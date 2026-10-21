@@ -10,16 +10,36 @@ export interface PokemonSummary {
 }
 
 interface PokemonTypeSlot {
-  type: { name: string };
+  slot: number;
+  type: { name: string; url: string };
+}
+
+interface PokemonStatSlot {
+  base_stat: number;
+  stat: { name: string };
+}
+
+interface PokemonAbilitySlot {
+  ability: { name: string };
+  is_hidden: boolean;
+}
+
+interface PokemonMoveSlot {
+  move: { name: string };
 }
 
 interface PokemonApiResponse {
   id: number;
   name: string;
   types: PokemonTypeSlot[];
-  sprites: Record<string, string>;
+  sprites: Record<string, any>;
   height: number;
   weight: number;
+  base_experience?: number;
+  stats?: PokemonStatSlot[];
+  abilities?: PokemonAbilitySlot[];
+  moves?: PokemonMoveSlot[];
+  cries?: { latest?: string; legacy?: string };
 }
 
 export interface Pokemon {
@@ -27,12 +47,221 @@ export interface Pokemon {
   name: string;
   types: string[];
   generation?: number;
-  sprites?: Record<string, string>;
+  sprites?: Record<string, any>;
   height?: number;
   weight?: number;
+  base_experience?: number;
+  stats?: { name: string; base_stat: number }[];
+  abilities?: { name: string; is_hidden: boolean }[];
+  moves?: string[];
+  cries?: { latest?: string; legacy?: string };
+  description?: string;
 }
 
-export async function listPokemon(limit = 20, offset = 0) {
+// Cachés en memoria para no saturar la API
+const abilityCache = new Map<string, string>();
+const moveCache = new Map<string, string>();
+
+const COMMON_ABILITIES_ES: Record<string, string> = {
+  overgrow: "Espesura",
+  chlorophyll: "Clorofila",
+  blaze: "Mar Llamas",
+  "solar-power": "Poder Solar",
+  torrent: "Torrente",
+  "rain-dish": "Cura Lluvia",
+  "shield-dust": "Polvo Escudo",
+  "run-away": "Fuga",
+  "shed-skin": "Mudar",
+  "compound-eyes": "Ojo Compuesto",
+  "tinted-lens": "Cromolente",
+  swarm: "Enjambre",
+  sniper: "Francotirador",
+  "keen-eye": "Vista Lince",
+  "tangled-feet": "Tumbos",
+  "big-pecks": "Sacapecho",
+  guts: "Agallas",
+  hustle: "Entusiasmo",
+  intimidate: "Intimidación",
+  unnerve: "Nerviosismo",
+  static: "Electricidad Estática",
+  "lightning-rod": "Pararrayos",
+  "sand-veil": "Velo Arena",
+  "sand-rush": "Ímpetu Arena",
+  "poison-point": "Punto Tóxico",
+  rivalry: "Rivalidad",
+  "cute-charm": "Gran Encanto",
+  "magic-guard": "Muro Mágico",
+  "flash-fire": "Absorbe Fuego",
+  drought: "Sequía",
+  drizzle: "Llovizna",
+  competitive: "Tenacidad",
+  frisk: "Cacheo",
+  levitate: "Levitación",
+  synchronize: "Sincronía",
+  "inner-focus": "Foco Interno",
+  infiltrator: "Allanamiento",
+  stench: "Hedor",
+  damp: "Humedad",
+  "water-absorb": "Absorbe Agua",
+  "volt-absorb": "Absorbe Elec",
+  pressure: "Presión",
+  "super-luck": "Afortunado",
+  justified: "Justiciero",
+  rattled: "Cobardía",
+  moxie: "Autoestima",
+  imposter: "Impostor",
+  adaptability: "Adaptable",
+  anticipation: "Anticipación",
+  sturdy: "Robustez",
+  "clear-body": "Cuerpo Puro",
+  "natural-cure": "Cura Natural",
+  "serene-grace": "Dicha",
+  trace: "Rastro",
+  "huge-power": "Potencia",
+  "thick-fat": "Sebo",
+  "snow-warning": "Nevada",
+  "sand-stream": "Chorro Arena",
+  "speed-boost": "Impulso",
+  "battle-armor": "Armadura Batalla",
+  disguise: "Disfraz",
+  "beast-boost": "Ultraimpulso",
+};
+
+const COMMON_MOVES_ES: Record<string, string> = {
+  tackle: "Placaje",
+  growl: "Gruñido",
+  scratch: "Arañazo",
+  "tail-whip": "Látigo",
+  ember: "Ascuas",
+  "water-gun": "Pistola Agua",
+  "vine-whip": "Látigo Cepa",
+  "thunder-shock": "Impactrueno",
+  "quick-attack": "Ataque Rápido",
+  bite: "Mordisco",
+  "hyper-beam": "Híper Rayo",
+  surf: "Surf",
+  thunderbolt: "Rayo",
+  thunder: "Trueno",
+  earthquake: "Terremoto",
+  psychic: "Psíquico",
+  "shadow-ball": "Bola Sombra",
+  flamethrower: "Lanzallamas",
+  "fire-blast": "Llamarada",
+  "hydro-pump": "Hidrobomba",
+  "ice-beam": "Rayo Hielo",
+  blizzard: "Ventisca",
+  fly: "Vuelo",
+  dig: "Excavar",
+  leer: "Malicioso",
+  "mega-drain": "Megaagotar",
+  "giga-drain": "Gigadrenado",
+  "solar-beam": "Rayo Solar",
+  "poison-powder": "Polvo Veneno",
+  "sleep-powder": "Somnífero",
+  "sweet-scent": "Dulce Aroma",
+  synthesis: "Síntesis",
+  protect: "Protección",
+  substitute: "Sustituto",
+  rest: "Descanso",
+  toxic: "Tóxico",
+  "swords-dance": "Danza Espada",
+  agility: "Agilidad",
+  recover: "Recuperación",
+  "double-team": "Doble Equipo",
+  reflect: "Reflejo",
+  "light-screen": "Pantalla de Luz",
+  slash: "Cuchillada",
+  "dragon-claw": "Garra Dragón",
+  "iron-tail": "Cola Férrea",
+  "close-combat": "A Bocajarro",
+  "aura-sphere": "Esfera Aural",
+  "stone-edge": "Roca Afilada",
+  "stealth-rock": "Trampa Rocas",
+  roost: "Respiro",
+  "u-turn": "Ida y Vuelta",
+  "volt-switch": "Voltiocambio",
+  scald: "Escaldar",
+  "bullet-punch": "Puño Bala",
+  "mach-punch": "Ultrapuño",
+  "ice-shard": "Canto Helado",
+  "shadow-sneak": "Sombra Vil",
+  "sucker-punch": "Golpe Bajo",
+  "extreme-speed": "Velocidad Extrema",
+  "calm-mind": "Paz Mental",
+  "nasty-plot": "Maquinación",
+  "dragon-dance": "Danza Dragón",
+  slam: "Atizar",
+  pound: "Destructor",
+  "mega-punch": "Megapuño",
+  "fire-punch": "Puño Fuego",
+  "ice-punch": "Puño Hielo",
+  "thunder-punch": "Puño Trueno",
+  gust: "Tornado",
+  "wing-attack": "Ataque Ala",
+  whirlwind: "Remolino",
+  cut: "Corte",
+  "headbutt": "Golpe Cabeza",
+  sing: "Canto",
+  supersonic: "Supersónico",
+  psybeam: "Psicorrayo",
+  disable: "Anulación",
+  acid: "Ácido",
+  hypnosis: "Hipnosis",
+  waterfall: "Cascada",
+};
+
+export async function translateAbility(name: string): Promise<string> {
+  const normalized = name.toLowerCase();
+  if (COMMON_ABILITIES_ES[normalized]) return COMMON_ABILITIES_ES[normalized];
+  if (abilityCache.has(normalized)) return abilityCache.get(normalized)!;
+
+  try {
+    const { data } = await api.get(`/ability/${normalized}`);
+    const es = data.names?.find((n: any) => n.language?.name === "es")?.name;
+    const result = es || normalized.replace(/-/g, " ");
+    abilityCache.set(normalized, result);
+    return result;
+  } catch {
+    const fallback = normalized.replace(/-/g, " ");
+    abilityCache.set(normalized, fallback);
+    return fallback;
+  }
+}
+
+export async function translateMove(name: string): Promise<string> {
+  const normalized = name.toLowerCase();
+  if (COMMON_MOVES_ES[normalized]) return COMMON_MOVES_ES[normalized];
+  if (moveCache.has(normalized)) return moveCache.get(normalized)!;
+
+  try {
+    const { data } = await api.get(`/move/${normalized}`);
+    const es = data.names?.find((n: any) => n.language?.name === "es")?.name;
+    const result = es || normalized.replace(/-/g, " ");
+    moveCache.set(normalized, result);
+    return result;
+  } catch {
+    const fallback = normalized.replace(/-/g, " ");
+    moveCache.set(normalized, fallback);
+    return fallback;
+  }
+}
+
+async function getSpeciesInfo(idOrName: number | string) {
+  try {
+    const { data } = await api.get(`/pokemon-species/${idOrName}`);
+    const esEntry =
+      data.flavor_text_entries?.find((e: any) => e.language?.name === "es") ||
+      data.flavor_text_entries?.find((e: any) => e.language?.name === "en");
+    const description = esEntry ? esEntry.flavor_text.replace(/[\f\n\r]/g, " ") : undefined;
+    const genMatch = data.generation?.url?.split("/").filter(Boolean).pop();
+    const generation = genMatch ? Number(genMatch) : undefined;
+    return { description, generation };
+  } catch {
+    return { description: undefined, generation: undefined };
+  }
+}
+
+export async function listPokemon(limit = 20, offset = 0): Promise<PokemonSummary[]> {
   const { data } = await api.get<{ results: PokemonSummary[] }>("/pokemon", {
     params: { limit, offset },
   });
@@ -43,27 +272,99 @@ export async function listPokemon(limit = 20, offset = 0) {
   }));
 }
 
-export async function searchPokemon(name: string) {
-  const { data } = await api.get<PokemonApiResponse>(
-    `/pokemon/${name.toLowerCase()}`
+export async function listPokemonByType(type: string): Promise<PokemonSummary[]> {
+  const { data } = await api.get<{ pokemon: { pokemon: PokemonSummary }[] }>(
+    `/type/${type.toLowerCase()}`
   );
-  return {
-    id: data.id,
-    name: data.name,
-    types: data.types.map((t) => t.type.name),
-    generation: 1,
-    sprites: data.sprites,
-  };
+  return data.pokemon.map((entry) => {
+    const p = entry.pokemon;
+    const id = Number(p.url.split("/").filter(Boolean).pop());
+    return {
+      id,
+      name: p.name,
+      url: p.url,
+    };
+  });
 }
 
-export async function getPokemonById(id: number) {
-  const { data } = await api.get<PokemonApiResponse>(`/pokemon/${id}`);
+export async function listPokemonByGeneration(gen: number): Promise<PokemonSummary[]> {
+  const { data } = await api.get<{ pokemon_species: PokemonSummary[] }>(
+    `/generation/${gen}`
+  );
+  return data.pokemon_species
+    .map((p) => {
+      const id = Number(p.url.split("/").filter(Boolean).pop());
+      return {
+        id,
+        name: p.name,
+        url: p.url,
+      };
+    })
+    .sort((a, b) => a.id - b.id);
+}
+
+export async function searchPokemon(name: string): Promise<Pokemon> {
+  const { data } = await api.get<PokemonApiResponse>(
+    `/pokemon/${encodeURIComponent(name.toLowerCase())}`
+  );
+  const speciesInfo = await getSpeciesInfo(data.id);
+
+  const abilities = await Promise.all(
+    (data.abilities ?? []).map(async (a) => ({
+      name: await translateAbility(a.ability.name),
+      is_hidden: a.is_hidden,
+    }))
+  );
+
+  const moves = await Promise.all(
+    (data.moves ?? []).slice(0, 24).map((m) => translateMove(m.move.name))
+  );
+
   return {
     id: data.id,
     name: data.name,
     types: data.types.map((t) => t.type.name),
+    generation: speciesInfo.generation ?? 1,
     sprites: data.sprites,
     height: data.height,
     weight: data.weight,
+    base_experience: data.base_experience,
+    stats: data.stats?.map((s) => ({ name: s.stat.name, base_stat: s.base_stat })) ?? [],
+    abilities,
+    moves,
+    cries: data.cries,
+    description: speciesInfo.description,
+  };
+}
+
+export async function getPokemonById(id: number): Promise<Pokemon> {
+  const { data } = await api.get<PokemonApiResponse>(`/pokemon/${id}`);
+  const speciesInfo = await getSpeciesInfo(id);
+
+  const abilities = await Promise.all(
+    (data.abilities ?? []).map(async (a) => ({
+      name: await translateAbility(a.ability.name),
+      is_hidden: a.is_hidden,
+    }))
+  );
+
+  const moves = await Promise.all(
+    (data.moves ?? []).slice(0, 24).map((m) => translateMove(m.move.name))
+  );
+
+  return {
+    id: data.id,
+    name: data.name,
+    types: data.types.map((t) => t.type.name),
+    generation: speciesInfo.generation,
+    sprites: data.sprites,
+    height: data.height,
+    weight: data.weight,
+    base_experience: data.base_experience,
+    stats: data.stats?.map((s) => ({ name: s.stat.name, base_stat: s.base_stat })) ?? [],
+    abilities,
+    moves,
+    cries: data.cries,
+    description: speciesInfo.description,
   };
 }

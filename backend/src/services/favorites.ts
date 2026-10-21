@@ -14,7 +14,11 @@ export async function addFavorite(input: FavoriteInput) {
 }
 
 export async function removeFavorite(pokemonId: number) {
-  return prisma.favorite.delete({ where: { pokemonId } });
+  try {
+    return await prisma.favorite.delete({ where: { pokemonId } });
+  } catch {
+    return null;
+  }
 }
 
 export async function isFavorite(pokemonId: number) {

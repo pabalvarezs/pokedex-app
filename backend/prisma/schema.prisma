@@ -9,9 +9,11 @@ datasource db {
 
 model Favorite {
   id        Int      @id @default(autoincrement())
-  pokemonId Int      @unique
+  userId    String   @default("pablito")
+  pokemonId Int
   name      String
   createdAt DateTime @default(now())
 
+  @@unique([userId, pokemonId])
   @@map("favorites")
 }

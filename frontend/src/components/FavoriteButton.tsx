@@ -1,15 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addFavorite, removeFavorite, isFavorite } from "../services/api";
 
-interface Props { pokemonId: number; name: string; }
+interface Props {
+  pokemonId: number;
+  name: string;
+}
 
 export default function FavoriteButton({ pokemonId, name }: Props) {
   const queryClient = useQueryClient();
-  const { data: fav } = useQuery({
+  const { data: fav, isLoading } = useQuery({
     queryKey: ["favorite", pokemonId],
     queryFn: () => isFavorite(pokemonId),
     enabled: !!pokemonId,
   });
+
   const toggle = useMutation({
     mutationFn: async () => {
       if (fav) await removeFavorite(pokemonId);
@@ -20,9 +24,18 @@ export default function FavoriteButton({ pokemonId, name }: Props) {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
+
   return (
-    <button onClick={() => toggle.mutate()} className="px-3 py-1 rounded text-sm border">
-      {fav ? "★ Favorito" : "☆ Favorito"}
+    <button
+      onClick={() => toggle.mutate()}
+      disabled={isLoading || toggle.isPending}
+      className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm ${
+        fav
+          ? "bg-amber-400 text-amber-950 border-amber-500 hover:bg-amber-500"
+          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      <span>{fav ? "⭐ Quitar de regalones" : "☆ ¡Guardar en mis regalones!"}</span>
     </button>
   );
 }

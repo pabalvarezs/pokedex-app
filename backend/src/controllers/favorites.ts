@@ -22,7 +22,9 @@ export async function addFavorite(req: Request, res: Response) {
 
 export async function removeFavorite(req: Request, res: Response) {
   const pokemonId = Number(req.params.pokemonId);
-  await favoritesService.removeFavorite(pokemonId);
+  try {
+    await favoritesService.removeFavorite(pokemonId);
+  } catch {}
   res.status(204).send();
 }
 
