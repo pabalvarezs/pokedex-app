@@ -23,9 +23,7 @@ function NavigationHeader() {
           <Link
             to="/"
             className={`px-3 py-1.5 rounded-lg text-sm font-bold transition ${
-              location.pathname === "/" ||
-              location.pathname.startsWith("/type") ||
-              location.pathname.startsWith("/generation")
+              location.pathname === "/"
                 ? "bg-red-700 text-white"
                 : "text-red-100 hover:bg-red-700/60"
             }`}
@@ -89,8 +87,6 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/pokemon/:id" element={<PokemonDetail />} />
             <Route path="/search/:name" element={<PokemonDetail />} />
-            <Route path="/type/:type" element={<Home />} />
-            <Route path="/generation/:gen" element={<Home />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/login" element={<Login />} />
           </Routes>
@@ -100,9 +96,6 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-4">
             <p className="font-bold text-gray-800 text-sm">
               Versión adaptada a Chilensis 🇨🇱 Hecho con cariño Pablito
-            </p>
-            <p className="mt-1 text-gray-400">
-              Desarrollado con React, Tailwind, Express, PostgreSQL y PokeAPI
             </p>
           </div>
         </footer>

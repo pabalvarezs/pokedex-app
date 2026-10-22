@@ -4,6 +4,20 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export const api = axios.create({ baseURL: API_URL });
 
+// Interceptor: añade x-user-id si hay usuario logueado
+api.interceptors.request.use((config) => {
+  try {
+    const raw = localStorage.getItem("pokedex_user");
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user?.username) {
+        config.headers["x-user-id"] = user.username;
+      }
+    }
+  } catch {}
+  return config;
+});
+
 export interface PokemonStat {
   name: string;
   base_stat: number;
@@ -139,4 +153,42 @@ export async function removeFavorite(pokemonId: number) {
 export async function isFavorite(pokemonId: number) {
   const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check`);
   return data.favorite;
+}
+
+export interface PokemonFilter {
+  type?: string;
+  gen?: number;
+  sort?: "id" | "name" | "hp" | "attack" | "speed";
+}
+
+export async function listPokemonFiltered(filter: PokemonFilter) {
+  let pokemon: Pokemon[] = [];
+
+  if (filter.type && filter.gen) {
+    // Ambos filtros: busca por tipo y luego filtra por gen en frontend
+    const typeData = await listPokemonByType(filter.type);
+    const genData = await listPokemonByGeneration(filter.gen!);
+    const genIds = new Set(genData.pokemon.map((p) => p.id));
+    pokemon = typeData.pokemon.filter((p) => genIds.has(p.id));
+  } else if (filter.type) {
+    const data = await listPokemonByType(filter.type);
+    pokemon = data.pokemon;
+  } else if (filter.gen) {
+    const data = await listPokemonByGeneration(filter.gen);
+    pokemon = data.pokemon;
+  } else {
+    const data = await listPokemon(250, 0);
+    pokemon = data.pokemon;
+  }
+
+  // Ordenamiento
+  if (filter.sort === "name") {
+    pokemon = [...pokemon].sort((a, b) => a.name.localeCompare(b.name));
+  } else if (filter.sort === "id") {
+    pokemon = [...pokemon].sort((a, b) => a.id - b.id);
+  }
+  // Para sort por stats (hp, attack, speed) no hay datos disponibles en el listado básico
+  // así que solo aplicamos id y name
+
+  return { pokemon, total: pokemon.length };
 }
