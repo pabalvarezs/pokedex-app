@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { listFavorites } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import FavoriteButton from "../components/FavoriteButton";
 
 export default function Favorites() {
+  const { user } = useAuth();
+  // Sin user autenticado, no mostrar favoritos (quedará vacío/sin datos)
+  const userId = user?.username;
   const { data: favorites = [], isLoading } = useQuery({
-    queryKey: ["favorites"],
-    queryFn: listFavorites,
+    queryKey: ["favorites", userId],
+    queryFn: () => listFavorites(userId),
   });
 
   if (isLoading)

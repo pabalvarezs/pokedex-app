@@ -14,37 +14,88 @@ const SORT_OPTIONS = [
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
 export default function Home() {
-  const [activeType, setActiveType] = useState<string | null>(null);
-  const [activeGen, setActiveGen] = useState<number | null>(null);
+  const [activeTypes, setActiveTypes] = useState<string[]>([]);
+  const [activeGens, setActiveGens] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("id");
-  const [showTypeFilter, setShowTypeFilter] = useState(true);
+  const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [showGenFilter, setShowGenFilter] = useState(false);
 
   const clearFilters = useCallback(() => {
-    setActiveType(null);
-    setActiveGen(null);
+    setActiveTypes([]);
+    setActiveGens([]);
     setSortBy("id");
+    setShowTypeFilter(false);
+    setShowGenFilter(false);
   }, []);
 
-  const hasFilters = !!(activeType || activeGen || sortBy !== "id");
+  const hasFilters = activeTypes.length > 0 || activeGens.length > 0 || sortBy !== "id";
 
   // Fetch según filtros activos
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["pokemon", "filtered", { type: activeType, gen: activeGen }],
+    queryKey: ["pokemon", "filtered", { types: activeTypes, gens: activeGens, sort: sortBy }],
     queryFn: async () => {
-      if (activeType && activeGen) {
-        // Combinar: filtra por tipo, luego intersecta con gen
-        const [typeData, genData] = await Promise.all([
-          listPokemonByType(activeType),
-          listPokemonByGeneration(activeGen),
-        ]);
-        const genIds = new Set(genData.pokemon.map((p) => p.id));
-        const combined = typeData.pokemon.filter((p) => genIds.has(p.id));
-        return { pokemon: combined, total: combined.length };
+      let pokemon: Pokemon[] = [];
+      const sort = sortBy === "name" || sortBy === "name_desc" || sortBy === "id";
+
+      if (activeTypes.length > 0 && activeGens.length > 0) {
+        // Múltiples tipos Y múltiples generaciones
+        // Empezar con el primer tipo, luego intersectar con tipos y generaciones
+        const typeData = await listPokemonByType(activeTypes[0]);
+        pokemon = typeData.pokemon;
+        // Intersectar con los tipos restantes
+        for (let i = 1; i < activeTypes.length; i++) {
+          const nextTypeData = await listPokemonByType(activeTypes[i]);
+          const nextIds = new Set(nextTypeData.pokemon.map((p: any) => p.id));
+          pokemon = pokemon.filter((p: any) => nextIds.has(p.id));
+        }
+        // Intersectar con las generaciones
+        for (const genId of activeGens) {
+          const genData = await listPokemonByGeneration(genId);
+          const genIds = new Set(genData.pokemon.map((p: any) => p.id));
+          pokemon = pokemon.filter((p: any) => genIds.has(p.id));
+        }
+      } else if (activeTypes.length > 0) {
+        // Solo múltiples tipos - juntar y dedup
+        const typePromises = activeTypes.map(t => listPokemonByType(t));
+        const typeResults = await Promise.all(typePromises);
+        pokemon = typeResults.flatMap((tr: any) => tr.pokemon);
+        const seen = new Set();
+        pokemon = pokemon.filter((p: any) => {
+          const key = p.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      } else if (activeGens.length > 0) {
+        // Solo múltiples generaciones
+        let first = true;
+        for (const genId of activeGens) {
+          const genData = await listPokemonByGeneration(genId);
+          if (first) {
+            pokemon = genData.pokemon;
+            first = false;
+          } else {
+            const genIds = new Set(genData.pokemon.map((p: any) => p.id));
+            pokemon = pokemon.filter((p: any) => genIds.has(p.id));
+          }
+        }
+      } else {
+        const data = await listPokemon(250, 0);
+        pokemon = data.pokemon;
       }
-      if (activeType) return listPokemonByType(activeType);
-      if (activeGen) return listPokemonByGeneration(activeGen);
-      return listPokemon(250, 0);
+
+      // Aplicar ordenamiento en cliente
+      if (sort) {
+        if (sortBy === "name") {
+          pokemon = [...pokemon].sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === "name_desc") {
+          pokemon = [...pokemon].sort((a, b) => b.name.localeCompare(a.name));
+        } else if (sortBy === "id") {
+          pokemon = [...pokemon].sort((a, b) => a.id - b.id);
+        }
+      }
+
+      return { pokemon, total: pokemon.length };
     },
   });
 
@@ -56,8 +107,8 @@ export default function Home() {
     return [...list].sort((a, b) => a.id - b.id);
   })();
 
-  const activeTypeInfo = activeType ? POKEMON_TYPES[activeType.toLowerCase()] : null;
-  const activeGenInfo = activeGen ? GENERATIONS.find((g) => g.id === activeGen) : null;
+  const activeTypeInfo = activeTypes.length > 0 ? POKEMON_TYPES[activeTypes[0].toLowerCase()] : null;
+  const activeGenInfo = activeGens.length > 0 ? GENERATIONS.find((g) => g.id === activeGens[0]) : null;
 
   return (
     <div className="max-w-6xl mx-auto py-6">
@@ -76,29 +127,29 @@ export default function Home() {
         {/* Fila 1: Botones de sección + Sort */}
         <div className="flex flex-wrap gap-2 items-center mb-3">
           <button
-            onClick={() => { setShowTypeFilter(!showTypeFilter); setShowGenFilter(false); }}
+            onClick={() => setShowTypeFilter(!showTypeFilter)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
               showTypeFilter
                 ? "bg-red-600 text-white border-red-600"
-                : activeType
-                ? "bg-red-50 text-red-700 border-red-300"
-                : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                : activeTypes.length > 0
+                  ? "bg-red-50 text-red-700 border-red-300"
+                  : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🎨 Tipo {activeType ? `· ${activeTypeInfo?.es}` : ""}
+            🎨 Tipo {activeTypes.length > 0 ? `${activeTypes.length} seleccionados` : ""}
           </button>
 
           <button
-            onClick={() => { setShowGenFilter(!showGenFilter); setShowTypeFilter(false); }}
+            onClick={() => setShowGenFilter(!showGenFilter)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
               showGenFilter
                 ? "bg-red-600 text-white border-red-600"
-                : activeGen
-                ? "bg-red-50 text-red-700 border-red-300"
-                : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                : activeGens.length > 0
+                  ? "bg-red-50 text-red-700 border-red-300"
+                  : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🌍 Generación {activeGen ? `· ${activeGenInfo?.name}` : ""}
+            🌍 Generación {activeGens.length > 0 ? `${activeGens.length} seleccionadas` : ""}
           </button>
 
           {/* Ordenamiento */}
@@ -133,9 +184,15 @@ export default function Home() {
               {Object.entries(POKEMON_TYPES).map(([key, info]) => (
                 <button
                   key={key}
-                  onClick={() => setActiveType(activeType === key ? null : key)}
+                  onClick={() => {
+                    if (activeTypes.includes(key)) {
+                      setActiveTypes(activeTypes.filter(t => t !== key));
+                    } else {
+                      setActiveTypes([...activeTypes, key]);
+                    }
+                  }}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-black transition border ${
-                    activeType === key
+                    activeTypes.includes(key)
                       ? `${info.bg} ${info.text} ${info.border} shadow-sm ring-2 ring-offset-1 ring-gray-400`
                       : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
                   }`}
@@ -155,9 +212,15 @@ export default function Home() {
               {GENERATIONS.map((g) => (
                 <button
                   key={g.id}
-                  onClick={() => setActiveGen(activeGen === g.id ? null : g.id)}
+                  onClick={() => {
+                    if (activeGens.includes(g.id)) {
+                      setActiveGens(activeGens.filter(id => id !== g.id));
+                    } else {
+                      setActiveGens([...activeGens, g.id]);
+                    }
+                  }}
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black transition border ${
-                    activeGen === g.id
+                    activeGens.includes(g.id)
                       ? "bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-offset-1 ring-red-300"
                       : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
                   }`}
@@ -170,19 +233,19 @@ export default function Home() {
         )}
 
         {/* Resumen de filtros activos */}
-        {(activeType || activeGen) && (
+        {(activeTypes.length > 0 || activeGens.length > 0) && (
           <div className="mt-3 flex flex-wrap gap-2 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500 font-semibold self-center">Filtros activos:</span>
-            {activeType && activeTypeInfo && (
+            {activeTypes.length > 0 && activeTypeInfo && (
               <span className={`px-2.5 py-1 rounded-full text-[11px] font-black ${activeTypeInfo.bg} ${activeTypeInfo.text} flex items-center gap-1`}>
                 {activeTypeInfo.es}
-                <button onClick={() => setActiveType(null)} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                <button onClick={() => setActiveTypes(activeTypes.filter(t => t !== activeTypes[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
               </span>
             )}
-            {activeGen && activeGenInfo && (
+            {activeGens.length > 0 && activeGenInfo && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 {activeGenInfo.name} · {activeGenInfo.region}
-                <button onClick={() => setActiveGen(null)} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                <button onClick={() => setActiveGens(activeGens.filter(id => id !== activeGens[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
               </span>
             )}
           </div>
@@ -208,7 +271,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
               {sortedPokemon.length} Pokémon encontrados
-              {activeType && activeGen ? " (con ambos filtros)" : ""}
+              {(activeTypes.length > 0 || activeGens.length > 0) ? " (con filtros activos)" : ""}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

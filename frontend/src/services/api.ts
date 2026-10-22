@@ -4,12 +4,15 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export const api = axios.create({ baseURL: API_URL });
 
-// Interceptor: añade x-user-id si hay usuario logueado
+// Interceptor: añade x-user-id solo si hay usuario autenticado (username + token)
 api.interceptors.request.use((config) => {
   try {
-    const raw = localStorage.getItem("pokedex_user");
-    if (raw) {
-      const user = JSON.parse(raw);
+    const userRaw = localStorage.getItem("pokedex_user");
+    const tokenRaw = localStorage.getItem("pokedex_token");
+    
+    // Solo establecer header si hay ambos: usuario Y token de sesión activa
+    if (userRaw && tokenRaw) {
+      const user = JSON.parse(userRaw);
       if (user?.username) {
         config.headers["x-user-id"] = user.username;
       }
@@ -136,22 +139,23 @@ export async function searchPokemon(name: string) {
   return data;
 }
 
-export async function listFavorites() {
-  const { data } = await api.get<Favorite[]>("/api/favorites");
+export async function listFavorites(userId: string | undefined) {
+  if (!userId) return [];
+  const { data } = await api.get<Favorite[]>(`/api/favorites?userId=${userId}`);
   return data;
 }
 
-export async function addFavorite(pokemonId: number, name: string) {
-  const { data } = await api.post<Favorite>("/api/favorites", { pokemonId, name });
+export async function addFavorite(pokemonId: number, name: string, userId: string) {
+  const { data } = await api.post<Favorite>("/api/favorites", { pokemonId, name, userId });
   return data;
 }
 
-export async function removeFavorite(pokemonId: number) {
-  await api.delete(`/api/favorites/${pokemonId}`);
+export async function removeFavorite(pokemonId: number, userId: string) {
+  await api.delete(`/api/favorites/${pokemonId}?userId=${userId}`);
 }
 
-export async function isFavorite(pokemonId: number) {
-  const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check`);
+export async function isFavorite(pokemonId: number, userId: string) {
+  const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check?userId=${userId}`);
   return data.favorite;
 }
 

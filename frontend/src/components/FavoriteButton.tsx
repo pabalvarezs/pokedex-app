@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addFavorite, removeFavorite, isFavorite } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 interface Props {
   pokemonId: number;
@@ -7,21 +8,25 @@ interface Props {
 }
 
 export default function FavoriteButton({ pokemonId, name }: Props) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  // Solo permitir favoritos cuando hay usuario autentificado con username real
+  // Si no hay user (sin sesión), userId será undefined y el query quedará disabled
+  const userId = user?.username; // No hay default "pablito" - si no hay usuario, no hay favoritos
   const { data: fav, isLoading } = useQuery({
-    queryKey: ["favorite", pokemonId],
+    queryKey: ["favorite", pokemonId, userId],
     queryFn: () => isFavorite(pokemonId),
-    enabled: !!pokemonId,
+    enabled: !!pokemonId && !!userId, // Solo habilitado cuando hay user real
   });
 
   const toggle = useMutation({
     mutationFn: async () => {
-      if (fav) await removeFavorite(pokemonId);
-      else await addFavorite(pokemonId, name);
+      if (fav) await removeFavorite(pokemonId, userId);
+      else await addFavorite(pokemonId, name, userId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorite", pokemonId] });
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["favorite", pokemonId, userId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites", userId] });
     },
   });
 

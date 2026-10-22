@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import PokemonDetail from "./pages/PokemonDetail";
 import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
+import TypePage from "./pages/TypePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 function NavigationHeader() {
@@ -89,16 +90,11 @@ export default function App() {
             <Route path="/search/:name" element={<PokemonDetail />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/type/:type" element={<TypePage />} />
           </Routes>
         </main>
 
-        <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-          <div className="max-w-6xl mx-auto px-4">
-            <p className="font-bold text-gray-800 text-sm">
-              Versión adaptada a Chilensis 🇨🇱 Hecho con cariño Pablito
-            </p>
-          </div>
-        </footer>
+        
       </div>
     </AuthProvider>
   );
