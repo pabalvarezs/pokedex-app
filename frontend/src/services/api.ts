@@ -25,6 +25,16 @@ export interface PokemonAbility {
   is_hidden: boolean;
 }
 
+export interface EvolutionMember {
+  id: number;
+  name: string;
+  condition?: string;
+}
+
+export interface EvolutionStage {
+  members: EvolutionMember[];
+}
+
 export interface Pokemon {
   id: number;
   name: string;
@@ -61,6 +71,7 @@ export interface Pokemon {
   moves?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
+  evolutionChain?: EvolutionStage[];
 }
 
 export interface Favorite {
