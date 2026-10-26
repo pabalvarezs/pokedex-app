@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listPokemon, listPokemonByType, listPokemonByGeneration } from "../services/api";
+import { listPokemon, listPokemonByType, listPokemonByGeneration, type Pokemon } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
@@ -13,12 +13,24 @@ const SORT_OPTIONS = [
 
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
+const PAGE_SIZE = 48;
+
+function dedupeById(pokemon: Pokemon[]): Pokemon[] {
+  const seen = new Set<number>();
+  return pokemon.filter((p) => {
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
+}
+
 export default function Home() {
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeGens, setActiveGens] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("id");
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [showGenFilter, setShowGenFilter] = useState(false);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const clearFilters = useCallback(() => {
     setActiveTypes([]);
@@ -26,72 +38,44 @@ export default function Home() {
     setSortBy("id");
     setShowTypeFilter(false);
     setShowGenFilter(false);
+    setPageSize(PAGE_SIZE);
   }, []);
+
+  // Al cambiar filtros volvemos a la primera página
+  useEffect(() => {
+    setPageSize(PAGE_SIZE);
+  }, [activeTypes, activeGens]);
 
   const hasFilters = activeTypes.length > 0 || activeGens.length > 0 || sortBy !== "id";
 
   // Fetch según filtros activos
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["pokemon", "filtered", { types: activeTypes, gens: activeGens, sort: sortBy }],
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ["pokemon", "filtered", { types: activeTypes, gens: activeGens, pageSize }],
     queryFn: async () => {
-      let pokemon: Pokemon[] = [];
-      const sort = sortBy === "name" || sortBy === "name_desc" || sortBy === "id";
-
-      if (activeTypes.length > 0 && activeGens.length > 0) {
-        // Múltiples tipos Y múltiples generaciones
-        // Empezar con el primer tipo, luego intersectar con tipos y generaciones
-        const typeData = await listPokemonByType(activeTypes[0]);
-        pokemon = typeData.pokemon;
-        // Intersectar con los tipos restantes
-        for (let i = 1; i < activeTypes.length; i++) {
-          const nextTypeData = await listPokemonByType(activeTypes[i]);
-          const nextIds = new Set(nextTypeData.pokemon.map((p: any) => p.id));
-          pokemon = pokemon.filter((p: any) => nextIds.has(p.id));
-        }
-        // Intersectar con las generaciones
-        for (const genId of activeGens) {
-          const genData = await listPokemonByGeneration(genId);
-          const genIds = new Set(genData.pokemon.map((p: any) => p.id));
-          pokemon = pokemon.filter((p: any) => genIds.has(p.id));
-        }
-      } else if (activeTypes.length > 0) {
-        // Solo múltiples tipos - juntar y dedup
-        const typePromises = activeTypes.map(t => listPokemonByType(t));
-        const typeResults = await Promise.all(typePromises);
-        pokemon = typeResults.flatMap((tr: any) => tr.pokemon);
-        const seen = new Set();
-        pokemon = pokemon.filter((p: any) => {
-          const key = p.id;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-      } else if (activeGens.length > 0) {
-        // Solo múltiples generaciones
-        let first = true;
-        for (const genId of activeGens) {
-          const genData = await listPokemonByGeneration(genId);
-          if (first) {
-            pokemon = genData.pokemon;
-            first = false;
-          } else {
-            const genIds = new Set(genData.pokemon.map((p: any) => p.id));
-            pokemon = pokemon.filter((p: any) => genIds.has(p.id));
-          }
-        }
-      } else {
-        const data = await listPokemon(250, 0);
-        pokemon = data.pokemon;
+      // Sin filtros: paginación contra el listado general
+      if (activeTypes.length === 0 && activeGens.length === 0) {
+        const page = await listPokemon(pageSize, 0);
+        return { pokemon: page.pokemon, total: page.total };
       }
 
-      // Aplicar ordenamiento en cliente
-      if (sort) {
-        if (sortBy === "name") {
-          pokemon = [...pokemon].sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortBy === "name_desc") {
-          pokemon = [...pokemon].sort((a, b) => b.name.localeCompare(a.name));
-        } else if (sortBy === "id") {
-          pokemon = [...pokemon].sort((a, b) => a.id - b.id);
+      let pokemon: Pokemon[] = [];
+
+      if (activeTypes.length > 0) {
+        // Unión de todos los tipos seleccionados
+        const typeResults = await Promise.all(activeTypes.map((t) => listPokemonByType(t)));
+        pokemon = dedupeById(typeResults.flatMap((tr) => tr.pokemon));
+      }
+
+      if (activeGens.length > 0) {
+        // Unión de todas las generaciones seleccionadas
+        const genResults = await Promise.all(activeGens.map((gen) => listPokemonByGeneration(gen)));
+        const genIds = new Set(genResults.flatMap((gr) => gr.pokemon.map((p) => p.id)));
+
+        if (activeTypes.length > 0) {
+          // Intersección: tipo(s) AND generación(es)
+          pokemon = pokemon.filter((p) => genIds.has(p.id));
+        } else {
+          pokemon = dedupeById(genResults.flatMap((gr) => gr.pokemon));
         }
       }
 
@@ -106,6 +90,12 @@ export default function Home() {
     if (sortBy === "name_desc") return [...list].sort((a, b) => b.name.localeCompare(a.name));
     return [...list].sort((a, b) => a.id - b.id);
   })();
+
+  const totalPokemon = data?.total ?? sortedPokemon.length;
+  const canLoadMore =
+    activeTypes.length === 0 &&
+    activeGens.length === 0 &&
+    sortedPokemon.length < totalPokemon;
 
   const activeTypeInfo = activeTypes.length > 0 ? POKEMON_TYPES[activeTypes[0].toLowerCase()] : null;
   const activeGenInfo = activeGens.length > 0 ? GENERATIONS.find((g) => g.id === activeGens[0]) : null;
@@ -270,8 +260,9 @@ export default function Home() {
         <>
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              {sortedPokemon.length} Pokémon encontrados
-              {(activeTypes.length > 0 || activeGens.length > 0) ? " (con filtros activos)" : ""}
+              {hasFilters
+                ? `${sortedPokemon.length} Pokémon encontrados`
+                : `Mostrando ${sortedPokemon.length} de ${totalPokemon} Pokémon`}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -279,6 +270,20 @@ export default function Home() {
               <PokemonCard key={p.id} pokemon={p} />
             ))}
           </div>
+
+          {canLoadMore && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPageSize((size) => size + PAGE_SIZE)}
+                disabled={isFetching}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-sm transition"
+              >
+                {isFetching
+                  ? "Cargando más Pokémon..."
+                  : `Cargar más Pokémon (${totalPokemon - sortedPokemon.length} restantes)`}
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <div className="text-center py-16 bg-white rounded-lg border my-6">

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { loginUser, logoutUser } from "../services/api";
 
 export interface User {
   id: number;
@@ -15,8 +15,6 @@ interface AuthContextType {
   login: (u: string, p: string) => Promise<User>;
   logout: () => void;
 }
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 function getStoredUser(): User | null {
   try {
@@ -45,23 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string): Promise<User> => {
-    const { data } = await axios.post(`${API_URL}/api/auth/login`, { username, password });
-    if (data.success && data.user) {
-      try {
-        localStorage.setItem("pokedex_user", JSON.stringify(data.user));
-        localStorage.setItem("pokedex_token", data.token);
-      } catch {}
-      setUser(data.user);
-      return data.user;
-    }
-    throw new Error(data.error || "Error al iniciar sesión");
+    const loggedUser = await loginUser(username, password);
+    setUser(loggedUser);
+    return loggedUser;
   };
 
   const logout = () => {
-    try {
-      localStorage.removeItem("pokedex_user");
-      localStorage.removeItem("pokedex_token");
-    } catch {}
+    logoutUser();
     setUser(null);
   };
 

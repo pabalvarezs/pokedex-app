@@ -1,20 +1,14 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listPokemonByType } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
-
-interface Pokemon {
-  id: number;
-  name: string;
-  types: string[];
-}
+import { getTypeBadge } from "../utils/pokemon";
 
 export default function TypePage() {
   const { type } = useParams();
   // Fallback por si useParams no devuelve type aún
-  const safeType = type ?? "fire";
-  const [typeName, setTypeName] = useState<string>(safeType);
+  const safeType = (type ?? "fire").toLowerCase();
+  const typeInfo = getTypeBadge(safeType);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["pokemon", "type", safeType],
     queryFn: () => listPokemonByType(safeType),
@@ -37,7 +31,7 @@ export default function TypePage() {
           Tipo no encontrado
         </h2>
         <p className="text-gray-500 text-sm mb-4">
-          No pillamos ningún Pokémon del tipo "<strong>{safeType}</strong>".
+          No pillamos ningún Pokémon del tipo "<strong>{typeInfo.es}</strong>".
         </p>
         <button
           onClick={() => window.history.back()}
@@ -49,7 +43,7 @@ export default function TypePage() {
     );
   }
 
-  const sortedPokemon = [...data.pokemon].sort((a: any, b: any) =>
+  const sortedPokemon = [...data.pokemon].sort((a, b) =>
     a.name.localeCompare(b.name)
   );
 
@@ -57,7 +51,7 @@ export default function TypePage() {
     <div className="max-w-6xl mx-auto py-6">
       <div className="mb-5">
         <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-          Pokémon de tipo {safeType}
+          Pokémon de tipo {typeInfo.es}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           Se encontraron {sortedPokemon.length} Pokémon

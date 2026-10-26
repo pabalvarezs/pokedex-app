@@ -4,18 +4,12 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export const api = axios.create({ baseURL: API_URL });
 
-// Interceptor: añade x-user-id solo si hay usuario autenticado (username + token)
+// Interceptor: adjunta el token firmado de la sesión activa
 api.interceptors.request.use((config) => {
   try {
-    const userRaw = localStorage.getItem("pokedex_user");
-    const tokenRaw = localStorage.getItem("pokedex_token");
-    
-    // Solo establecer header si hay ambos: usuario Y token de sesión activa
-    if (userRaw && tokenRaw) {
-      const user = JSON.parse(userRaw);
-      if (user?.username) {
-        config.headers["x-user-id"] = user.username;
-      }
+    const token = localStorage.getItem("pokedex_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
   } catch {}
   return config;
@@ -85,13 +79,20 @@ export interface User {
 }
 
 export async function loginUser(username: string, password: string): Promise<User> {
-  const { data } = await api.post("/api/auth/login", { username, password });
-  if (data.success && data.user) {
-    localStorage.setItem("pokedex_user", JSON.stringify(data.user));
-    localStorage.setItem("pokedex_token", data.token);
-    return data.user;
+  try {
+    const { data } = await api.post("/api/auth/login", { username, password });
+    if (data.success && data.user) {
+      localStorage.setItem("pokedex_user", JSON.stringify(data.user));
+      localStorage.setItem("pokedex_token", data.token);
+      return data.user;
+    }
+    throw new Error(data.error || "Error al iniciar sesión");
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || "Error al iniciar sesión");
+    }
+    throw error;
   }
-  throw new Error(data.error || "Error al iniciar sesión");
 }
 
 export function getCurrentUser(): User | null {
@@ -109,9 +110,12 @@ export function logoutUser(): void {
 }
 
 export async function listPokemon(limit = 20, offset = 0) {
-  const { data } = await api.get<{ pokemon: Pokemon[]; limit: number; offset: number }>(
-    "/api/pokemon", { params: { limit, offset } }
-  );
+  const { data } = await api.get<{
+    pokemon: Pokemon[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>("/api/pokemon", { params: { limit, offset } });
   return data;
 }
 
@@ -139,60 +143,21 @@ export async function searchPokemon(name: string) {
   return data;
 }
 
-export async function listFavorites(userId: string | undefined) {
-  if (!userId) return [];
-  const { data } = await api.get<Favorite[]>(`/api/favorites?userId=${userId}`);
+export async function listFavorites() {
+  const { data } = await api.get<Favorite[]>("/api/favorites");
   return data;
 }
 
-export async function addFavorite(pokemonId: number, name: string, userId: string) {
-  const { data } = await api.post<Favorite>("/api/favorites", { pokemonId, name, userId });
+export async function addFavorite(pokemonId: number, name: string) {
+  const { data } = await api.post<Favorite>("/api/favorites", { pokemonId, name });
   return data;
 }
 
-export async function removeFavorite(pokemonId: number, userId: string) {
-  await api.delete(`/api/favorites/${pokemonId}?userId=${userId}`);
+export async function removeFavorite(pokemonId: number) {
+  await api.delete(`/api/favorites/${pokemonId}`);
 }
 
-export async function isFavorite(pokemonId: number, userId: string) {
-  const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check?userId=${userId}`);
+export async function isFavorite(pokemonId: number) {
+  const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check`);
   return data.favorite;
-}
-
-export interface PokemonFilter {
-  type?: string;
-  gen?: number;
-  sort?: "id" | "name" | "hp" | "attack" | "speed";
-}
-
-export async function listPokemonFiltered(filter: PokemonFilter) {
-  let pokemon: Pokemon[] = [];
-
-  if (filter.type && filter.gen) {
-    // Ambos filtros: busca por tipo y luego filtra por gen en frontend
-    const typeData = await listPokemonByType(filter.type);
-    const genData = await listPokemonByGeneration(filter.gen!);
-    const genIds = new Set(genData.pokemon.map((p) => p.id));
-    pokemon = typeData.pokemon.filter((p) => genIds.has(p.id));
-  } else if (filter.type) {
-    const data = await listPokemonByType(filter.type);
-    pokemon = data.pokemon;
-  } else if (filter.gen) {
-    const data = await listPokemonByGeneration(filter.gen);
-    pokemon = data.pokemon;
-  } else {
-    const data = await listPokemon(250, 0);
-    pokemon = data.pokemon;
-  }
-
-  // Ordenamiento
-  if (filter.sort === "name") {
-    pokemon = [...pokemon].sort((a, b) => a.name.localeCompare(b.name));
-  } else if (filter.sort === "id") {
-    pokemon = [...pokemon].sort((a, b) => a.id - b.id);
-  }
-  // Para sort por stats (hp, attack, speed) no hay datos disponibles en el listado básico
-  // así que solo aplicamos id y name
-
-  return { pokemon, total: pokemon.length };
 }

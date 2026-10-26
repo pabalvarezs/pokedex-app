@@ -31,7 +31,7 @@ export default function Login() {
       navigate("/");
     } catch (err: any) {
       setError(
-        err.response?.data?.error ||
+        err.message ||
           "¡Pucha compadre! Usuario o clave incorrecta. Prueba con las credenciales de prueba."
       );
     } finally {

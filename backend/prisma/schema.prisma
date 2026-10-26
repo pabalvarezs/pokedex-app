@@ -9,7 +9,7 @@ datasource db {
 
 model Favorite {
   id        Int      @id @default(autoincrement())
-  userId    String   @default("pablito")
+  userId    String
   pokemonId Int
   name      String
   createdAt DateTime @default(now())

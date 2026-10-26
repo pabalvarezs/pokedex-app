@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { createToken } from "../services/auth";
 
 export const TEST_CREDENTIALS = {
   username: "pablito",
@@ -36,7 +37,7 @@ export async function login(req: Request, res: Response) {
         role: TEST_CREDENTIALS.role,
         avatar: TEST_CREDENTIALS.avatar,
       },
-      token: `pokedex-token-${cleanUser}-${Date.now()}`,
+      token: createToken(cleanUser),
     });
     return;
   }

@@ -1,11 +1,15 @@
 import { Router } from "express";
 import * as favoritesController from "../controllers/favorites";
+import { requireAuth } from "../middleware/auth";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", favoritesController.listFavorites);
-router.post("/", favoritesController.addFavorite);
-router.delete("/:pokemonId", favoritesController.removeFavorite);
-router.get("/:pokemonId/check", favoritesController.checkFavorite);
+router.use(requireAuth);
+
+router.get("/", asyncHandler(favoritesController.listFavorites));
+router.post("/", asyncHandler(favoritesController.addFavorite));
+router.delete("/:pokemonId", asyncHandler(favoritesController.removeFavorite));
+router.get("/:pokemonId/check", asyncHandler(favoritesController.checkFavorite));
 
 export default router;

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Pokemon } from "../services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFavorite, addFavorite, removeFavorite } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { getTypeBadge } from "../utils/pokemon";
 
 interface Props {
@@ -10,21 +11,24 @@ interface Props {
 
 export default function PokemonCard({ pokemon }: Props) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.username;
   const { data: fav } = useQuery({
-    queryKey: ["favorite", pokemon.id],
+    queryKey: ["favorite", pokemon.id, userId],
     queryFn: () => isFavorite(pokemon.id),
-    enabled: !!pokemon.id,
+    enabled: !!pokemon.id && !!userId,
   });
 
   const toggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!userId) return;
     if (fav) {
       await removeFavorite(pokemon.id);
     } else {
       await addFavorite(pokemon.id, pokemon.name);
     }
-    queryClient.invalidateQueries({ queryKey: ["favorite", pokemon.id] });
+    queryClient.invalidateQueries({ queryKey: ["favorite"] });
     queryClient.invalidateQueries({ queryKey: ["favorites"] });
   };
 
@@ -81,17 +85,27 @@ export default function PokemonCard({ pokemon }: Props) {
         </div>
       )}
 
-      <button
-        onClick={toggle}
-        title={fav ? "Quitar de mis regalones" : "Agregar a mis regalones"}
-        className={`w-full mt-2 py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 border ${
-          fav
-            ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
-            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-        }`}
-      >
-        <span>{fav ? "⭐ Regalón" : "☆ Hacer regalón"}</span>
-      </button>
+      {userId ? (
+        <button
+          onClick={toggle}
+          title={fav ? "Quitar de mis regalones" : "Agregar a mis regalones"}
+          className={`w-full mt-2 py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 border ${
+            fav
+              ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
+              : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+          }`}
+        >
+          <span>{fav ? "⭐ Regalón" : "☆ Hacer regalón"}</span>
+        </button>
+      ) : (
+        <Link
+          to="/login"
+          title="Inicia sesión para guardar favoritos"
+          className="w-full mt-2 py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 border bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+        >
+          <span>🔐 Inicia sesión</span>
+        </Link>
+      )}
     </div>
   );
 }

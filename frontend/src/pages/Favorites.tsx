@@ -1,17 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { listFavorites } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import FavoriteButton from "../components/FavoriteButton";
 
 export default function Favorites() {
   const { user } = useAuth();
-  // Sin user autenticado, no mostrar favoritos (quedará vacío/sin datos)
+  // Sin sesión no se consultan favoritos: el backend exige token válido
   const userId = user?.username;
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ["favorites", userId],
-    queryFn: () => listFavorites(userId),
+    queryFn: () => listFavorites(),
+    enabled: !!userId,
   });
+
+  if (!userId)
+    return (
+      <div className="max-w-md mx-auto py-16 text-center bg-white rounded-2xl border p-8 shadow-sm mt-6">
+        <span className="text-5xl mb-4 block">🔐</span>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">
+          Inicia sesión para ver tus regalones
+        </h2>
+        <p className="text-gray-500 text-sm mb-6">
+          Los favoritos se guardan por entrenador. Entra con tu cuenta para verlos en cualquier dispositivo.
+        </p>
+        <Link
+          to="/login"
+          className="inline-block px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 shadow-sm transition"
+        >
+          Ir al acceso de entrenador 👈
+        </Link>
+      </div>
+    );
 
   if (isLoading)
     return (

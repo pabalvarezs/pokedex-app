@@ -7,6 +7,12 @@ export interface PokemonSummary {
   id: number;
   name: string;
   url: string;
+  types?: string[];
+}
+
+export interface PokemonListResult {
+  pokemon: PokemonSummary[];
+  total: number;
 }
 
 interface PokemonTypeSlot {
@@ -61,6 +67,53 @@ export interface Pokemon {
 // Cachés en memoria para no saturar la API
 const abilityCache = new Map<string, string>();
 const moveCache = new Map<string, string>();
+
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const ENRICH_CONCURRENCY = 10;
+
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+const rawPokemonCache = new Map<string, CacheEntry<PokemonApiResponse>>();
+const speciesCache = new Map<string, CacheEntry<{ description?: string; generation?: number }>>();
+const detailCache = new Map<string, CacheEntry<Pokemon>>();
+
+function cacheGet<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
+  const entry = cache.get(key);
+  if (!entry) return undefined;
+  if (entry.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return undefined;
+  }
+  return entry.value;
+}
+
+function cacheSet<T>(cache: Map<string, CacheEntry<T>>, key: string, value: T) {
+  cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index]);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  );
+  return results;
+}
 
 const COMMON_ABILITIES_ES: Record<string, string> = {
   overgrow: "Espesura",
@@ -246,37 +299,73 @@ export async function translateMove(name: string): Promise<string> {
   }
 }
 
+async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> {
+  const normalized = String(key).trim().toLowerCase();
+  const cached = cacheGet(rawPokemonCache, normalized);
+  if (cached) return cached;
+
+  const { data } = await api.get<PokemonApiResponse>(
+    `/pokemon/${encodeURIComponent(normalized)}`
+  );
+  cacheSet(rawPokemonCache, normalized, data);
+  cacheSet(rawPokemonCache, String(data.id), data);
+  return data;
+}
+
 async function getSpeciesInfo(idOrName: number | string) {
+  const cacheKey = String(idOrName).trim().toLowerCase();
+  const cached = cacheGet(speciesCache, cacheKey);
+  if (cached) return cached;
+
+  let result: { description?: string; generation?: number } = {};
   try {
-    const { data } = await api.get(`/pokemon-species/${idOrName}`);
+    const { data } = await api.get(`/pokemon-species/${encodeURIComponent(cacheKey)}`);
     const esEntry =
       data.flavor_text_entries?.find((e: any) => e.language?.name === "es") ||
       data.flavor_text_entries?.find((e: any) => e.language?.name === "en");
     const description = esEntry ? esEntry.flavor_text.replace(/[\f\n\r]/g, " ") : undefined;
     const genMatch = data.generation?.url?.split("/").filter(Boolean).pop();
     const generation = genMatch ? Number(genMatch) : undefined;
-    return { description, generation };
+    result = { description, generation };
+    cacheSet(speciesCache, String(data.id), result);
   } catch {
-    return { description: undefined, generation: undefined };
+    result = { description: undefined, generation: undefined };
   }
+
+  cacheSet(speciesCache, cacheKey, result);
+  return result;
 }
 
-export async function listPokemon(limit = 20, offset = 0): Promise<PokemonSummary[]> {
-  const { data } = await api.get<{ results: PokemonSummary[] }>("/pokemon", {
+async function enrichWithTypes(summaries: PokemonSummary[]): Promise<PokemonSummary[]> {
+  return mapWithConcurrency(summaries, ENRICH_CONCURRENCY, async (summary) => {
+    try {
+      const raw = await getRawPokemon(summary.id);
+      return { ...summary, types: raw.types.map((t) => t.type.name) };
+    } catch {
+      return summary;
+    }
+  });
+}
+
+export async function listPokemon(limit = 20, offset = 0): Promise<PokemonListResult> {
+  const { data } = await api.get<{ count: number; results: PokemonSummary[] }>("/pokemon", {
     params: { limit, offset },
   });
-  return data.results.map((p) => ({
+
+  const summaries = data.results.map((p) => ({
     id: Number(p.url.split("/").filter(Boolean).pop()),
     name: p.name,
     url: p.url,
   }));
+
+  return { pokemon: await enrichWithTypes(summaries), total: data.count };
 }
 
 export async function listPokemonByType(type: string): Promise<PokemonSummary[]> {
   const { data } = await api.get<{ pokemon: { pokemon: PokemonSummary }[] }>(
-    `/type/${type.toLowerCase()}`
+    `/type/${encodeURIComponent(type.toLowerCase())}`
   );
-  return data.pokemon.map((entry) => {
+  const summaries = data.pokemon.map((entry) => {
     const p = entry.pokemon;
     const id = Number(p.url.split("/").filter(Boolean).pop());
     return {
@@ -285,13 +374,15 @@ export async function listPokemonByType(type: string): Promise<PokemonSummary[]>
       url: p.url,
     };
   });
+
+  return enrichWithTypes(summaries);
 }
 
 export async function listPokemonByGeneration(gen: number): Promise<PokemonSummary[]> {
   const { data } = await api.get<{ pokemon_species: PokemonSummary[] }>(
     `/generation/${gen}`
   );
-  return data.pokemon_species
+  const summaries = data.pokemon_species
     .map((p) => {
       const id = Number(p.url.split("/").filter(Boolean).pop());
       return {
@@ -301,26 +392,31 @@ export async function listPokemonByGeneration(gen: number): Promise<PokemonSumma
       };
     })
     .sort((a, b) => a.id - b.id);
+
+  return enrichWithTypes(summaries);
 }
 
-export async function searchPokemon(name: string): Promise<Pokemon> {
-  const { data } = await api.get<PokemonApiResponse>(
-    `/pokemon/${encodeURIComponent(name.toLowerCase())}`
-  );
+async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
+  const cacheKey = String(key).trim().toLowerCase();
+  const cached = cacheGet(detailCache, cacheKey);
+  if (cached) return cached;
+
+  const data = await getRawPokemon(cacheKey);
   const speciesInfo = await getSpeciesInfo(data.id);
 
-  const abilities = await Promise.all(
-    (data.abilities ?? []).map(async (a) => ({
-      name: await translateAbility(a.ability.name),
-      is_hidden: a.is_hidden,
-    }))
-  );
+  const [abilities, moves] = await Promise.all([
+    Promise.all(
+      (data.abilities ?? []).map(async (a) => ({
+        name: await translateAbility(a.ability.name),
+        is_hidden: a.is_hidden,
+      }))
+    ),
+    Promise.all(
+      (data.moves ?? []).slice(0, 24).map((m) => translateMove(m.move.name))
+    ),
+  ]);
 
-  const moves = await Promise.all(
-    (data.moves ?? []).slice(0, 24).map((m) => translateMove(m.move.name))
-  );
-
-  return {
+  const pokemon: Pokemon = {
     id: data.id,
     name: data.name,
     types: data.types.map((t) => t.type.name),
@@ -335,36 +431,16 @@ export async function searchPokemon(name: string): Promise<Pokemon> {
     cries: data.cries,
     description: speciesInfo.description,
   };
+
+  cacheSet(detailCache, cacheKey, pokemon);
+  cacheSet(detailCache, String(data.id), pokemon);
+  return pokemon;
 }
 
-export async function getPokemonById(id: number): Promise<Pokemon> {
-  const { data } = await api.get<PokemonApiResponse>(`/pokemon/${id}`);
-  const speciesInfo = await getSpeciesInfo(id);
+export function searchPokemon(name: string): Promise<Pokemon> {
+  return fetchPokemonDetail(name.trim().toLowerCase());
+}
 
-  const abilities = await Promise.all(
-    (data.abilities ?? []).map(async (a) => ({
-      name: await translateAbility(a.ability.name),
-      is_hidden: a.is_hidden,
-    }))
-  );
-
-  const moves = await Promise.all(
-    (data.moves ?? []).slice(0, 24).map((m) => translateMove(m.move.name))
-  );
-
-  return {
-    id: data.id,
-    name: data.name,
-    types: data.types.map((t) => t.type.name),
-    generation: speciesInfo.generation,
-    sprites: data.sprites,
-    height: data.height,
-    weight: data.weight,
-    base_experience: data.base_experience,
-    stats: data.stats?.map((s) => ({ name: s.stat.name, base_stat: s.base_stat })) ?? [],
-    abilities,
-    moves,
-    cries: data.cries,
-    description: speciesInfo.description,
-  };
+export function getPokemonById(id: number): Promise<Pokemon> {
+  return fetchPokemonDetail(id);
 }

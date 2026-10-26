@@ -1,12 +1,17 @@
 import http from "http";
+import path from "path";
 import { spawn } from "child_process";
+import { fileURLToPath } from "url";
+
+const BACKEND_DIR = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
+const BASE_URL = "http://localhost:5000";
 
 let serverPid: number | null = null;
 let ownsServer = false;
 
 function isServerUp(): Promise<boolean> {
   return new Promise((resolve) => {
-    const req = http.get("http://localhost:5000/health", (res) => {
+    const req = http.get(`${BASE_URL}/health`, (res) => {
       res.resume();
       resolve(res.statusCode === 200);
     });
@@ -25,21 +30,22 @@ export async function startServer() {
   }
   return new Promise<void>((resolve, reject) => {
     const proc = spawn("npx", ["tsx", "src/index.ts"], {
-      cwd: "/opt/data/pokedex-app/backend",
+      cwd: BACKEND_DIR,
+      shell: process.platform === "win32",
       stdio: ["ignore", "pipe", "pipe"],
     });
-    serverPid = proc.pid;
+    serverPid = proc.pid ?? null;
     ownsServer = true;
     let resolved = false;
     const timeout = setTimeout(() => {
       if (!resolved) {
         proc.kill("SIGTERM");
-        reject(new Error("server did not start in time"));
+        reject(new Error("server did not start in time (¿PostgreSQL está corriendo?)"));
       }
     }, 30000);
     const poll = () => {
       http
-        .get("http://localhost:5000/health", (res) => {
+        .get(`${BASE_URL}/health`, (res) => {
           if (res.statusCode === 200) {
             resolved = true;
             clearTimeout(timeout);
