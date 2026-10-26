@@ -22,6 +22,15 @@ vi.mock("../src/services/api", () => ({
   getCurrentUser: vi.fn(() => null),
   getPokemon: vi.fn(),
   searchPokemon: vi.fn(),
+  adminListUsers: vi.fn(async () => []),
+  adminListFavorites: vi.fn(async () => []),
+  adminCreateUser: vi.fn(),
+  adminUpdateUser: vi.fn(),
+  adminDeleteUser: vi.fn(),
+  adminCreateFavorite: vi.fn(),
+  adminUpdateFavorite: vi.fn(),
+  adminDeleteFavorite: vi.fn(),
+  getApiErrorMessage: vi.fn(() => "error"),
 }));
 
 function renderApp(initialEntries: string[] = ["/"]) {
@@ -56,5 +65,13 @@ describe("App", () => {
     renderApp(["/favorites"]);
 
     expect(await screen.findByText(/Inicia sesión para ver tus regalones/i)).toBeTruthy();
+  });
+
+  it("no muestra las credenciales de prueba en el login", () => {
+    renderApp(["/login"]);
+
+    expect(screen.getByText(/Acceso Entrenador/i)).toBeTruthy();
+    expect(screen.queryByText(/Credenciales de prueba/i)).toBeNull();
+    expect(screen.queryByText(/pablito2026/i)).toBeNull();
   });
 });
