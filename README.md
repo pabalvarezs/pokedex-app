@@ -1,6 +1,6 @@
 # PokeChile
 
-PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador.
+PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador. Incluye un favicon original inspirado en una Poké Ball con los colores y la estrella de la bandera de Chile.
 
 ## Stack
 
@@ -134,6 +134,7 @@ frontend/
   src/components/          # buscador predictivo, card, botón de favorito, filtros
   src/services/api.ts      # cliente Axios tipado
   src/context/AuthContext  # sesión, rol y localStorage
+  public/                  # favicon original (SVG, ICO y PNG)
   tests/
 ```
 
@@ -146,4 +147,5 @@ frontend/
 - **Caché en memoria:** las respuestas de PokéAPI se guardan 10 minutos por proceso. Con varias instancias cada una tiene su propia caché.
 - **Listados enriquecidos:** los tipos se obtienen con concurrencia limitada; la primera carga de una generación puede tardar unos segundos y luego queda en caché.
 - **Esquema con `db push`:** no hay historial de migraciones; es un proyecto de demostración.
+- **Favicon original:** el arte se dibujó desde cero (Poké Ball con paleta y estrella chilena) para no reutilizar fan art ni recursos de terceros. Pokémon y Poké Ball son marcas de Nintendo/Game Freak.
 - **Docker Compose levanta servidores de desarrollo:** para producción hay que construir los artefactos y servir el frontend con un servidor estático.

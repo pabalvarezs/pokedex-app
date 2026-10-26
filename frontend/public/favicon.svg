@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="title desc">
+  <title id="title">PokeChile</title>
+  <desc id="desc">Poké Ball con los colores y la estrella de la bandera de Chile</desc>
+  <defs>
+    <clipPath id="ball">
+      <circle cx="32" cy="32" r="29"/>
+    </clipPath>
+  </defs>
+
+  <!-- Aro exterior -->
+  <circle cx="32" cy="32" r="30" fill="#111827"/>
+
+  <!-- Mitades roja y azul con banda blanca -->
+  <g clip-path="url(#ball)">
+    <rect x="0" y="0" width="64" height="28.7" fill="#D52B1E"/>
+    <rect x="0" y="28.7" width="64" height="0.6" fill="#111827"/>
+    <rect x="0" y="29.3" width="64" height="6.4" fill="#FFFFFF"/>
+    <rect x="0" y="35.7" width="64" height="0.6" fill="#111827"/>
+    <rect x="0" y="36.3" width="64" height="27.7" fill="#0039A6"/>
+  </g>
+
+  <!-- Botón central con estrella -->
+  <circle cx="32" cy="32" r="10.7" fill="#111827"/>
+  <circle cx="32" cy="32" r="9.3" fill="#FFFFFF"/>
+  <circle cx="32" cy="32" r="7.5" fill="#0039A6"/>
+  <path
+    fill="#FFFFFF"
+    d="M32 27.1 L33.205 30.342 L36.66 30.486 L33.95 32.634 L34.88 35.964 L32 34.05 L29.12 35.964 L30.05 32.634 L27.34 30.486 L30.795 30.342 Z"
+  />
+</svg>
