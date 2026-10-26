@@ -70,7 +70,7 @@ export default function Login() {
             ⚡
           </div>
           <h1 className="text-2xl font-black text-gray-800">
-            Acceso Entrenador Pablito
+            Acceso Entrenadores
           </h1>
           <p className="text-xs text-gray-500 mt-1">
             Ingresa a tu cuenta para administrar la Pokédex y tus regalones

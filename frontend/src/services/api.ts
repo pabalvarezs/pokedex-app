@@ -143,6 +143,19 @@ export async function searchPokemon(name: string) {
   return data;
 }
 
+export interface PokemonSuggestion {
+  id: number;
+  name: string;
+}
+
+export async function suggestPokemon(query: string, limit = 8) {
+  const { data } = await api.get<{ suggestions: PokemonSuggestion[]; query: string }>(
+    "/api/pokemon/suggest",
+    { params: { q: query, limit } }
+  );
+  return data.suggestions;
+}
+
 export async function listFavorites() {
   const { data } = await api.get<Favorite[]>("/api/favorites");
   return data;

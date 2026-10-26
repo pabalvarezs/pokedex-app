@@ -7,6 +7,7 @@ const router = Router();
 router.get("/", asyncHandler(pokemonController.listPokemon));
 router.get("/type/:type", asyncHandler(pokemonController.listPokemonByType));
 router.get("/generation/:gen", asyncHandler(pokemonController.listPokemonByGeneration));
+router.get("/suggest", asyncHandler(pokemonController.suggestPokemon));
 router.get("/search/:name", asyncHandler(pokemonController.searchPokemon));
 router.get("/:id", asyncHandler(pokemonController.getPokemonById));
 

@@ -65,6 +65,26 @@ export async function listPokemonByGeneration(req: Request, res: Response) {
   }
 }
 
+export async function suggestPokemon(req: Request, res: Response) {
+  const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (!query) {
+    res.status(400).json({ error: "Debes indicar un nombre o número de Pokémon" });
+    return;
+  }
+  if (query.length > 50) {
+    res.status(400).json({ error: "La búsqueda es demasiado larga" });
+    return;
+  }
+
+  const rawLimit = Number(req.query.limit);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(Math.trunc(rawLimit), 1), 20)
+    : 8;
+
+  const suggestions = await pokemonService.suggestPokemon(query, limit);
+  res.json({ suggestions, query });
+}
+
 export async function searchPokemon(req: Request, res: Response) {
   const name = req.params.name?.trim() ?? "";
   if (!name) {

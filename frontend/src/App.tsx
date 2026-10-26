@@ -49,10 +49,8 @@ function NavigationHeader() {
             className="flex items-center gap-2 min-w-0 text-base sm:text-xl font-black tracking-wide hover:opacity-95 transition"
           >
             <span className="text-xl sm:text-2xl shrink-0">⚡</span>
-            <span className="truncate">PokéChile</span>
-            <span className="hidden sm:inline text-xs md:text-sm font-bold text-red-100 truncate">
-              · Pablito 🇨🇱
-            </span>
+            <span className="truncate">PokeChile</span>
+            <span className="text-base shrink-0" aria-hidden="true">🇨🇱</span>
           </Link>
 
           {/* Navegación escritorio */}
