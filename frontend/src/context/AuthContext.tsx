@@ -1,17 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { loginUser, logoutUser } from "../services/api";
 
+export type UserRole = "admin" | "trainer";
+
 export interface User {
   id: number;
   username: string;
   name: string;
-  role: string;
+  role: UserRole | string;
   avatar: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (u: string, p: string) => Promise<User>;
   logout: () => void;
 }
@@ -29,6 +32,7 @@ function getStoredUser(): User | null {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
+  isAdmin: false,
   login: async () => {
     throw new Error("No provider");
   },
@@ -58,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin: user?.role === "admin",
         login,
         logout,
       }}

@@ -3,6 +3,7 @@ import cors from "cors";
 import pokemonRoutes from "./routes/pokemon";
 import favoriteRoutes from "./routes/favorites";
 import authRoutes from "./routes/auth";
+import adminRoutes from "./routes/admin";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 
 const app = express();
@@ -18,6 +19,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/pokemon", pokemonRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

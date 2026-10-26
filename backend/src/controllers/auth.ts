@@ -1,13 +1,7 @@
 import { Request, Response } from "express";
 import { createToken } from "../services/auth";
-
-export const TEST_CREDENTIALS = {
-  username: "pablito",
-  password: "pablito2026",
-  name: "Pablito",
-  role: "Maestro Pokémon",
-  avatar: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
-};
+import { verifyPassword } from "../services/password";
+import { findByUsername, toPublicUser } from "../services/users";
 
 export async function login(req: Request, res: Response) {
   const { username, password } = req.body || {};
@@ -15,7 +9,7 @@ export async function login(req: Request, res: Response) {
   if (!username || !password) {
     res.status(400).json({
       success: false,
-      error: "Debes ingresar tu usuario y contraseña, po.",
+      error: "Debes ingresar tu usuario y contraseña.",
     });
     return;
   }
@@ -23,35 +17,27 @@ export async function login(req: Request, res: Response) {
   const cleanUser = String(username).trim().toLowerCase();
   const cleanPass = String(password).trim();
 
-  if (
-    (cleanUser === TEST_CREDENTIALS.username && cleanPass === TEST_CREDENTIALS.password) ||
-    (cleanUser === "admin" && cleanPass === "admin123")
-  ) {
-    res.json({
-      success: true,
-      message: "¡Bienvenido a la Pokédex, compadre!",
-      user: {
-        id: 1,
-        username: cleanUser,
-        name: cleanUser === "admin" ? "Administrador" : TEST_CREDENTIALS.name,
-        role: TEST_CREDENTIALS.role,
-        avatar: TEST_CREDENTIALS.avatar,
-      },
-      token: createToken(cleanUser),
+  const user = await findByUsername(cleanUser);
+  if (!user || !verifyPassword(cleanPass, user.passwordHash)) {
+    res.status(401).json({
+      success: false,
+      error: "Usuario o contraseña incorrectos.",
     });
     return;
   }
 
-  res.status(401).json({
-    success: false,
-    error: "¡Pucha compadre! Usuario o clave incorrecta. Prueba con las credenciales de prueba.",
-  });
-}
+  const publicUser = toPublicUser(user);
 
-export async function getCredentialsInfo(_req: Request, res: Response) {
   res.json({
-    testUser: TEST_CREDENTIALS.username,
-    testPassword: TEST_CREDENTIALS.password,
-    name: TEST_CREDENTIALS.name,
+    success: true,
+    message: "¡Bienvenido a la Pokédex!",
+    user: {
+      id: publicUser.id,
+      username: publicUser.username,
+      name: publicUser.name,
+      role: publicUser.role,
+      avatar: publicUser.avatar,
+    },
+    token: createToken(publicUser.username),
   });
 }

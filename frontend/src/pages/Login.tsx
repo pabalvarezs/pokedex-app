@@ -10,12 +10,6 @@ export default function Login() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleFillCredentials = () => {
-    setUsername("pablito");
-    setPassword("pablito2026");
-    setError(null);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
@@ -30,10 +24,7 @@ export default function Login() {
       await login(username.trim(), password.trim());
       navigate("/");
     } catch (err: any) {
-      setError(
-        err.message ||
-          "¡Pucha compadre! Usuario o clave incorrecta. Prueba con las credenciales de prueba."
-      );
+      setError(err?.message || "Usuario o contraseña incorrectos.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +38,10 @@ export default function Login() {
           ¡Ya estás conectado, {user.name}!
         </h2>
         <p className="text-sm text-gray-500 mt-1 mb-6">
-          Rol: <span className="font-semibold text-red-600">{user.role}</span>
+          Rol:{" "}
+          <span className="font-semibold text-red-600">
+            {user.role === "admin" ? "Administrador" : "Entrenador"}
+          </span>
         </p>
         <Link
           to="/"
@@ -55,43 +49,20 @@ export default function Login() {
         >
           Ir a explorar la Pokédex al tiro 👈
         </Link>
+        {user.role === "admin" && (
+          <Link
+            to="/admin"
+            className="inline-block w-full mt-3 py-3 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-900 transition shadow-sm"
+          >
+            Ir al panel de administración 🛡️
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
     <div className="max-w-md mx-auto my-8">
-      {/* Tarjeta de credenciales de prueba */}
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-5 mb-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xl">🔑</span>
-          <h3 className="text-sm font-black text-amber-950 uppercase tracking-wider">
-            Credenciales de prueba
-          </h3>
-        </div>
-        <p className="text-xs text-amber-900 mb-3 leading-relaxed">
-          Usa estas credenciales para probar el acceso de entrenador:
-        </p>
-        <div className="bg-white/80 rounded-xl p-3 border border-amber-200 text-xs text-gray-800 space-y-1 font-mono">
-          <div>
-            <span className="text-gray-400 select-none">Usuario: </span>
-            <span className="font-bold text-gray-900">pablito</span>
-          </div>
-          <div>
-            <span className="text-gray-400 select-none">Contraseña: </span>
-            <span className="font-bold text-gray-900">pablito2026</span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={handleFillCredentials}
-          className="mt-3 w-full py-2 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
-        >
-          <span>⚡</span>
-          <span>Rellenar credenciales al tiro</span>
-        </button>
-      </div>
-
       {/* Formulario de Login */}
       <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
         <div className="text-center mb-6">
@@ -122,7 +93,7 @@ export default function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: pablito"
+              placeholder="Tu nombre de usuario"
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
             />
           </div>

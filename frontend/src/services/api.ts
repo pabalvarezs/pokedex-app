@@ -161,3 +161,80 @@ export async function isFavorite(pokemonId: number) {
   const { data } = await api.get<{ favorite: boolean }>(`/api/favorites/${pokemonId}/check`);
   return data.favorite;
 }
+
+// --- Administración ---
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  name: string;
+  role: "admin" | "trainer";
+  avatar: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserInput {
+  username?: string;
+  password?: string;
+  name: string;
+  role: "admin" | "trainer";
+  avatar?: string;
+}
+
+export interface AdminFavorite {
+  id: number;
+  userId: string;
+  pokemonId: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface AdminFavoriteInput {
+  userId: string;
+  pokemonId: number;
+  name: string;
+}
+
+export function getApiErrorMessage(error: unknown, fallback = "Ocurrió un error inesperado."): string {
+  const err = error as { response?: { data?: { error?: string } }; message?: string };
+  return err?.response?.data?.error ?? err?.message ?? fallback;
+}
+
+export async function adminListUsers() {
+  const { data } = await api.get<AdminUser[]>("/api/admin/users");
+  return data;
+}
+
+export async function adminCreateUser(input: AdminUserInput & { username: string; password: string }) {
+  const { data } = await api.post<AdminUser>("/api/admin/users", input);
+  return data;
+}
+
+export async function adminUpdateUser(id: number, input: Omit<AdminUserInput, "username">) {
+  const { data } = await api.put<AdminUser>(`/api/admin/users/${id}`, input);
+  return data;
+}
+
+export async function adminDeleteUser(id: number) {
+  await api.delete(`/api/admin/users/${id}`);
+}
+
+export async function adminListFavorites() {
+  const { data } = await api.get<AdminFavorite[]>("/api/admin/favorites");
+  return data;
+}
+
+export async function adminCreateFavorite(input: AdminFavoriteInput) {
+  const { data } = await api.post<AdminFavorite>("/api/admin/favorites", input);
+  return data;
+}
+
+export async function adminUpdateFavorite(id: number, input: Partial<AdminFavoriteInput>) {
+  const { data } = await api.put<AdminFavorite>(`/api/admin/favorites/${id}`, input);
+  return data;
+}
+
+export async function adminDeleteFavorite(id: number) {
+  await api.delete(`/api/admin/favorites/${id}`);
+}

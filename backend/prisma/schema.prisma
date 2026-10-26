@@ -7,6 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("trainer")
+  avatar       String   @default("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
 model Favorite {
   id        Int      @id @default(autoincrement())
   userId    String
