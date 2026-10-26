@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "../src/App";
+import { suggestPokemon } from "../src/services/api";
 
 vi.mock("../src/services/api", () => ({
   listPokemon: vi.fn(async () => ({
@@ -22,6 +23,7 @@ vi.mock("../src/services/api", () => ({
   getCurrentUser: vi.fn(() => null),
   getPokemon: vi.fn(),
   searchPokemon: vi.fn(),
+  suggestPokemon: vi.fn(async () => []),
   adminListUsers: vi.fn(async () => []),
   adminListFavorites: vi.fn(async () => []),
   adminCreateUser: vi.fn(),
@@ -52,13 +54,31 @@ describe("App", () => {
     localStorage.clear();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renderiza la portada con Pokémon y sus tipos", async () => {
     renderApp();
 
+    expect(screen.getByRole("heading", { name: "PokeChile" })).toBeTruthy();
     expect(await screen.findByText("bulbasaur")).toBeTruthy();
     expect(screen.getByText(/Mostrando 1 de 1 Pokémon/i)).toBeTruthy();
     expect(screen.getByText("Planta")).toBeTruthy();
     expect(screen.getByText("Veneno")).toBeTruthy();
+  });
+
+  it("muestra sugerencias predictivas al buscar un Pokémon", async () => {
+    vi.mocked(suggestPokemon).mockResolvedValueOnce([
+      { id: 25, name: "pikachu" },
+    ]);
+    renderApp();
+
+    const input = screen.getByLabelText(/Buscar Pokémon/i);
+    fireEvent.change(input, { target: { value: "pika" } });
+
+    expect(await screen.findByText("Pikachu")).toBeTruthy();
+    expect(screen.getByText("#025")).toBeTruthy();
   });
 
   it("pide iniciar sesión en favoritos sin sesión", async () => {
@@ -73,5 +93,6 @@ describe("App", () => {
     expect(screen.getByText(/Acceso Entrenador/i)).toBeTruthy();
     expect(screen.queryByText(/Credenciales de prueba/i)).toBeNull();
     expect(screen.queryByText(/pablito2026/i)).toBeNull();
+    expect(screen.queryByText(/Pablito/i)).toBeNull();
   });
 });

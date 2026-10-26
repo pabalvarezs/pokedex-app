@@ -1,6 +1,6 @@
-# Pokédex
+# PokeChile
 
-Pokédex full-stack con estética chilena: explora Pokémon, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador.
+PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador.
 
 ## Stack
 
@@ -80,6 +80,7 @@ Al eliminar un entrenador también se eliminan sus regalones.
 | `GET` | `/health` | Estado del servicio |
 | `POST` | `/api/auth/login` | Devuelve usuario y token firmado |
 | `GET` | `/api/pokemon?limit=&offset=` | Listado paginado (incluye tipos y total) |
+| `GET` | `/api/pokemon/suggest?q=` | Sugerencias predictivas por nombre o número |
 | `GET` | `/api/pokemon/type/:type` | Pokémon por tipo |
 | `GET` | `/api/pokemon/generation/:gen` | Pokémon por generación (1-9) |
 | `GET` | `/api/pokemon/search/:name` | Búsqueda por nombre |
@@ -130,7 +131,7 @@ backend/
 frontend/
   src/pages/               # Home, detalle, favoritos, login, tipo y admin
   src/components/admin/    # CRUD de entrenadores y regalones
-  src/components/          # card, botón de favorito, filtros
+  src/components/          # buscador predictivo, card, botón de favorito, filtros
   src/services/api.ts      # cliente Axios tipado
   src/context/AuthContext  # sesión, rol y localStorage
   tests/

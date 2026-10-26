@@ -30,7 +30,7 @@ export async function login(req: Request, res: Response) {
 
   res.json({
     success: true,
-    message: "¡Bienvenido a la Pokédex!",
+    message: "¡Bienvenido a PokeChile!",
     user: {
       id: publicUser.id,
       username: publicUser.username,

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listPokemon, listPokemonByType, listPokemonByGeneration, type Pokemon } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
+import PokemonSearch from "../components/PokemonSearch";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
 // --- Tipos de ordenamiento ---
@@ -105,12 +106,15 @@ export default function Home() {
       {/* Título */}
       <div className="mb-5">
         <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-          Pokédex Pablito
+          PokeChile
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          ¡Edición Chilensis! Pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones 🇨🇱
+          La Pokédex chilena: pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones 🇨🇱
         </p>
       </div>
+
+      {/* Buscador predictivo */}
+      <PokemonSearch />
 
       {/* Panel de filtros */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 shadow-sm">

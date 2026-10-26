@@ -444,3 +444,110 @@ export function searchPokemon(name: string): Promise<Pokemon> {
 export function getPokemonById(id: number): Promise<Pokemon> {
   return fetchPokemonDetail(id);
 }
+
+// --- Búsqueda predictiva ---
+
+export interface PokemonSuggestion {
+  id: number;
+  name: string;
+}
+
+const NAME_INDEX_TTL_MS = 24 * 60 * 60 * 1000;
+
+let nameIndexCache: CacheEntry<PokemonSuggestion[]> | null = null;
+let nameIndexRequest: Promise<PokemonSuggestion[]> | null = null;
+
+function normalizeQuery(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Ordena un índice de nombres según qué tan bien calza con la búsqueda:
+ * 1) coincidencia exacta por número, 2) prefijo, 3) inicio de palabra,
+ * 4) coincidencia parcial. Función pura para poder testearla sin red.
+ */
+export function rankSuggestions(
+  index: PokemonSuggestion[],
+  query: string,
+  limit = 8
+): PokemonSuggestion[] {
+  const raw = query.trim().toLowerCase();
+  if (!raw) return [];
+
+  const normalized = normalizeQuery(raw);
+  const compact = raw.replace(/[^a-z0-9]+/g, "");
+  if (!normalized && !compact) return [];
+
+  const numericId = /^\d+$/.test(raw) ? Number(raw) : null;
+  const max = Math.min(Math.max(Math.trunc(limit) || 8, 1), 20);
+  const scored: { entry: PokemonSuggestion; score: number }[] = [];
+
+  for (const entry of index) {
+    if (numericId !== null && entry.id === numericId) {
+      scored.push({ entry, score: 0 });
+      continue;
+    }
+
+    const name = entry.name.toLowerCase();
+    const compactName = name.replace(/[^a-z0-9]+/g, "");
+    const words = normalizeQuery(name).split(" ").filter(Boolean);
+
+    let score = 0;
+    if (name.startsWith(raw) || (compact && compactName.startsWith(compact))) {
+      score = 1;
+    } else if (normalized && words.some((word) => word.startsWith(normalized))) {
+      score = 2;
+    } else if (name.includes(raw) || (compact && compactName.includes(compact))) {
+      score = 3;
+    }
+
+    if (score > 0) scored.push({ entry, score });
+  }
+
+  scored.sort((a, b) => a.score - b.score || a.entry.id - b.entry.id);
+  return scored.slice(0, max).map((item) => item.entry);
+}
+
+async function fetchNameIndex(): Promise<PokemonSuggestion[]> {
+  const { data } = await api.get<{ results: { name: string; url: string }[] }>("/pokemon", {
+    params: { limit: 100000, offset: 0 },
+  });
+
+  return data.results
+    .map((p) => ({
+      id: Number(p.url.split("/").filter(Boolean).pop()),
+      name: p.name,
+    }))
+    .filter((p) => Number.isInteger(p.id) && p.id > 0);
+}
+
+async function getNameIndex(): Promise<PokemonSuggestion[]> {
+  if (nameIndexCache && nameIndexCache.expiresAt > Date.now()) {
+    return nameIndexCache.value;
+  }
+
+  if (!nameIndexRequest) {
+    nameIndexRequest = fetchNameIndex()
+      .then((value) => {
+        nameIndexCache = { value, expiresAt: Date.now() + NAME_INDEX_TTL_MS };
+        return value;
+      })
+      .finally(() => {
+        nameIndexRequest = null;
+      });
+  }
+
+  return nameIndexRequest;
+}
+
+export async function suggestPokemon(
+  query: string,
+  limit = 8
+): Promise<PokemonSuggestion[]> {
+  const index = await getNameIndex();
+  return rankSuggestions(index, query, limit);
+}
