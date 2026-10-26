@@ -62,6 +62,61 @@ export interface Pokemon {
   moves?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
+  evolutionChain?: EvolutionStage[];
+}
+
+export interface EvolutionMember {
+  id: number;
+  name: string;
+  condition?: string;
+}
+
+export interface EvolutionStage {
+  members: EvolutionMember[];
+}
+
+interface SpeciesInfo {
+  description?: string;
+  generation?: number;
+  evolutionChainUrl?: string;
+}
+
+interface EvolutionDetail {
+  is_default?: boolean;
+  trigger?: { name?: string };
+  min_level?: number | null;
+  min_happiness?: number | null;
+  min_affection?: number | null;
+  min_beauty?: number | null;
+  item?: { name?: string } | null;
+  held_item?: { name?: string } | null;
+  known_move?: { name?: string } | null;
+  known_move_type?: { name?: string } | null;
+  location?: { name?: string } | null;
+  gender?: number | null;
+  needs_overworld_rain?: boolean;
+  needs_multiplayer?: boolean;
+  time_of_day?: string;
+  trade_species?: { name?: string } | null;
+  near_special_rock?: boolean;
+  relative_physical_stats?: number | null;
+  turn_upside_down?: boolean;
+  min_steps?: number | null;
+  min_damage_taken?: number | null;
+  min_move_count?: number | null;
+  used_move?: { name?: string } | null;
+  condition_expression?: string | null;
+}
+
+export interface EvolutionChainLink {
+  species: { name: string; url: string };
+  evolution_details?: EvolutionDetail[];
+  evolves_to?: EvolutionChainLink[];
+}
+
+interface EvolutionChainApiResponse {
+  id: number;
+  chain: EvolutionChainLink;
 }
 
 // Cachés en memoria para no saturar la API
@@ -77,7 +132,8 @@ interface CacheEntry<T> {
 }
 
 const rawPokemonCache = new Map<string, CacheEntry<PokemonApiResponse>>();
-const speciesCache = new Map<string, CacheEntry<{ description?: string; generation?: number }>>();
+const speciesCache = new Map<string, CacheEntry<SpeciesInfo>>();
+const evolutionChainCache = new Map<string, CacheEntry<EvolutionStage[]>>();
 const detailCache = new Map<string, CacheEntry<Pokemon>>();
 
 function cacheGet<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
@@ -299,6 +355,217 @@ export async function translateMove(name: string): Promise<string> {
   }
 }
 
+// --- Cadena evolutiva ---
+
+const TYPE_NAMES_ES: Record<string, string> = {
+  normal: "Normal",
+  fire: "Fuego",
+  water: "Agua",
+  grass: "Planta",
+  electric: "Eléctrico",
+  ice: "Hielo",
+  fighting: "Lucha",
+  poison: "Veneno",
+  ground: "Tierra",
+  flying: "Volador",
+  psychic: "Psíquico",
+  bug: "Bicho",
+  rock: "Roca",
+  ghost: "Fantasma",
+  dragon: "Dragón",
+  dark: "Siniestro",
+  steel: "Acero",
+  fairy: "Hada",
+};
+
+const ITEM_NAMES_ES: Record<string, string> = {
+  "water-stone": "Piedra Agua",
+  "fire-stone": "Piedra Fuego",
+  "thunder-stone": "Piedra Trueno",
+  "leaf-stone": "Piedra Hoja",
+  "moon-stone": "Piedra Lunar",
+  "sun-stone": "Piedra Solar",
+  "shiny-stone": "Piedra Brillante",
+  "dusk-stone": "Piedra Noche",
+  "dawn-stone": "Piedra Alba",
+  "ice-stone": "Piedra Hielo",
+  "oval-stone": "Piedra Oval",
+  protector: "Protector",
+  electirizer: "Electrizador",
+  magmarizer: "Magmatizador",
+  "dragon-scale": "Escama Dragón",
+  "kings-rock": "Roca del Rey",
+  "metal-coat": "Revestimiento Metálico",
+  upgrade: "Mejora",
+  "up-grade": "Mejora",
+  "dubious-disc": "Disco Extraño",
+  "reaper-cloth": "Tela Terrible",
+  "prism-scale": "Escama Bella",
+  "whipped-dream": "Nata Batida",
+  sachet: "Saquito",
+  "tart-apple": "Manzana Ácida",
+  "sweet-apple": "Manzana Dulce",
+  "syrupy-apple": "Manzana Melosa",
+  "cracked-pot": "Olla Rota",
+  "chipped-pot": "Olla Agrietada",
+  "galarica-cuff": "Brazal Galanita",
+  "galarica-wreath": "Corona Galanita",
+  "razor-claw": "Garra Afilada",
+  "razor-fang": "Colmillo Afilado",
+  "deep-sea-tooth": "Diente Marino",
+  "deep-sea-scale": "Escama Marina",
+  "malicious-armor": "Armadura Maldita",
+  "auspicious-armor": "Armadura Auspiciosa",
+  "scroll-of-darkness": "Manuscrito de las Sombras",
+  "scroll-of-waters": "Manuscrito de las Aguas",
+  "unremarkable-teacup": "Taza de Té Corriente",
+  "masterpiece-teacup": "Taza de Té Maestra",
+  "metal-alloy": "Aleación Metálica",
+  "black-augurite": "Augurita Negra",
+  "peat-block": "Bloque de Turba",
+};
+
+function humanize(name: string): string {
+  return name
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function itemLabel(item?: { name?: string } | null): string | undefined {
+  if (!item?.name) return undefined;
+  return ITEM_NAMES_ES[item.name] ?? humanize(item.name);
+}
+
+/**
+ * Traduce la condición de evolución que entrega PokéAPI. Se prefiere la
+ * entrada marcada como predeterminada (la vigente en los juegos recientes).
+ */
+export function formatEvolutionCondition(
+  details?: EvolutionDetail[]
+): string | undefined {
+  if (!details?.length) return undefined;
+
+  const detail = details.find((entry) => entry.is_default) ?? details[0];
+  const trigger = detail.trigger?.name ?? "";
+  const parts: string[] = [];
+
+  if (trigger === "level-up") {
+    if (detail.min_level) parts.push(`Nivel ${detail.min_level}`);
+    if (detail.min_happiness) parts.push(`Amistad ${detail.min_happiness}+`);
+    if (detail.min_affection) parts.push(`Afecto ${detail.min_affection}+`);
+    if (detail.min_beauty) parts.push(`Belleza ${detail.min_beauty}+`);
+    if (detail.needs_overworld_rain) parts.push("Con lluvia");
+    if (detail.time_of_day === "day") parts.push("De día");
+    if (detail.time_of_day === "night") parts.push("De noche");
+    if (detail.location?.name) parts.push(`En ${humanize(detail.location.name)}`);
+    if (detail.near_special_rock) parts.push("Cerca de roca especial");
+    if (detail.known_move?.name) parts.push(`Sabe ${humanize(detail.known_move.name)}`);
+    if (detail.known_move_type?.name) {
+      const type = TYPE_NAMES_ES[detail.known_move_type.name] ?? humanize(detail.known_move_type.name);
+      parts.push(`Movimiento ${type}`);
+    }
+    if (detail.relative_physical_stats === 1) parts.push("Ataque > Defensa");
+    else if (detail.relative_physical_stats === -1) parts.push("Ataque < Defensa");
+    else if (detail.relative_physical_stats === 0) parts.push("Ataque = Defensa");
+    if (detail.gender === 1) parts.push("Hembra");
+    else if (detail.gender === 2) parts.push("Macho");
+    if (detail.needs_multiplayer) parts.push("Multijugador");
+    if (detail.turn_upside_down) parts.push("Consola girada");
+    if (detail.min_steps) parts.push(`${detail.min_steps} pasos`);
+    if (detail.min_damage_taken) parts.push(`Recibir ${detail.min_damage_taken}+ de daño`);
+    if (detail.min_move_count) parts.push(`Usar el movimiento ${detail.min_move_count} veces`);
+    if (detail.used_move?.name) parts.push(`Usar ${humanize(detail.used_move.name)}`);
+    if (parts.length === 0) parts.push("Subir de nivel");
+  } else if (trigger === "use-item") {
+    const item = itemLabel(detail.item);
+    parts.push(item ? `Usar ${item}` : "Usar un objeto");
+  } else if (trigger === "trade") {
+    if (detail.trade_species?.name) {
+      parts.push(`Intercambio por ${humanize(detail.trade_species.name)}`);
+    } else {
+      parts.push("Intercambio");
+    }
+    const heldItem = itemLabel(detail.held_item);
+    if (heldItem) parts.push(`Con ${heldItem}`);
+  } else if (trigger === "shed") {
+    parts.push("Mudar");
+  } else if (trigger === "spin") {
+    parts.push("Girar");
+  } else if (trigger === "tower-of-darkness") {
+    parts.push("Torre de la Oscuridad");
+  } else if (trigger === "tower-of-waters") {
+    parts.push("Torre de las Aguas");
+  } else if (trigger === "three-critical-hits") {
+    parts.push("3 golpes críticos");
+  } else if (trigger === "take-damage") {
+    parts.push("Recibir daño");
+  } else if (trigger === "agile-style") {
+    parts.push("Estilo ágil");
+  } else if (trigger === "strong-style") {
+    parts.push("Estilo fuerte");
+  } else if (trigger) {
+    parts.push(humanize(trigger));
+  }
+
+  if (parts.length === 0 && detail.condition_expression) {
+    return humanize(detail.condition_expression);
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+/**
+ * Recorre el árbol de evoluciones y lo agrupa por profundidad. Así las
+ * ramificaciones (por ejemplo, las evoluciones de Eevee) quedan en una
+ * misma etapa y se pueden mostrar en grilla.
+ */
+export function buildEvolutionStages(chain: EvolutionChainLink): EvolutionStage[] {
+  const stages: EvolutionStage[] = [];
+
+  const visit = (
+    node: EvolutionChainLink,
+    depth: number,
+    condition?: string
+  ) => {
+    const rawId = node.species.url.split("/").filter(Boolean).pop();
+    const id = Number(rawId);
+    if (!rawId || !Number.isInteger(id) || id <= 0) return;
+
+    if (!stages[depth]) stages[depth] = { members: [] };
+    stages[depth].members.push({
+      id,
+      name: node.species.name,
+      ...(condition ? { condition } : {}),
+    });
+
+    for (const child of node.evolves_to ?? []) {
+      visit(child, depth + 1, formatEvolutionCondition(child.evolution_details));
+    }
+  };
+
+  visit(chain, 0);
+  return stages.filter(Boolean);
+}
+
+async function getEvolutionChain(url: string): Promise<EvolutionStage[]> {
+  const chainId = url.split("/").filter(Boolean).pop();
+  if (!chainId) return [];
+
+  const cached = cacheGet(evolutionChainCache, chainId);
+  if (cached) return cached;
+
+  try {
+    const { data } = await api.get<EvolutionChainApiResponse>(
+      `/evolution-chain/${encodeURIComponent(chainId)}`
+    );
+    const stages = buildEvolutionStages(data.chain);
+    cacheSet(evolutionChainCache, chainId, stages);
+    return stages;
+  } catch {
+    return [];
+  }
+}
+
 async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> {
   const normalized = String(key).trim().toLowerCase();
   const cached = cacheGet(rawPokemonCache, normalized);
@@ -317,7 +584,7 @@ async function getSpeciesInfo(idOrName: number | string) {
   const cached = cacheGet(speciesCache, cacheKey);
   if (cached) return cached;
 
-  let result: { description?: string; generation?: number } = {};
+  let result: SpeciesInfo = {};
   try {
     const { data } = await api.get(`/pokemon-species/${encodeURIComponent(cacheKey)}`);
     const esEntry =
@@ -326,7 +593,11 @@ async function getSpeciesInfo(idOrName: number | string) {
     const description = esEntry ? esEntry.flavor_text.replace(/[\f\n\r]/g, " ") : undefined;
     const genMatch = data.generation?.url?.split("/").filter(Boolean).pop();
     const generation = genMatch ? Number(genMatch) : undefined;
-    result = { description, generation };
+    result = {
+      description,
+      generation,
+      evolutionChainUrl: data.evolution_chain?.url,
+    };
     cacheSet(speciesCache, String(data.id), result);
   } catch {
     result = { description: undefined, generation: undefined };
@@ -404,7 +675,10 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
   const data = await getRawPokemon(cacheKey);
   const speciesInfo = await getSpeciesInfo(data.id);
 
-  const [abilities, moves] = await Promise.all([
+  const [evolutionChain, abilities, moves] = await Promise.all([
+    speciesInfo.evolutionChainUrl
+      ? getEvolutionChain(speciesInfo.evolutionChainUrl)
+      : Promise.resolve<EvolutionStage[]>([]),
     Promise.all(
       (data.abilities ?? []).map(async (a) => ({
         name: await translateAbility(a.ability.name),
@@ -430,6 +704,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     moves,
     cries: data.cries,
     description: speciesInfo.description,
+    evolutionChain,
   };
 
   cacheSet(detailCache, cacheKey, pokemon);
