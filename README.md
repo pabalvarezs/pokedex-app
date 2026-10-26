@@ -1,6 +1,6 @@
 # PokeChile
 
-PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador. La ficha de cada Pokémon incluye su cadena evolutiva con las condiciones para evolucionar. Incluye un favicon original inspirado en una Poké Ball con los colores y la estrella de la bandera de Chile.
+PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador. La ficha de cada Pokémon incluye su cadena evolutiva con las condiciones para evolucionar y una ficha aparte con sus Megaevoluciones cuando existen. Incluye un favicon original inspirado en una Poké Ball con los colores y la estrella de la bandera de Chile.
 
 ## Stack
 
@@ -84,7 +84,7 @@ Al eliminar un entrenador también se eliminan sus regalones.
 | `GET` | `/api/pokemon/type/:type` | Pokémon por tipo |
 | `GET` | `/api/pokemon/generation/:gen` | Pokémon por generación (1-9) |
 | `GET` | `/api/pokemon/search/:name` | Búsqueda por nombre |
-| `GET` | `/api/pokemon/:id` | Ficha completa (incluye cadena evolutiva) |
+| `GET` | `/api/pokemon/:id` | Ficha completa (cadena evolutiva y Megaevoluciones) |
 | `GET` | `/api/favorites` | Favoritos del usuario autenticado |
 | `POST` | `/api/favorites` | Agrega favorito (`{ pokemonId, name }`) |
 | `DELETE` | `/api/favorites/:pokemonId` | Elimina favorito |
@@ -131,7 +131,7 @@ backend/
 frontend/
   src/pages/               # Home, detalle, favoritos, login, tipo y admin
   src/components/admin/    # CRUD de entrenadores y regalones
-  src/components/          # buscador predictivo, card, cadena evolutiva, filtros
+  src/components/          # buscador predictivo, card, cadena evolutiva, megas, filtros
   src/services/api.ts      # cliente Axios tipado
   src/context/AuthContext  # sesión, rol y localStorage
   public/                  # favicon original (SVG, ICO y PNG)

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvolutionStages,
   formatEvolutionCondition,
+  pickMegaVarieties,
   type EvolutionChainLink,
 } from "../src/services/pokemon";
 
@@ -161,5 +162,36 @@ describe("formatEvolutionCondition", () => {
   it("devuelve undefined cuando no hay detalles", () => {
     expect(formatEvolutionCondition([])).toBeUndefined();
     expect(formatEvolutionCondition(undefined)).toBeUndefined();
+  });
+});
+
+describe("pickMegaVarieties", () => {
+  it("deja solo las Mega y descarta Gigamax y formas normales", () => {
+    const varieties = [
+      { name: "charizard" },
+      { name: "charizard-mega-x" },
+      { name: "charizard-mega-y" },
+      { name: "charizard-gmax" },
+    ];
+
+    expect(pickMegaVarieties(varieties).map((variety) => variety.name)).toEqual([
+      "charizard-mega-x",
+      "charizard-mega-y",
+    ]);
+  });
+
+  it("reconoce megas sin variante X/Y", () => {
+    expect(
+      pickMegaVarieties([
+        { name: "gengar" },
+        { name: "gengar-mega" },
+        { name: "gengar-gmax" },
+      ]).map((variety) => variety.name)
+    ).toEqual(["gengar-mega"]);
+  });
+
+  it("tolera listas vacías o indefinidas", () => {
+    expect(pickMegaVarieties([])).toEqual([]);
+    expect(pickMegaVarieties(undefined)).toEqual([]);
   });
 });

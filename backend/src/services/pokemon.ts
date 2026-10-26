@@ -37,6 +37,7 @@ interface PokemonMoveSlot {
 interface PokemonApiResponse {
   id: number;
   name: string;
+  species?: { name: string; url: string };
   types: PokemonTypeSlot[];
   sprites: Record<string, any>;
   height: number;
@@ -51,6 +52,7 @@ interface PokemonApiResponse {
 export interface Pokemon {
   id: number;
   name: string;
+  speciesId?: number;
   types: string[];
   generation?: number;
   sprites?: Record<string, any>;
@@ -63,6 +65,7 @@ export interface Pokemon {
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
+  megaForms?: MegaForm[];
 }
 
 export interface EvolutionMember {
@@ -75,10 +78,26 @@ export interface EvolutionStage {
   members: EvolutionMember[];
 }
 
+export interface MegaForm {
+  id: number;
+  name: string;
+  baseName: string;
+  variant?: "X" | "Y";
+  types: string[];
+  sprite?: string;
+  artwork?: string;
+}
+
+interface SpeciesVariety {
+  name: string;
+  url: string;
+}
+
 interface SpeciesInfo {
   description?: string;
   generation?: number;
   evolutionChainUrl?: string;
+  varieties?: SpeciesVariety[];
 }
 
 interface EvolutionDetail {
@@ -134,6 +153,7 @@ interface CacheEntry<T> {
 const rawPokemonCache = new Map<string, CacheEntry<PokemonApiResponse>>();
 const speciesCache = new Map<string, CacheEntry<SpeciesInfo>>();
 const evolutionChainCache = new Map<string, CacheEntry<EvolutionStage[]>>();
+const megaFormCache = new Map<string, CacheEntry<MegaForm>>();
 const detailCache = new Map<string, CacheEntry<Pokemon>>();
 
 function cacheGet<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
@@ -566,6 +586,75 @@ async function getEvolutionChain(url: string): Promise<EvolutionStage[]> {
   }
 }
 
+/**
+ * De todas las variedades de una especie, deja solo las Mega. Excluye
+ * deliberadamente las formas Gigamax y cualquier otra variante.
+ */
+export function pickMegaVarieties<T extends { name: string }>(
+  varieties: T[] | undefined
+): T[] {
+  return (varieties ?? []).filter((variety) =>
+    /-mega(?:-[xy])?$/.test(variety.name)
+  );
+}
+
+async function getMegaForm(
+  variety: SpeciesVariety,
+  baseName: string
+): Promise<MegaForm | null> {
+  const cached = cacheGet(megaFormCache, variety.name);
+  if (cached) return cached;
+
+  try {
+    const { data } = await api.get<PokemonApiResponse>(
+      `/pokemon/${encodeURIComponent(variety.name)}`
+    );
+    const variant = variety.name.match(/-mega-([xy])$/)?.[1]?.toUpperCase();
+    const form: MegaForm = {
+      id: data.id,
+      name: data.name,
+      baseName,
+      ...(variant === "X" || variant === "Y" ? { variant } : {}),
+      types: data.types.map((t) => t.type.name),
+      sprite: data.sprites?.front_default,
+      artwork: data.sprites?.other?.["official-artwork"]?.front_default,
+    };
+
+    cacheSet(megaFormCache, variety.name, form);
+    return form;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Busca las Mega formas de la última etapa de la cadena. Se consultan las
+ * variedades de cada especie final porque las megas no viven en evolution-chain.
+ */
+async function getMegaForms(stages: EvolutionStage[]): Promise<MegaForm[]> {
+  const finalStage = stages[stages.length - 1];
+  if (!finalStage) return [];
+
+  const groups = await mapWithConcurrency(
+    finalStage.members,
+    8,
+    async (member) => {
+      const speciesInfo = await getSpeciesInfo(member.id);
+      const varieties = pickMegaVarieties(speciesInfo.varieties);
+      return Promise.all(
+        varieties.map((variety) => getMegaForm(variety, member.name))
+      );
+    }
+  );
+
+  const seen = new Set<number>();
+  return groups.flat().filter((form): form is MegaForm => {
+    if (!form || seen.has(form.id)) return false;
+    seen.add(form.id);
+    return true;
+  });
+}
+
 async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> {
   const normalized = String(key).trim().toLowerCase();
   const cached = cacheGet(rawPokemonCache, normalized);
@@ -593,10 +682,22 @@ async function getSpeciesInfo(idOrName: number | string) {
     const description = esEntry ? esEntry.flavor_text.replace(/[\f\n\r]/g, " ") : undefined;
     const genMatch = data.generation?.url?.split("/").filter(Boolean).pop();
     const generation = genMatch ? Number(genMatch) : undefined;
+    const varieties: SpeciesVariety[] = Array.isArray(data.varieties)
+      ? data.varieties
+          .map((variety: any) => ({
+            name: variety.pokemon?.name,
+            url: variety.pokemon?.url,
+          }))
+          .filter(
+            (variety: SpeciesVariety): variety is SpeciesVariety =>
+              Boolean(variety.name && variety.url)
+          )
+      : [];
     result = {
       description,
       generation,
       evolutionChainUrl: data.evolution_chain?.url,
+      varieties,
     };
     cacheSet(speciesCache, String(data.id), result);
   } catch {
@@ -673,7 +774,9 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
   if (cached) return cached;
 
   const data = await getRawPokemon(cacheKey);
-  const speciesInfo = await getSpeciesInfo(data.id);
+  const speciesInfo = await getSpeciesInfo(data.species?.name ?? data.id);
+  const speciesRawId = data.species?.url?.split("/").filter(Boolean).pop();
+  const speciesId = speciesRawId ? Number(speciesRawId) : undefined;
 
   const [evolutionChain, abilities, moves] = await Promise.all([
     speciesInfo.evolutionChainUrl
@@ -690,9 +793,15 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     ),
   ]);
 
+  const megaForms = await getMegaForms(evolutionChain);
+
   const pokemon: Pokemon = {
     id: data.id,
     name: data.name,
+    speciesId:
+      speciesId && Number.isInteger(speciesId) && speciesId > 0
+        ? speciesId
+        : undefined,
     types: data.types.map((t) => t.type.name),
     generation: speciesInfo.generation ?? 1,
     sprites: data.sprites,
@@ -705,6 +814,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     cries: data.cries,
     description: speciesInfo.description,
     evolutionChain,
+    megaForms,
   };
 
   cacheSet(detailCache, cacheKey, pokemon);
