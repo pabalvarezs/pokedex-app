@@ -35,9 +35,20 @@ export interface EvolutionStage {
   members: EvolutionMember[];
 }
 
+export interface MegaForm {
+  id: number;
+  name: string;
+  baseName: string;
+  variant?: "X" | "Y";
+  types: string[];
+  sprite?: string;
+  artwork?: string;
+}
+
 export interface Pokemon {
   id: number;
   name: string;
+  speciesId?: number;
   types: string[];
   generation?: number;
   sprites?: {
@@ -72,6 +83,7 @@ export interface Pokemon {
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
+  megaForms?: MegaForm[];
 }
 
 export interface Favorite {

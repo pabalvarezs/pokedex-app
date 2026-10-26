@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPokemon, searchPokemon } from "../services/api";
 import FavoriteButton from "../components/FavoriteButton";
 import EvolutionChain from "../components/EvolutionChain";
+import MegaForms from "../components/MegaForms";
 import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
 
 interface SpriteItem {
@@ -409,10 +410,18 @@ export default function PokemonDetail() {
         {/* Cadena evolutiva: ocupa todo el ancho de la ficha */}
         {data.evolutionChain && data.evolutionChain.length > 0 && (
           <div className="border-t border-gray-100 bg-gray-50/60 p-6 sm:p-8">
-            <EvolutionChain stages={data.evolutionChain} currentId={data.id} />
+            <EvolutionChain
+              stages={data.evolutionChain}
+              currentId={data.speciesId ?? data.id}
+            />
           </div>
         )}
       </div>
+
+      {/* Ficha aparte de Megaevoluciones */}
+      {data.megaForms && data.megaForms.length > 0 && (
+        <MegaForms forms={data.megaForms} />
+      )}
 
       {/* VENTANA MODAL DE VISTA PREVIA DE SPRITES */}
       {modalOpen && selectedSprite && (
