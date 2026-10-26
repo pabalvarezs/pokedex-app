@@ -75,10 +75,22 @@ export default function EvolutionChain({ stages, currentId }: EvolutionChainProp
               {index > 0 && (
                 <div
                   aria-hidden="true"
-                  className="flex shrink-0 items-center justify-center py-1 text-3xl font-black text-gray-300 md:self-center md:py-0"
+                  className="flex shrink-0 items-center justify-center py-1 md:self-center md:py-0"
                 >
-                  <span className="md:hidden">↓</span>
-                  <span className="hidden md:inline">→</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-600 via-rose-500 to-amber-500 text-white shadow-lg shadow-rose-200/80 ring-4 ring-white transition-transform duration-300 hover:scale-105 md:h-12 md:w-12">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.75}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5 rotate-90 md:h-6 md:w-6 md:rotate-0"
+                    >
+                      <path d="M4 12h15" />
+                      <path d="m13 6 6 6-6 6" />
+                    </svg>
+                  </span>
                 </div>
               )}
 
