@@ -1,3 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* PokeChile · sistema visual compartido */
+    --pc-font-sans: "Inter", "Nunito Sans", ui-sans-serif, system-ui, -apple-system,
+      "Segoe UI", Roboto, sans-serif;
+
+    --pc-canvas: #f8fafc;
+    --pc-surface: #ffffff;
+    --pc-border: #e2e8f0;
+    --pc-border-soft: #eef2f7;
+    --pc-ink-900: #0f172a;
+    --pc-ink-700: #334155;
+    --pc-ink-500: #64748b;
+
+    --pc-container: 1120px;
+    --pc-radius-card: 16px;
+    --pc-radius-control: 10px;
+
+    --pc-text-display: clamp(2rem, 4vw, 2.375rem);
+    --pc-text-section: 0.9375rem;
+    --pc-text-meta: 0.8125rem;
+    --pc-text-body: 0.9375rem;
+    --pc-text-value: 1.0625rem;
+
+    --pc-shadow-card: 0 1px 2px rgb(15 23 42 / 0.04),
+      0 16px 40px -24px rgb(15 23 42 / 0.22);
+    --pc-shadow-ambient: 0 24px 48px -24px rgb(15 23 42 / 0.28),
+      0 6px 16px -8px rgb(15 23 42 / 0.12);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--pc-canvas);
+    color: var(--pc-ink-900);
+    font-family: var(--pc-font-sans);
+  }
+}
+
+@layer components {
+  /* Marco de la ilustración principal: fondo gris azulado muy claro */
+  .artwork-frame {
+    background:
+      radial-gradient(circle at 50% 36%, #ffffff 0%, #f8fafc 48%, #eef2f7 100%);
+  }
+}

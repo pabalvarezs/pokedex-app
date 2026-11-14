@@ -60,9 +60,9 @@ export default function PokemonDetail() {
 
   if (isLoading)
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mb-4"></div>
-        <p className="text-gray-600 font-semibold text-lg">
+      <div className="mx-auto max-w-ficha py-20 text-center">
+        <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-red-600 border-t-transparent"></div>
+        <p className="text-lg font-semibold text-ink-700">
           Buscando la ficha completa de este Pokémon al tiro...
         </p>
       </div>
@@ -70,17 +70,17 @@ export default function PokemonDetail() {
 
   if (isError || !data)
     return (
-      <div className="max-w-md mx-auto py-16 text-center bg-white rounded-2xl border p-8 shadow-sm mt-8">
-        <span className="text-5xl mb-4 block">🔍</span>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
+      <div className="mx-auto mt-8 max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
+        <span className="mb-4 block text-5xl">🔍</span>
+        <h2 className="mb-2 text-xl font-bold text-ink-900">
           ¡Chuta! No pillamos ese Pokémon
         </h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <p className="mb-6 text-sm text-ink-500">
           Revisa que el nombre o ID esté bien escrito, o vuelve a la portada para explorar.
         </p>
         <Link
           to="/"
-          className="inline-block px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 shadow-sm transition"
+          className="inline-block rounded-control bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
         >
           Volver a la portada al tiro 👈
         </Link>
@@ -137,12 +137,12 @@ export default function PokemonDetail() {
   const totalStats = (data.stats ?? []).reduce((acc, s) => acc + s.base_stat, 0);
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
+    <div className="mx-auto w-full max-w-ficha pb-12">
       {/* Botón Volver y Header superior */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-red-600 bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
         >
           <span>←</span>
           <span>Volver a la lista</span>
@@ -153,33 +153,47 @@ export default function PokemonDetail() {
       </div>
 
       {/* Tarjeta Principal Hero */}
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Banner con gradiente de color */}
-        <div className="bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 p-6 sm:p-8 text-white relative">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <span className="text-white/80 font-black text-sm tracking-wider uppercase">
-                Pokémon #{formattedId}
+        <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 px-6 py-8 text-white sm:px-8 sm:py-10 lg:px-10">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full border-[44px] border-white/10"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-32 right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+          />
+
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-white/90" aria-hidden="true" />
+                Pokédex #{formattedId}
               </span>
-              <h1 className="text-3xl sm:text-5xl font-black capitalize tracking-tight mt-0.5">
+              <h1 className="mt-3 break-words text-display font-extrabold capitalize">
                 {data.name}
               </h1>
               {genInfo && (
-                <p className="text-xs text-white/90 font-medium mt-1">
-                  {genInfo.name} • Región de {genInfo.region}
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-meta font-medium text-white/90">
+                  <span>{genInfo.name}</span>
+                  <span className="text-white/50" aria-hidden="true">
+                    •
+                  </span>
+                  <span>Región de {genInfo.region}</span>
                 </p>
               )}
             </div>
 
             {/* Badges de Tipos */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 sm:justify-end sm:pb-1">
               {(data.types ?? []).map((t) => {
                 const info = getTypeBadge(t);
                 return (
                   <Link
                     key={t}
                     to={`/type/${t}`}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${info.bg} ${info.text} border ${info.border} shadow hover:opacity-95 transition`}
+                    className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 ${info.bg} ${info.text} ${info.border}`}
                   >
                     {info.es}
                   </Link>
@@ -190,32 +204,34 @@ export default function PokemonDetail() {
         </div>
 
         {/* Cuerpo de la tarjeta */}
-        <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 gap-8 p-6 sm:p-8 md:grid-cols-12 lg:gap-10 lg:p-10">
           {/* Columna Izquierda: Imagen, controles y galería */}
-          <div className="md:col-span-5 flex flex-col items-center">
-            <div
+          <div className="flex flex-col md:col-span-5">
+            <button
+              type="button"
               onClick={() => openSpriteModal()}
               title="Haz clic para ver en pantalla completa"
-              className="w-56 h-56 sm:w-64 sm:h-64 bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-center relative shadow-inner cursor-pointer group"
+              aria-label={`Ampliar la ilustración de ${data.name}`}
+              className="artwork-frame group relative mx-auto flex aspect-square w-full max-w-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-card border border-slate-200/80 p-6 shadow-ambient transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200"
             >
               <img
                 src={officialArtwork}
                 alt={data.name}
-                className="max-h-full max-w-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                className="max-h-full max-w-full object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.04]"
               />
-              <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition">
+              <span className="pointer-events-none absolute bottom-3 right-3 rounded-lg bg-slate-900/70 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
                 🔍 Ver en grande
               </span>
-            </div>
+            </button>
 
             {/* Controles: Shiny y Grito */}
-            <div className="flex gap-2 mt-4 w-full">
+            <div className="mt-6 flex w-full flex-col gap-2 sm:flex-row">
               <button
                 onClick={() => setShowShiny(!showShiny)}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-control border px-3 py-2.5 text-xs font-bold transition ${
                   showShiny
-                    ? "bg-amber-100 border-amber-300 text-amber-900 shadow-sm"
-                    : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
+                    ? "border-amber-300 bg-amber-100 text-amber-900 shadow-sm"
+                    : "border-line bg-slate-100 text-ink-700 hover:bg-slate-200"
                 }`}
               >
                 <span>✨</span>
@@ -227,7 +243,7 @@ export default function PokemonDetail() {
                   onClick={() => playCry(data.cries?.latest)}
                   disabled={isPlayingCry}
                   title="Escuchar sonido / grito del Pokémon"
-                  className="py-2 px-3.5 bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  className="flex items-center justify-center gap-1.5 rounded-control border border-line bg-slate-100 px-4 py-2.5 text-xs font-bold text-ink-700 transition hover:bg-slate-200"
                 >
                   <span>{isPlayingCry ? "🔊 ..." : "🔊 Grito"}</span>
                 </button>
@@ -235,33 +251,33 @@ export default function PokemonDetail() {
             </div>
 
             {/* Galería de Sprites miniatura con apertura de modal */}
-            <div className="mt-4 pt-4 border-t border-gray-100 w-full">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div className="mt-6 w-full border-t border-line-soft pt-6">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-ink-500">
                   Sprites del juego
                 </p>
                 <button
                   onClick={() => openSpriteModal()}
-                  className="text-xs text-red-600 hover:underline font-bold"
+                  className="text-xs font-bold text-red-600 hover:underline"
                 >
                   Ver en modal 🔍
                 </button>
               </div>
 
-              <div className="flex justify-center gap-2 flex-wrap">
+              <div className="flex flex-wrap justify-center gap-2">
                 {allSprites.slice(0, 4).map((sprite) => (
                   <button
                     key={sprite.key}
                     onClick={() => openSpriteModal(sprite)}
-                    className="text-center group bg-gray-50 hover:bg-red-50 p-1 rounded-lg border border-gray-200 hover:border-red-300 transition"
+                    className="group rounded-control border border-line bg-slate-50 p-1 text-center transition hover:border-red-300 hover:bg-red-50"
                   >
                     <img
                       src={sprite.url}
                       alt={sprite.label}
-                      className="w-14 h-14 object-contain group-hover:scale-110 transition"
+                      className="h-14 w-14 object-contain transition group-hover:scale-110"
                       title={`Clic para ver ${sprite.label}`}
                     />
-                    <span className="text-[10px] text-gray-500 group-hover:text-red-600 font-semibold block truncate max-w-[60px]">
+                    <span className="block max-w-[60px] truncate text-[10px] font-semibold text-ink-500 group-hover:text-red-600">
                       {sprite.label}
                     </span>
                   </button>
@@ -271,43 +287,43 @@ export default function PokemonDetail() {
           </div>
 
           {/* Columna Derecha: Descripción, Datos, Estadísticas y Habilidades */}
-          <div className="md:col-span-7 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 md:col-span-7">
             {/* Descripción oficial en español */}
             {data.description && (
-              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
-                <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <div className="rounded-card border border-amber-200/80 bg-amber-50/70 p-6 shadow-sm">
+                <p className="mb-2 flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-amber-800">
                   <span>📖</span>
                   <span>Entrada de la Pokédex:</span>
                 </p>
-                <p className="text-sm text-gray-800 italic leading-relaxed">
+                <p className="text-body italic leading-relaxed text-ink-700">
                   &ldquo;{data.description}&rdquo;
                 </p>
               </div>
             )}
 
             {/* Ficha Biológica rápida */}
-            <div className="grid grid-cols-3 gap-3 bg-gray-50 rounded-2xl p-4 border border-gray-100 text-center">
+            <div className="grid grid-cols-3 gap-3 rounded-card border border-line-soft bg-slate-50/80 p-6 text-center shadow-sm">
               <div>
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
                   Estatura
                 </span>
-                <span className="text-base font-extrabold text-gray-800">
+                <span className="text-value font-bold text-ink-900">
                   {data.height ? `${data.height / 10} m` : "Desconocida"}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
                   Peso
                 </span>
-                <span className="text-base font-extrabold text-gray-800">
+                <span className="text-value font-bold text-ink-900">
                   {data.weight ? `${data.weight / 10} kg` : "Desconocido"}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
                   Exp. Base
                 </span>
-                <span className="text-base font-extrabold text-gray-800">
+                <span className="text-value font-bold text-ink-900">
                   {data.base_experience ? `${data.base_experience} XP` : "N/A"}
                 </span>
               </div>
@@ -315,12 +331,12 @@ export default function PokemonDetail() {
 
             {/* Estadísticas Base */}
             <div>
-              <div className="flex justify-between items-baseline mb-2">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="mb-2 flex items-baseline justify-between">
+                <h3 className="text-section font-bold uppercase tracking-wider text-ink-500">
                   Estadísticas de Combate
                 </h3>
-                <span className="text-xs font-extrabold text-gray-700">
-                  Total: <span className="text-red-600">{totalStats}</span>
+                <span className="text-sm font-semibold text-ink-700">
+                  Total: <span className="text-value font-extrabold text-red-600">{totalStats}</span>
                 </span>
               </div>
 
@@ -361,14 +377,14 @@ export default function PokemonDetail() {
             {/* Habilidades en Español */}
             {data.abilities && data.abilities.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <h3 className="mb-2 text-section font-bold uppercase tracking-wider text-ink-500">
                   Habilidades (en Español)
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {data.abilities.map((a) => (
                     <div
                       key={a.name}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize border flex items-center gap-1.5 ${
+                      className={`flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-bold capitalize ${
                         a.is_hidden
                           ? "bg-purple-50 text-purple-800 border-purple-200"
                           : "bg-gray-100 text-gray-800 border-gray-200"
@@ -389,14 +405,14 @@ export default function PokemonDetail() {
             {/* Movimientos Destacados en Español */}
             {data.moves && data.moves.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <h3 className="mb-2 text-section font-bold uppercase tracking-wider text-ink-500">
                   Movimientos Destacados (en Español)
                 </h3>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 scrollbar-thin">
                   {data.moves.map((m) => (
                     <span
                       key={m}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-gray-800 rounded-lg text-[11px] font-semibold capitalize border border-slate-200 transition"
+                      className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold capitalize text-ink-700 transition hover:bg-slate-200"
                     >
                       {m}
                     </span>
@@ -409,7 +425,7 @@ export default function PokemonDetail() {
 
         {/* Cadena evolutiva: ocupa todo el ancho de la ficha */}
         {data.evolutionChain && data.evolutionChain.length > 0 && (
-          <div className="border-t border-gray-100 bg-gray-50/60 p-6 sm:p-8">
+          <div className="border-t border-line-soft bg-slate-50/70 p-6 sm:p-8">
             <EvolutionChain
               stages={data.evolutionChain}
               currentId={data.speciesId ?? data.id}
@@ -430,7 +446,7 @@ export default function PokemonDetail() {
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative border border-gray-100"
+            className="relative w-full max-w-lg rounded-card border border-line bg-surface p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header del modal */}
@@ -452,7 +468,7 @@ export default function PokemonDetail() {
             </div>
 
             {/* Visualizador central grande del sprite */}
-            <div className="w-full h-64 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center p-4 relative shadow-inner mb-4">
+            <div className="artwork-frame relative mb-4 flex h-64 w-full items-center justify-center rounded-card border border-slate-200 p-4 shadow-inner">
               <img
                 src={selectedSprite.url}
                 alt={selectedSprite.label}
@@ -473,7 +489,7 @@ export default function PokemonDetail() {
                   <button
                     key={sprite.key}
                     onClick={() => setSelectedSprite(sprite)}
-                    className={`p-1.5 rounded-xl border text-center transition flex flex-col items-center ${
+                    className={`flex flex-col items-center rounded-control border p-1.5 text-center transition ${
                       selectedSprite.key === sprite.key
                         ? "border-red-500 bg-red-50 ring-2 ring-red-400"
                         : "border-gray-200 bg-gray-50 hover:bg-gray-100"
@@ -496,7 +512,7 @@ export default function PokemonDetail() {
             <div className="mt-5 pt-3 border-t border-gray-100 text-right">
               <button
                 onClick={() => setModalOpen(false)}
-                className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                className="rounded-control bg-gray-800 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-gray-900"
               >
                 Cerrar vista previa
               </button>

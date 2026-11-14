@@ -35,7 +35,7 @@ export default function FavoriteButton({ pokemonId, name }: Props) {
     return (
       <Link
         to="/login"
-        className="px-4 py-2 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+        className="px-4 py-2 rounded-control text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
       >
         <span>🔐</span>
         <span>Inicia sesión para guardar</span>
@@ -47,7 +47,7 @@ export default function FavoriteButton({ pokemonId, name }: Props) {
     <button
       onClick={() => toggle.mutate()}
       disabled={isLoading || toggle.isPending}
-      className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm ${
+      className={`px-4 py-2 rounded-control text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm ${
         fav
           ? "bg-amber-400 text-amber-950 border-amber-500 hover:bg-amber-500"
           : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"

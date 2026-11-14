@@ -152,7 +152,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 text-gray-900 flex flex-col font-sans">
         <NavigationHeader />
 
-        <main className="flex-1 px-3 sm:px-4 py-5 sm:py-6">
+        <main className="flex-1 px-4 sm:px-6 py-5 sm:py-6">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/pokemon/:id" element={<PokemonDetail />} />
