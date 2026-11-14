@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { listPokemon, listPokemonByType, listPokemonByGeneration, type Pokemon } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonSearch from "../components/PokemonSearch";
@@ -52,6 +52,9 @@ export default function Home() {
   // Fetch según filtros activos
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["pokemon", "filtered", { types: activeTypes, gens: activeGens, pageSize }],
+    // Mantiene el listado anterior mientras llega la nueva página, evitando
+    // que el spinner reemplace el contenido y se pierda la posición del scroll.
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       // Sin filtros: paginación contra el listado general
       if (activeTypes.length === 0 && activeGens.length === 0) {
