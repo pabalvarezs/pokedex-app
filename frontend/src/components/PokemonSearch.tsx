@@ -1,4 +1,11 @@
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  FocusEvent,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { suggestPokemon, type PokemonSuggestion } from "../services/api";
@@ -40,20 +47,30 @@ export default function PokemonSearch() {
   const canSearch = debouncedTerm.length >= MIN_QUERY_LENGTH;
   const isReady = debouncedTerm === trimmedTerm;
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError, refetch } = useQuery({
     queryKey: ["pokemon", "suggest", debouncedTerm],
     queryFn: () => suggestPokemon(debouncedTerm),
     enabled: canSearch,
     staleTime: 5 * 60 * 1000,
   });
 
-  const suggestions: PokemonSuggestion[] = canSearch && isReady ? data ?? [] : [];
+  const suggestions: PokemonSuggestion[] =
+    canSearch && isReady ? data ?? [] : [];
   const isDebouncing = trimmedTerm.length >= MIN_QUERY_LENGTH && !isReady;
   const isLoading = (canSearch || isDebouncing) && (isDebouncing || isFetching);
+  const showError = isError && !isLoading && suggestions.length === 0;
+  const activeSuggestion = activeIndex >= 0 ? suggestions[activeIndex] : undefined;
 
   useEffect(() => {
     setActiveIndex(-1);
-  }, [debouncedTerm]);
+  }, [trimmedTerm, debouncedTerm]);
+
+  useEffect(() => {
+    if (!activeSuggestion) return;
+    document
+      .getElementById(`pokemon-suggestion-${activeSuggestion.id}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeSuggestion]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,6 +84,7 @@ export default function PokemonSearch() {
   }, []);
 
   const showPanel = open && trimmedTerm.length >= MIN_QUERY_LENGTH;
+  const hasActiveSearch = trimmedTerm.length > 0;
 
   const choose = (suggestion: PokemonSuggestion) => {
     setTerm("");
@@ -113,6 +131,21 @@ export default function PokemonSearch() {
     }
 
     if (event.key === "Escape") {
+      event.preventDefault();
+      // Primer Escape cierra el panel; el segundo limpia la búsqueda.
+      if (showPanel) {
+        setOpen(false);
+        setActiveIndex(-1);
+        return;
+      }
+      if (trimmedTerm) {
+        clear();
+      }
+    }
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!containerRef.current?.contains(event.relatedTarget as Node)) {
       setOpen(false);
       setActiveIndex(-1);
     }
@@ -126,8 +159,22 @@ export default function PokemonSearch() {
     inputRef.current?.focus();
   };
 
+  const resultCountLabel = `${suggestions.length} ${
+    suggestions.length === 1 ? "resultado" : "resultados"
+  }`;
+
+  const activeStatus = (() => {
+    if (trimmedTerm.length < MIN_QUERY_LENGTH) {
+      return `Escribe al menos ${MIN_QUERY_LENGTH} caracteres`;
+    }
+    if (isLoading) return "Buscando coincidencias…";
+    if (showError) return "No se pudo consultar el buscador";
+    if (!isReady) return "Buscando coincidencias…";
+    return `${resultCountLabel} para «${trimmedTerm}»`;
+  })();
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" onBlur={handleBlur}>
       <form onSubmit={handleSubmit} role="search" className="relative">
         <span
           className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-500"
@@ -150,6 +197,7 @@ export default function PokemonSearch() {
           ref={inputRef}
           type="text"
           inputMode="search"
+          enterKeyHint="search"
           value={term}
           onChange={(event) => {
             setTerm(event.target.value);
@@ -157,20 +205,21 @@ export default function PokemonSearch() {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Busca un Pokémon por nombre o número… ej: pikachu, 25"
+          placeholder="Busca un Pokémon…"
           aria-label="Buscar Pokémon"
+          aria-describedby="pokemon-search-help"
           role="combobox"
           aria-expanded={showPanel}
           aria-controls="pokemon-search-suggestions"
           aria-autocomplete="list"
           aria-activedescendant={
-            showPanel && activeIndex >= 0
-              ? `pokemon-suggestion-${suggestions[activeIndex]?.id}`
+            showPanel && activeSuggestion
+              ? `pokemon-suggestion-${activeSuggestion.id}`
               : undefined
           }
           autoComplete="off"
           spellCheck={false}
-          className="w-full rounded-[14px] border border-line bg-white py-4 pl-12 pr-28 text-[15px] font-semibold text-ink-900 shadow-sm outline-none transition placeholder:font-normal placeholder:text-ink-500/80 hover:border-slate-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+          className="w-full rounded-[14px] border border-line bg-white py-4 pl-12 pr-28 text-[15px] font-semibold text-ink-900 shadow-sm outline-none transition placeholder:font-normal placeholder:text-ink-500 hover:border-slate-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
         />
 
         <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
@@ -179,7 +228,8 @@ export default function PokemonSearch() {
               type="button"
               onClick={clear}
               aria-label="Limpiar búsqueda"
-              className="flex h-9 w-9 items-center justify-center rounded-control text-sm font-bold text-ink-500 transition hover:bg-slate-100 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+              title="Limpiar búsqueda"
+              className="flex h-11 w-11 items-center justify-center rounded-control text-sm font-bold text-ink-500 transition hover:bg-slate-100 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
             >
               ✕
             </button>
@@ -194,30 +244,120 @@ export default function PokemonSearch() {
         </div>
       </form>
 
+      <p id="pokemon-search-help" className="sr-only">
+        Escribe al menos {MIN_QUERY_LENGTH} caracteres. Usa las flechas arriba y
+        abajo para recorrer las sugerencias, Enter para abrir la ficha y Escape
+        para cerrar o limpiar la búsqueda.
+      </p>
+
+      {/* Ayuda breve cuando no hay búsqueda ni panel abierto */}
+      {!hasActiveSearch && !showPanel && (
+        <p className="mt-2 px-1 text-[11px] font-medium text-ink-500">
+          Busca por nombre o número, por ejemplo{" "}
+          <span className="font-bold text-ink-700">pikachu</span> o{" "}
+          <span className="font-bold text-ink-700">25</span>.
+        </p>
+      )}
+
+      {/* Indicador de búsqueda activa cuando el panel de sugerencias está cerrado */}
+      {hasActiveSearch && !showPanel && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-control border border-line-soft bg-slate-50 px-3 py-2 text-[11px]">
+          <span className="font-extrabold uppercase tracking-[0.12em] text-ink-500">
+            Búsqueda activa
+          </span>
+          <span className="max-w-[14rem] truncate font-bold text-ink-900">
+            «{trimmedTerm}»
+          </span>
+          <span
+            role="status"
+            aria-live="polite"
+            className={
+              showError ? "font-bold text-red-600" : "font-semibold text-ink-500"
+            }
+          >
+            {activeStatus}
+          </span>
+          <button
+            type="button"
+            onClick={clear}
+            className="ml-auto min-h-[32px] rounded-control border border-line bg-white px-2.5 py-1 font-bold text-ink-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-1"
+          >
+            Limpiar
+          </button>
+        </div>
+      )}
+
       {showPanel && (
         <div
           id="pokemon-search-suggestions"
           role="listbox"
           aria-label="Sugerencias de Pokémon"
-          className="absolute z-30 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
+          aria-busy={isLoading}
+          className="absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-line bg-white shadow-ambient"
         >
+          <div className="flex items-center justify-between gap-3 border-b border-line-soft bg-slate-50/80 px-3.5 py-2">
+            <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink-500">
+              {isLoading ? "Buscando…" : `Resultados para «${trimmedTerm}»`}
+            </span>
+            {!isLoading && !showError && (
+              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-ink-500 shadow-sm">
+                {resultCountLabel}
+              </span>
+            )}
+          </div>
+
           {isLoading ? (
-            <div className="flex items-center gap-2.5 px-4 py-4 text-sm text-gray-500 font-medium">
-              <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent" />
-              Buscando Pokémon…
+            <div className="px-2 py-2" role="status" aria-live="polite">
+              <span className="sr-only">Buscando Pokémon…</span>
+              {[0, 1, 2].map((row) => (
+                <div
+                  key={row}
+                  aria-hidden="true"
+                  className="flex items-center gap-3 px-1.5 py-2.5"
+                >
+                  <div className="skeleton h-9 w-9 shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="skeleton h-3 w-1/2 rounded-full" />
+                    <div className="skeleton h-2.5 w-1/4 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : showError ? (
+            <div className="px-4 py-4" role="alert">
+              <p className="text-sm font-bold text-ink-900">
+                No pudimos consultar el buscador.
+              </p>
+              <p className="mt-0.5 text-xs text-ink-500">
+                Revisa tu conexión e inténtalo de nuevo.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mt-3 rounded-control bg-red-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
+              >
+                Reintentar
+              </button>
             </div>
           ) : suggestions.length === 0 ? (
-            <div className="px-4 py-4">
-              <p className="text-sm font-bold text-gray-700">
+            <div className="px-4 py-4" role="status">
+              <p className="text-sm font-bold text-ink-900">
                 No pillamos ningún Pokémon para “{trimmedTerm}”.
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="mt-0.5 text-xs text-ink-500">
                 Prueba con el nombre en inglés o con su número de la Pokédex.
               </p>
+              <button
+                type="button"
+                onClick={clear}
+                className="mt-3 rounded-control border border-line bg-white px-3 py-2 text-xs font-bold text-ink-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
+              >
+                Limpiar búsqueda
+              </button>
             </div>
           ) : (
             <>
-              <ul className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+              <ul className="max-h-80 divide-y divide-line-soft overflow-y-auto">
                 {suggestions.map((suggestion, index) => {
                   const isActive = index === activeIndex;
                   return (
@@ -227,27 +367,31 @@ export default function PokemonSearch() {
                         id={`pokemon-suggestion-${suggestion.id}`}
                         role="option"
                         aria-selected={isActive}
+                        tabIndex={-1}
                         onMouseEnter={() => setActiveIndex(index)}
                         onClick={() => choose(suggestion)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition ${
-                          isActive ? "bg-red-50" : "hover:bg-gray-50"
+                        className={`flex min-h-[56px] w-full items-center gap-3 px-3.5 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-400 ${
+                          isActive ? "bg-red-50" : "hover:bg-slate-50"
                         }`}
                       >
                         <img
                           src={spriteUrl(suggestion.id)}
                           alt=""
                           loading="lazy"
-                          className="w-9 h-9 object-contain drop-shadow-sm shrink-0"
+                          className="h-9 w-9 shrink-0 object-contain drop-shadow-sm"
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold text-gray-800 truncate">
+                          <span className="block truncate text-sm font-bold text-ink-900">
                             {formatName(suggestion.name)}
                           </span>
-                          <span className="block text-[11px] font-semibold text-gray-400">
+                          <span className="block text-[11px] font-semibold text-ink-500">
                             {formatId(suggestion.id)}
                           </span>
                         </span>
-                        <span className="text-xs text-gray-300" aria-hidden="true">
+                        <span
+                          className="text-xs text-ink-500"
+                          aria-hidden="true"
+                        >
                           ↵
                         </span>
                       </button>
@@ -255,8 +399,8 @@ export default function PokemonSearch() {
                   );
                 })}
               </ul>
-              <div className="px-3.5 py-2 bg-gray-50 border-t border-gray-100 text-[11px] text-gray-400 font-medium">
-                Usa ↑ ↓ para moverte y Enter para abrir la ficha.
+              <div className="border-t border-line-soft bg-slate-50 px-3.5 py-2 text-[11px] font-medium text-ink-500">
+                Usa ↑ ↓ para moverte, Enter para abrir y Esc para cerrar.
               </div>
             </>
           )}

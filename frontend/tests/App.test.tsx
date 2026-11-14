@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "../src/App";
-import { listPokemonByGeneration, listPokemonByType, suggestPokemon } from "../src/services/api";
+import { listPokemonByGeneration, listPokemonByType, suggestPokemon, listPokemon } from "../src/services/api";
 
 vi.mock("../src/services/api", () => ({
   listPokemon: vi.fn(async () => ({
@@ -243,5 +243,59 @@ describe("App", () => {
     expect(screen.queryByText(/Credenciales de prueba/i)).toBeNull();
     expect(screen.queryByText(/pablito2026/i)).toBeNull();
     expect(screen.queryByText(/Pablito/i)).toBeNull();
+  });
+
+  it("muestra y limpia el estado de búsqueda activa", async () => {
+    vi.mocked(suggestPokemon).mockResolvedValueOnce([
+      { id: 25, name: "pikachu" },
+    ]);
+    renderApp();
+
+    const input = screen.getByLabelText(/Buscar Pokémon/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "pika" } });
+
+    expect(await screen.findByText("Pikachu")).toBeTruthy();
+
+    // El primer Escape cierra el panel y deja visible la búsqueda activa.
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.getByText("Búsqueda activa")).toBeTruthy();
+    expect(screen.getByText("«pika»")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar" }));
+    expect(input.value).toBe("");
+    expect(screen.queryByText("Búsqueda activa")).toBeNull();
+  });
+
+  it("muestra un estado sin resultados al filtrar y permite limpiarlo", async () => {
+    vi.mocked(listPokemonByType).mockImplementation(async (type: string) => ({
+      pokemon: [],
+      total: 0,
+      type,
+    }));
+    renderApp();
+
+    await screen.findByText("bulbasaur");
+    fireEvent.click(screen.getByRole("button", { name: /Tipo/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Fuego" }));
+
+    expect(
+      await screen.findByText(/No pillamos ningún Pokémon con esos filtros/i)
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver todos los Pokémon" })
+    );
+
+    expect(await screen.findByText("bulbasaur")).toBeTruthy();
+  });
+
+  it("muestra el error de carga y permite reintentar", async () => {
+    vi.mocked(listPokemon).mockRejectedValueOnce(new Error("offline"));
+    renderApp();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/No pudimos cargar los Pokémon/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByText("bulbasaur")).toBeTruthy();
   });
 });
