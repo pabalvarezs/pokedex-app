@@ -17,6 +17,7 @@
     --pc-ink-500: #64748b;
 
     --pc-container: 1120px;
+    --pc-container-home: 1200px;
     --pc-radius-card: 16px;
     --pc-radius-control: 10px;
 
@@ -49,5 +50,19 @@
   .artwork-frame {
     background:
       radial-gradient(circle at 50% 36%, #ffffff 0%, #f8fafc 48%, #eef2f7 100%);
+  }
+
+  /* Cuadrícula del catálogo: 2 columnas en móvil y autoajuste desde tablet */
+  .pokemon-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (min-width: 640px) {
+    .pokemon-grid {
+      grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+      gap: 24px;
+    }
   }
 }

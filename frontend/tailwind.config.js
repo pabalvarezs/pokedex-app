@@ -21,6 +21,7 @@ export default {
       },
       maxWidth: {
         ficha: "var(--pc-container)",
+        home: "var(--pc-container-home)",
       },
       borderRadius: {
         card: "var(--pc-radius-card)",

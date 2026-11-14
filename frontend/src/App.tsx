@@ -42,7 +42,7 @@ function NavigationHeader() {
 
   return (
     <header className="bg-red-600 text-white shadow-md sticky top-0 z-30">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4">
+      <div className="mx-auto max-w-home px-3 sm:px-4">
         <div className="flex items-center justify-between gap-2 py-3">
           <Link
             to="/"

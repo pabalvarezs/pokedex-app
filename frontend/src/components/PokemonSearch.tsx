@@ -127,13 +127,23 @@ export default function PokemonSearch() {
   };
 
   return (
-    <div ref={containerRef} className="relative mb-4">
+    <div ref={containerRef} className="relative">
       <form onSubmit={handleSubmit} role="search" className="relative">
         <span
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-500"
           aria-hidden="true"
         >
-          🔍
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="h-5 w-5"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.6-3.6" />
+          </svg>
         </span>
 
         <input
@@ -160,16 +170,16 @@ export default function PokemonSearch() {
           }
           autoComplete="off"
           spellCheck={false}
-          className="w-full pl-12 pr-24 py-3.5 bg-white border-2 border-gray-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 rounded-2xl text-sm font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal shadow-sm outline-none transition"
+          className="w-full rounded-[14px] border border-line bg-white py-4 pl-12 pr-28 text-[15px] font-semibold text-ink-900 shadow-sm outline-none transition placeholder:font-normal placeholder:text-ink-500/80 hover:border-slate-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
         />
 
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
           {term && (
             <button
               type="button"
               onClick={clear}
               aria-label="Limpiar búsqueda"
-              className="w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-sm font-bold transition"
+              className="flex h-9 w-9 items-center justify-center rounded-control text-sm font-bold text-ink-500 transition hover:bg-slate-100 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
             >
               ✕
             </button>
@@ -177,7 +187,7 @@ export default function PokemonSearch() {
           <button
             type="submit"
             aria-label="Buscar"
-            className="px-3 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm"
+            className="h-11 rounded-control bg-red-600 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 active:scale-[0.98]"
           >
             Buscar
           </button>
