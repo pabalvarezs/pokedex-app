@@ -66,6 +66,11 @@ export default function Home() {
   const allGensSelected =
     genMode === "include" ? activeGens.length === allGenIds.length : activeGens.length === 0;
   const hasFilters = typeFilterActive || genFilterActive || sortBy !== "id";
+  // "Todos" activa el modo exclusión aunque no haya nada excluido todavía. No
+  // restringe resultados, pero es un estado de filtro que debe verse y poder
+  // limpiarse.
+  const hasFilterModes = typeMode === "exclude" || genMode === "exclude";
+  const canClearFilters = hasFilters || hasFilterModes;
 
   // Listado general (paginado): solo cuando no hay filtros activos
   const {
@@ -221,8 +226,14 @@ export default function Home() {
 
   const activeTypeInfo = activeTypes.length > 0 ? POKEMON_TYPES[activeTypes[0].toLowerCase()] : null;
 
-  const selectedTypeCount =
-    typeMode === "include" ? activeTypes.length : allTypeKeys.length - activeTypes.length;
+  const typeFilterLabel =
+    typeMode === "exclude"
+      ? activeTypes.length === 0
+        ? "todos"
+        : `${activeTypes.length} excluido${activeTypes.length === 1 ? "" : "s"}`
+      : activeTypes.length > 0
+        ? `${activeTypes.length} seleccionado${activeTypes.length === 1 ? "" : "s"}`
+        : "";
 
   const isTypeSelected = (key: string) =>
     typeMode === "include" ? activeTypes.includes(key) : !activeTypes.includes(key);
@@ -252,8 +263,14 @@ export default function Home() {
     );
   };
 
-  const selectedGenCount =
-    genMode === "include" ? activeGens.length : allGenIds.length - activeGens.length;
+  const genFilterLabel =
+    genMode === "exclude"
+      ? activeGens.length === 0
+        ? "todas"
+        : `${activeGens.length} excluida${activeGens.length === 1 ? "" : "s"}`
+      : activeGens.length > 0
+        ? `${activeGens.length} seleccionada${activeGens.length === 1 ? "" : "s"}`
+        : "";
 
   const isGenSelected = (id: number) =>
     genMode === "include" ? activeGens.includes(id) : !activeGens.includes(id);
@@ -307,12 +324,12 @@ export default function Home() {
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
               showTypeFilter
                 ? "bg-red-600 text-white border-red-600"
-                : activeTypes.length > 0
+                : activeTypes.length > 0 || typeMode === "exclude"
                   ? "bg-red-50 text-red-700 border-red-300"
                   : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🎨 Tipo {selectedTypeCount > 0 ? `${selectedTypeCount} seleccionados` : ""}
+            🎨 Tipo {typeFilterLabel}
           </button>
 
           <button
@@ -320,12 +337,12 @@ export default function Home() {
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
               showGenFilter
                 ? "bg-red-600 text-white border-red-600"
-                : activeGens.length > 0
+                : activeGens.length > 0 || genMode === "exclude"
                   ? "bg-red-50 text-red-700 border-red-300"
                   : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🌍 Generación {selectedGenCount > 0 ? `${selectedGenCount} seleccionadas` : ""}
+            🌍 Generación {genFilterLabel}
           </button>
 
           {/* Ordenamiento */}
@@ -341,7 +358,7 @@ export default function Home() {
               ))}
             </select>
 
-            {hasFilters && (
+            {canClearFilters && (
               <button
                 onClick={clearFilters}
                 className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition"
@@ -425,10 +442,10 @@ export default function Home() {
         )}
 
         {/* Resumen de filtros activos */}
-        {(activeTypes.length > 0 || activeGens.length > 0 || allTypesSelected || allGensSelected) && (
+        {(activeTypes.length > 0 || activeGens.length > 0 || hasFilterModes) && (
           <div className="mt-3 flex flex-wrap gap-2 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500 font-semibold self-center">Filtros activos:</span>
-            {allTypesSelected && (
+            {(typeMode === "exclude" || allTypesSelected) && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 Todos los tipos
                 <button
@@ -458,7 +475,7 @@ export default function Home() {
                 </span>
               );
             })}
-            {allGensSelected && (
+            {(genMode === "exclude" || allGensSelected) && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 Todas las generaciones
                 <button

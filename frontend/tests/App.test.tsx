@@ -93,9 +93,12 @@ describe("App", () => {
     // 18 tipos más el propio botón "Todos"
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(19);
     expect(screen.getByText("Todos los tipos")).toBeTruthy();
+    // "Todos" es un estado de filtro: debe poder limpiarse aunque no restrinja
+    expect(screen.getByRole("button", { name: /Limpiar todo/i })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Todos" }));
     expect(screen.queryByText("Todos los tipos")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Limpiar todo/i })).toBeNull();
   });
 
   it("selecciona todas las generaciones con la opción Todos", async () => {
@@ -109,9 +112,11 @@ describe("App", () => {
     // 9 generaciones más el propio botón "Todos"
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(10);
     expect(screen.getByText("Todas las generaciones")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Limpiar todo/i })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Todos" }));
     expect(screen.queryByText("Todas las generaciones")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Limpiar todo/i })).toBeNull();
   });
 
   it("quita los Pokémon de una generación al desmarcarla", async () => {
@@ -131,6 +136,9 @@ describe("App", () => {
 
     expect(gen1.getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByText(/Sin Gen 1 · Kanto/)).toBeTruthy();
+    // "Todas las generaciones" sigue visible junto a la exclusión
+    expect(screen.getByText("Todas las generaciones")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Generación 1 excluida/i })).toBeTruthy();
     // 9 generaciones menos Gen 1: el resto sigue marcado y "Todos" ya no lo está
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(8);
 
@@ -159,6 +167,9 @@ describe("App", () => {
 
     expect(planta.getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByText("Sin Planta")).toBeTruthy();
+    // "Todos los tipos" sigue visible junto a la exclusión y el botón lo resume
+    expect(screen.getByText("Todos los tipos")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Tipo 1 excluido/i })).toBeTruthy();
     // 18 tipos menos Planta: el resto sigue marcado y "Todos" ya no lo está
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(17);
 
