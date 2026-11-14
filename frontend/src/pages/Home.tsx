@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { listPokemon, listPokemonByType, listPokemonByGeneration, type Pokemon } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonSearch from "../components/PokemonSearch";
@@ -32,6 +32,8 @@ export default function Home() {
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [showGenFilter, setShowGenFilter] = useState(false);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [typeMode, setTypeMode] = useState<"include" | "exclude">("include");
+  const [genMode, setGenMode] = useState<"include" | "exclude">("include");
 
   const clearFilters = useCallback(() => {
     setActiveTypes([]);
@@ -40,42 +42,94 @@ export default function Home() {
     setShowTypeFilter(false);
     setShowGenFilter(false);
     setPageSize(PAGE_SIZE);
+    setTypeMode("include");
+    setGenMode("include");
   }, []);
 
   // Al cambiar filtros volvemos a la primera página
   useEffect(() => {
     setPageSize(PAGE_SIZE);
-  }, [activeTypes, activeGens]);
+  }, [activeTypes, activeGens, typeMode, genMode]);
 
-  const hasFilters = activeTypes.length > 0 || activeGens.length > 0 || sortBy !== "id";
+  const allTypeKeys = Object.keys(POKEMON_TYPES);
+  const allGenIds = GENERATIONS.map((g) => g.id);
+  // En modo "include" los filtros marcados se suman (unión). En modo "exclude"
+  // (activado con "Todos") los desmarcados se restan del catálogo.
+  const typeFilterActive =
+    typeMode === "include"
+      ? activeTypes.length > 0 && activeTypes.length < allTypeKeys.length
+      : activeTypes.length > 0;
+  const genFilterActive =
+    genMode === "include" ? activeGens.length > 0 : true;
+  const allTypesSelected =
+    typeMode === "include" ? activeTypes.length === allTypeKeys.length : activeTypes.length === 0;
+  const allGensSelected =
+    genMode === "include" ? activeGens.length === allGenIds.length : activeGens.length === 0;
+  const hasFilters = typeFilterActive || genFilterActive || sortBy !== "id";
 
   // Fetch según filtros activos
   const { data, isLoading, isError, isFetching } = useQuery({
-    queryKey: ["pokemon", "filtered", { types: activeTypes, gens: activeGens, pageSize }],
-    // Mantiene el listado anterior mientras llega la nueva página, evitando
-    // que el spinner reemplace el contenido y se pierda la posición del scroll.
-    placeholderData: keepPreviousData,
+    queryKey: [
+      "pokemon",
+      "filtered",
+      { typeMode, types: activeTypes, genMode, gens: activeGens, pageSize },
+    ],
+    // Conserva la lista anterior solo al paginar ("Cargar más"). Al cambiar
+    // filtros se muestra la carga para que el resultado anterior no quede
+    // pegado y parezca que el filtro no hizo efecto.
+    placeholderData: (previousData, previousQuery) => {
+      const prev = previousQuery?.queryKey[2] as
+        | { typeMode: "include" | "exclude"; types: string[]; genMode: "include" | "exclude"; gens: number[] }
+        | undefined;
+      if (
+        prev &&
+        prev.typeMode === typeMode &&
+        prev.types === activeTypes &&
+        prev.genMode === genMode &&
+        prev.gens === activeGens
+      ) {
+        return previousData;
+      }
+      return undefined;
+    },
     queryFn: async () => {
-      // Sin filtros: paginación contra el listado general
-      if (activeTypes.length === 0 && activeGens.length === 0) {
+      // Sin filtros efectivos: paginación contra el listado general
+      if (!typeFilterActive && !genFilterActive) {
         const page = await listPokemon(pageSize, 0);
         return { pokemon: page.pokemon, total: page.total };
       }
 
       let pokemon: Pokemon[] = [];
 
-      if (activeTypes.length > 0) {
-        // Unión de todos los tipos seleccionados
-        const typeResults = await Promise.all(activeTypes.map((t) => listPokemonByType(t)));
+      if (typeFilterActive) {
+        const typesToFetch =
+          typeMode === "include"
+            ? activeTypes
+            : allTypeKeys.filter((t) => !activeTypes.includes(t));
+
+        // Unión de todos los tipos incluidos (OR)
+        const typeResults = await Promise.all(typesToFetch.map((t) => listPokemonByType(t)));
         pokemon = dedupeById(typeResults.flatMap((tr) => tr.pokemon));
+
+        // En modo exclusión también se descartan los Pokémon de doble tipo que
+        // tengan alguno de los tipos excluidos.
+        if (typeMode === "exclude") {
+          const excluded = new Set(activeTypes);
+          pokemon = pokemon.filter((p) => !p.types?.some((t) => excluded.has(t)));
+        }
       }
 
-      if (activeGens.length > 0) {
-        // Unión de todas las generaciones seleccionadas
-        const genResults = await Promise.all(activeGens.map((gen) => listPokemonByGeneration(gen)));
+      if (genFilterActive) {
+        const gensToFetch =
+          genMode === "include"
+            ? activeGens
+            : allGenIds.filter((id) => !activeGens.includes(id));
+
+        // Unión de todas las generaciones incluidas
+        const genResults = await Promise.all(gensToFetch.map((gen) => listPokemonByGeneration(gen)));
         const genIds = new Set(genResults.flatMap((gr) => gr.pokemon.map((p) => p.id)));
 
-        if (activeTypes.length > 0) {
+        if (typeFilterActive) {
           // Intersección: tipo(s) AND generación(es)
           pokemon = pokemon.filter((p) => genIds.has(p.id));
         } else {
@@ -97,17 +151,73 @@ export default function Home() {
 
   const totalPokemon = data?.total ?? sortedPokemon.length;
   const canLoadMore =
-    activeTypes.length === 0 &&
-    activeGens.length === 0 &&
+    !typeFilterActive &&
+    !genFilterActive &&
     sortedPokemon.length < totalPokemon;
 
   const activeTypeInfo = activeTypes.length > 0 ? POKEMON_TYPES[activeTypes[0].toLowerCase()] : null;
-  const activeGenInfo = activeGens.length > 0 ? GENERATIONS.find((g) => g.id === activeGens[0]) : null;
 
-  const allTypeKeys = Object.keys(POKEMON_TYPES);
-  const allTypesSelected = activeTypes.length === allTypeKeys.length;
-  const allGenIds = GENERATIONS.map((g) => g.id);
-  const allGensSelected = activeGens.length === allGenIds.length;
+  const selectedTypeCount =
+    typeMode === "include" ? activeTypes.length : allTypeKeys.length - activeTypes.length;
+
+  const isTypeSelected = (key: string) =>
+    typeMode === "include" ? activeTypes.includes(key) : !activeTypes.includes(key);
+
+  const toggleAllTypes = () => {
+    if (allTypesSelected) {
+      setTypeMode("include");
+      setActiveTypes([]);
+    } else {
+      setTypeMode("exclude");
+      setActiveTypes([]);
+    }
+  };
+
+  const toggleType = (key: string) => {
+    // Si veníamos de tener los 18 tipos marcados uno a uno, al quitar uno
+    // pasamos a modo exclusión para que se oculten todos los de ese tipo.
+    if (typeMode === "include" && activeTypes.length === allTypeKeys.length) {
+      setTypeMode("exclude");
+      setActiveTypes([key]);
+      return;
+    }
+    setActiveTypes(
+      activeTypes.includes(key)
+        ? activeTypes.filter((t) => t !== key)
+        : [...activeTypes, key]
+    );
+  };
+
+  const selectedGenCount =
+    genMode === "include" ? activeGens.length : allGenIds.length - activeGens.length;
+
+  const isGenSelected = (id: number) =>
+    genMode === "include" ? activeGens.includes(id) : !activeGens.includes(id);
+
+  const toggleAllGens = () => {
+    if (allGensSelected) {
+      setGenMode("include");
+      setActiveGens([]);
+    } else {
+      setGenMode("exclude");
+      setActiveGens([]);
+    }
+  };
+
+  const toggleGen = (id: number) => {
+    // Si veníamos de tener las 9 generaciones marcadas una a una, al quitar
+    // una pasamos a modo exclusión para que se oculten todos sus Pokémon.
+    if (genMode === "include" && activeGens.length === allGenIds.length) {
+      setGenMode("exclude");
+      setActiveGens([id]);
+      return;
+    }
+    setActiveGens(
+      activeGens.includes(id)
+        ? activeGens.filter((g) => g !== id)
+        : [...activeGens, id]
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto py-6">
@@ -138,7 +248,7 @@ export default function Home() {
                   : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🎨 Tipo {activeTypes.length > 0 ? `${activeTypes.length} seleccionados` : ""}
+            🎨 Tipo {selectedTypeCount > 0 ? `${selectedTypeCount} seleccionados` : ""}
           </button>
 
           <button
@@ -151,7 +261,7 @@ export default function Home() {
                   : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
             }`}
           >
-            🌍 Generación {activeGens.length > 0 ? `${activeGens.length} seleccionadas` : ""}
+            🌍 Generación {selectedGenCount > 0 ? `${selectedGenCount} seleccionadas` : ""}
           </button>
 
           {/* Ordenamiento */}
@@ -181,10 +291,12 @@ export default function Home() {
         {/* Panel de tipos */}
         {showTypeFilter && (
           <div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona un tipo:</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              {typeMode === "exclude" ? "Quita un tipo para excluirlo:" : "Selecciona un tipo:"}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               <button
-                onClick={() => setActiveTypes(allTypesSelected ? [] : allTypeKeys)}
+                onClick={toggleAllTypes}
                 aria-pressed={allTypesSelected}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-black transition border ${
                   allTypesSelected
@@ -197,16 +309,10 @@ export default function Home() {
               {Object.entries(POKEMON_TYPES).map(([key, info]) => (
                 <button
                   key={key}
-                  onClick={() => {
-                    if (activeTypes.includes(key)) {
-                      setActiveTypes(activeTypes.filter(t => t !== key));
-                    } else {
-                      setActiveTypes([...activeTypes, key]);
-                    }
-                  }}
-                  aria-pressed={activeTypes.includes(key)}
+                  onClick={() => toggleType(key)}
+                  aria-pressed={isTypeSelected(key)}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-black transition border ${
-                    activeTypes.includes(key)
+                    isTypeSelected(key)
                       ? `${info.bg} ${info.text} ${info.border} shadow-sm ring-2 ring-offset-1 ring-gray-400`
                       : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
                   }`}
@@ -221,10 +327,12 @@ export default function Home() {
         {/* Panel de generaciones */}
         {showGenFilter && (
           <div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona una generación:</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              {genMode === "exclude" ? "Quita una generación para excluirla:" : "Selecciona una generación:"}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               <button
-                onClick={() => setActiveGens(allGensSelected ? [] : allGenIds)}
+                onClick={toggleAllGens}
                 aria-pressed={allGensSelected}
                 className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black transition border ${
                   allGensSelected
@@ -237,16 +345,10 @@ export default function Home() {
               {GENERATIONS.map((g) => (
                 <button
                   key={g.id}
-                  onClick={() => {
-                    if (activeGens.includes(g.id)) {
-                      setActiveGens(activeGens.filter(id => id !== g.id));
-                    } else {
-                      setActiveGens([...activeGens, g.id]);
-                    }
-                  }}
-                  aria-pressed={activeGens.includes(g.id)}
+                  onClick={() => toggleGen(g.id)}
+                  aria-pressed={isGenSelected(g.id)}
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black transition border ${
-                    activeGens.includes(g.id)
+                    isGenSelected(g.id)
                       ? "bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-offset-1 ring-red-300"
                       : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
                   }`}
@@ -259,33 +361,73 @@ export default function Home() {
         )}
 
         {/* Resumen de filtros activos */}
-        {(activeTypes.length > 0 || activeGens.length > 0) && (
+        {(activeTypes.length > 0 || activeGens.length > 0 || allTypesSelected || allGensSelected) && (
           <div className="mt-3 flex flex-wrap gap-2 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500 font-semibold self-center">Filtros activos:</span>
-            {activeTypes.length > 0 && allTypesSelected && (
+            {allTypesSelected && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 Todos los tipos
-                <button onClick={() => setActiveTypes([])} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                <button
+                  onClick={() => {
+                    setTypeMode("include");
+                    setActiveTypes([]);
+                  }}
+                  className="ml-1 opacity-70 hover:opacity-100"
+                >
+                  ✕
+                </button>
               </span>
             )}
-            {activeTypes.length > 0 && !allTypesSelected && activeTypeInfo && (
+            {typeMode === "include" && activeTypes.length > 0 && !allTypesSelected && activeTypeInfo && (
               <span className={`px-2.5 py-1 rounded-full text-[11px] font-black ${activeTypeInfo.bg} ${activeTypeInfo.text} flex items-center gap-1`}>
                 {activeTypeInfo.es}
                 <button onClick={() => setActiveTypes(activeTypes.filter(t => t !== activeTypes[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
               </span>
             )}
-            {activeGens.length > 0 && allGensSelected && (
+            {typeMode === "exclude" && activeTypes.map((key) => {
+              const info = POKEMON_TYPES[key];
+              if (!info) return null;
+              return (
+                <span key={key} className="px-2.5 py-1 rounded-full text-[11px] font-black bg-white text-gray-700 border border-gray-300 flex items-center gap-1">
+                  Sin {info.es}
+                  <button onClick={() => setActiveTypes(activeTypes.filter(t => t !== key))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                </span>
+              );
+            })}
+            {allGensSelected && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 Todas las generaciones
-                <button onClick={() => setActiveGens([])} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                <button
+                  onClick={() => {
+                    setGenMode("include");
+                    setActiveGens([]);
+                  }}
+                  className="ml-1 opacity-70 hover:opacity-100"
+                >
+                  ✕
+                </button>
               </span>
             )}
-            {activeGens.length > 0 && !allGensSelected && activeGenInfo && (
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
-                {activeGenInfo.name} · {activeGenInfo.region}
-                <button onClick={() => setActiveGens(activeGens.filter(id => id !== activeGens[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
-              </span>
-            )}
+            {genMode === "include" && activeGens.length > 0 && !allGensSelected && activeGens.map((id) => {
+              const g = GENERATIONS.find((item) => item.id === id);
+              if (!g) return null;
+              return (
+                <span key={id} className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
+                  {g.name} · {g.region}
+                  <button onClick={() => setActiveGens(activeGens.filter((x) => x !== id))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                </span>
+              );
+            })}
+            {genMode === "exclude" && activeGens.map((id) => {
+              const g = GENERATIONS.find((item) => item.id === id);
+              if (!g) return null;
+              return (
+                <span key={id} className="px-2.5 py-1 rounded-full text-[11px] font-black bg-white text-gray-700 border border-gray-300 flex items-center gap-1">
+                  Sin {g.name} · {g.region}
+                  <button onClick={() => setActiveGens(activeGens.filter((x) => x !== id))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

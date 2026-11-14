@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "../src/App";
-import { suggestPokemon } from "../src/services/api";
+import { listPokemonByGeneration, listPokemonByType, suggestPokemon } from "../src/services/api";
 
 vi.mock("../src/services/api", () => ({
   listPokemon: vi.fn(async () => ({
@@ -112,6 +112,63 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Todos" }));
     expect(screen.queryByText("Todas las generaciones")).toBeNull();
+  });
+
+  it("quita los Pokémon de una generación al desmarcarla", async () => {
+    vi.mocked(listPokemonByGeneration).mockImplementation(async (gen: number) => ({
+      pokemon: gen === 1 ? [{ id: 1, name: "bulbasaur", types: ["grass", "poison"] }] : [],
+      total: gen === 1 ? 1 : 0,
+      generation: gen,
+    }));
+
+    renderApp();
+    await screen.findByText("bulbasaur");
+    fireEvent.click(screen.getByRole("button", { name: /Generación/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+
+    const gen1 = screen.getByRole("button", { name: /Gen 1 · Kanto/ });
+    fireEvent.click(gen1);
+
+    expect(gen1.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByText(/Sin Gen 1 · Kanto/)).toBeTruthy();
+    // 9 generaciones menos Gen 1: el resto sigue marcado y "Todos" ya no lo está
+    expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(8);
+
+    await waitFor(() => expect(screen.queryByText("bulbasaur")).toBeNull());
+  });
+
+  it("excluye un tipo al quitarlo después de pulsar Todos", async () => {
+    vi.mocked(listPokemonByType).mockImplementation(async (type: string) => {
+      if (type === "poison") {
+        return {
+          pokemon: [{ id: 1, name: "bulbasaur", types: ["grass", "poison"] }],
+          total: 1,
+          type,
+        };
+      }
+      return { pokemon: [], total: 0, type };
+    });
+
+    renderApp();
+    await screen.findByText("bulbasaur");
+    fireEvent.click(screen.getByRole("button", { name: /Tipo/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+
+    const planta = screen.getByRole("button", { name: "Planta" });
+    fireEvent.click(planta);
+
+    expect(planta.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByText("Sin Planta")).toBeTruthy();
+    // 18 tipos menos Planta: el resto sigue marcado y "Todos" ya no lo está
+    expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(17);
+
+    // Bulbasaur es Planta/Veneno: aparece por Veneno, pero se descarta por Planta
+    await waitFor(() => expect(screen.queryByText("bulbasaur")).toBeNull());
+
+    fireEvent.click(planta);
+    expect(planta.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByText("Sin Planta")).toBeNull();
+    expect(await screen.findByText("bulbasaur")).toBeTruthy();
   });
 
   it("pide iniciar sesión en favoritos sin sesión", async () => {
