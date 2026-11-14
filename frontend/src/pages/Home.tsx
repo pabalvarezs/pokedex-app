@@ -104,6 +104,9 @@ export default function Home() {
   const activeTypeInfo = activeTypes.length > 0 ? POKEMON_TYPES[activeTypes[0].toLowerCase()] : null;
   const activeGenInfo = activeGens.length > 0 ? GENERATIONS.find((g) => g.id === activeGens[0]) : null;
 
+  const allTypeKeys = Object.keys(POKEMON_TYPES);
+  const allTypesSelected = activeTypes.length === allTypeKeys.length;
+
   return (
     <div className="max-w-6xl mx-auto py-6">
       {/* Título */}
@@ -178,6 +181,17 @@ export default function Home() {
           <div>
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona un tipo:</p>
             <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setActiveTypes(allTypesSelected ? [] : allTypeKeys)}
+                aria-pressed={allTypesSelected}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-black transition border ${
+                  allTypesSelected
+                    ? "bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-offset-1 ring-red-300"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                Todos
+              </button>
               {Object.entries(POKEMON_TYPES).map(([key, info]) => (
                 <button
                   key={key}
@@ -188,6 +202,7 @@ export default function Home() {
                       setActiveTypes([...activeTypes, key]);
                     }
                   }}
+                  aria-pressed={activeTypes.includes(key)}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-black transition border ${
                     activeTypes.includes(key)
                       ? `${info.bg} ${info.text} ${info.border} shadow-sm ring-2 ring-offset-1 ring-gray-400`
@@ -233,7 +248,13 @@ export default function Home() {
         {(activeTypes.length > 0 || activeGens.length > 0) && (
           <div className="mt-3 flex flex-wrap gap-2 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500 font-semibold self-center">Filtros activos:</span>
-            {activeTypes.length > 0 && activeTypeInfo && (
+            {activeTypes.length > 0 && allTypesSelected && (
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
+                Todos los tipos
+                <button onClick={() => setActiveTypes([])} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+              </span>
+            )}
+            {activeTypes.length > 0 && !allTypesSelected && activeTypeInfo && (
               <span className={`px-2.5 py-1 rounded-full text-[11px] font-black ${activeTypeInfo.bg} ${activeTypeInfo.text} flex items-center gap-1`}>
                 {activeTypeInfo.es}
                 <button onClick={() => setActiveTypes(activeTypes.filter(t => t !== activeTypes[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>

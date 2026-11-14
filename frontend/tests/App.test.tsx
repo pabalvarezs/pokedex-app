@@ -81,6 +81,23 @@ describe("App", () => {
     expect(screen.getByText("#025")).toBeTruthy();
   });
 
+  it("selecciona todos los tipos con la opción Todos", async () => {
+    renderApp();
+
+    await screen.findByText("bulbasaur");
+    fireEvent.click(screen.getByRole("button", { name: /Tipo/i }));
+
+    const todos = screen.getByRole("button", { name: "Todos" });
+    fireEvent.click(todos);
+
+    // 18 tipos más el propio botón "Todos"
+    expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(19);
+    expect(screen.getByText("Todos los tipos")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+    expect(screen.queryByText("Todos los tipos")).toBeNull();
+  });
+
   it("pide iniciar sesión en favoritos sin sesión", async () => {
     renderApp(["/favorites"]);
 
