@@ -25,8 +25,9 @@ app.use("/api/admin", adminRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Pokedex backend listening on http://0.0.0.0:${PORT}`);
+// Sin host explícito Node escucha en `::` (dual-stack), cubriendo IPv4 e IPv6.
+app.listen(PORT, () => {
+  console.log(`Pokedex backend listening on http://localhost:${PORT}`);
   // Deja listo el buscador predictivo antes de la primera consulta.
   warmSuggestionIndex();
 });
