@@ -98,6 +98,22 @@ describe("App", () => {
     expect(screen.queryByText("Todos los tipos")).toBeNull();
   });
 
+  it("selecciona todas las generaciones con la opción Todos", async () => {
+    renderApp();
+
+    await screen.findByText("bulbasaur");
+    fireEvent.click(screen.getByRole("button", { name: /Generación/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+
+    // 9 generaciones más el propio botón "Todos"
+    expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(10);
+    expect(screen.getByText("Todas las generaciones")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+    expect(screen.queryByText("Todas las generaciones")).toBeNull();
+  });
+
   it("pide iniciar sesión en favoritos sin sesión", async () => {
     renderApp(["/favorites"]);
 

@@ -106,6 +106,8 @@ export default function Home() {
 
   const allTypeKeys = Object.keys(POKEMON_TYPES);
   const allTypesSelected = activeTypes.length === allTypeKeys.length;
+  const allGenIds = GENERATIONS.map((g) => g.id);
+  const allGensSelected = activeGens.length === allGenIds.length;
 
   return (
     <div className="max-w-6xl mx-auto py-6">
@@ -221,6 +223,17 @@ export default function Home() {
           <div>
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona una generación:</p>
             <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setActiveGens(allGensSelected ? [] : allGenIds)}
+                aria-pressed={allGensSelected}
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black transition border ${
+                  allGensSelected
+                    ? "bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-offset-1 ring-red-300"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                Todos
+              </button>
               {GENERATIONS.map((g) => (
                 <button
                   key={g.id}
@@ -231,6 +244,7 @@ export default function Home() {
                       setActiveGens([...activeGens, g.id]);
                     }
                   }}
+                  aria-pressed={activeGens.includes(g.id)}
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black transition border ${
                     activeGens.includes(g.id)
                       ? "bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-offset-1 ring-red-300"
@@ -260,7 +274,13 @@ export default function Home() {
                 <button onClick={() => setActiveTypes(activeTypes.filter(t => t !== activeTypes[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
               </span>
             )}
-            {activeGens.length > 0 && activeGenInfo && (
+            {activeGens.length > 0 && allGensSelected && (
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
+                Todas las generaciones
+                <button onClick={() => setActiveGens([])} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+              </span>
+            )}
+            {activeGens.length > 0 && !allGensSelected && activeGenInfo && (
               <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-red-600 text-white flex items-center gap-1">
                 {activeGenInfo.name} · {activeGenInfo.region}
                 <button onClick={() => setActiveGens(activeGens.filter(id => id !== activeGens[0]))} className="ml-1 opacity-70 hover:opacity-100">✕</button>
