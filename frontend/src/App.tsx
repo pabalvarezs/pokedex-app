@@ -6,6 +6,7 @@ import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import TypePage from "./pages/TypePage";
 import Admin from "./pages/Admin";
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 function NavigationHeader() {
@@ -163,6 +164,9 @@ export default function App() {
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
+
+        {/* Botón flotante Volver arriba (PokéBall) */}
+        <ScrollToTop />
       </div>
     </AuthProvider>
   );
