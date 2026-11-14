@@ -9,6 +9,4 @@ build/
 .coverage/
 prisma/migrations/
 .playwright-cli/
-# Ignorar carpeta de documentación y docker-compose en producción
-docs/
-docker-compose.yml
+docs
