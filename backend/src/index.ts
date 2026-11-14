@@ -5,6 +5,7 @@ import favoriteRoutes from "./routes/favorites";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import { errorHandler, notFoundHandler } from "./middleware/error";
+import { warmSuggestionIndex } from "./services/pokemon";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -26,4 +27,6 @@ app.use(errorHandler);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Pokedex backend listening on http://0.0.0.0:${PORT}`);
+  // Deja listo el buscador predictivo antes de la primera consulta.
+  warmSuggestionIndex();
 });

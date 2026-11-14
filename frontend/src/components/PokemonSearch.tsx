@@ -6,12 +6,14 @@ import {
   useRef,
   useState,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { suggestPokemon, type PokemonSuggestion } from "../services/api";
 
-const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 120;
 const MIN_QUERY_LENGTH = 2;
+// Consulta usada para calentar el índice del backend en segundo plano.
+const WARMUP_QUERY = "pikachu";
 
 function spriteUrl(id: number) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
@@ -29,8 +31,10 @@ function formatId(id: number) {
 
 export default function PokemonSearch() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const warmedRef = useRef(false);
 
   const [term, setTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
@@ -38,6 +42,18 @@ export default function PokemonSearch() {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const trimmedTerm = term.trim();
+
+  // Al enfocar, dispara la descarga del índice si aún no se hizo, para que la
+  // primera búsqueda no espere a que el backend lo construya.
+  const warmIndex = () => {
+    if (warmedRef.current) return;
+    warmedRef.current = true;
+    queryClient.prefetchQuery({
+      queryKey: ["pokemon", "suggest", WARMUP_QUERY],
+      queryFn: () => suggestPokemon(WARMUP_QUERY),
+      staleTime: 5 * 60 * 1000,
+    });
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedTerm(term.trim()), DEBOUNCE_MS);
@@ -52,12 +68,17 @@ export default function PokemonSearch() {
     queryFn: () => suggestPokemon(debouncedTerm),
     enabled: canSearch,
     staleTime: 5 * 60 * 1000,
+    // Mantiene las sugerencias anteriores mientras llega el término nuevo:
+    // la lista no desaparece ni parpadea al seguir escribiendo.
+    placeholderData: keepPreviousData,
   });
 
-  const suggestions: PokemonSuggestion[] =
-    canSearch && isReady ? data ?? [] : [];
+  const suggestions: PokemonSuggestion[] = canSearch ? data ?? [] : [];
   const isDebouncing = trimmedTerm.length >= MIN_QUERY_LENGTH && !isReady;
   const isLoading = (canSearch || isDebouncing) && (isDebouncing || isFetching);
+  // Resultados de un término anterior que todavía no se reemplazan.
+  const isRefreshing = isLoading && suggestions.length > 0;
+  const showSkeleton = isLoading && suggestions.length === 0;
   const showError = isError && !isLoading && suggestions.length === 0;
   const activeSuggestion = activeIndex >= 0 ? suggestions[activeIndex] : undefined;
 
@@ -203,7 +224,10 @@ export default function PokemonSearch() {
             setTerm(event.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true);
+            warmIndex();
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Busca un Pokémon…"
           aria-label="Buscar Pokémon"
@@ -306,7 +330,7 @@ export default function PokemonSearch() {
             )}
           </div>
 
-          {isLoading ? (
+          {showSkeleton ? (
             <div className="px-2 py-2" role="status" aria-live="polite">
               <span className="sr-only">Buscando Pokémon…</span>
               {[0, 1, 2].map((row) => (
@@ -357,7 +381,11 @@ export default function PokemonSearch() {
             </div>
           ) : (
             <>
-              <ul className="max-h-80 divide-y divide-line-soft overflow-y-auto">
+              <ul
+                className={`max-h-80 divide-y divide-line-soft overflow-y-auto transition-opacity ${
+                  isRefreshing ? "opacity-60" : "opacity-100"
+                }`}
+              >
                 {suggestions.map((suggestion, index) => {
                   const isActive = index === activeIndex;
                   return (

@@ -949,3 +949,14 @@ export async function suggestPokemon(
   const index = await getNameIndex();
   return rankSuggestions(index, query, limit);
 }
+
+/**
+ * Precalienta el índice de nombres en segundo plano. La descarga inicial desde
+ * PokéAPI tarda un par de segundos; hacerla al arrancar evita que la primera
+ * búsqueda predictiva de un usuario espere a que se construya.
+ */
+export function warmSuggestionIndex(): void {
+  getNameIndex().catch(() => {
+    // Sin acción: la próxima búsqueda reintenta la descarga.
+  });
+}
