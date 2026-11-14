@@ -151,6 +151,9 @@ interface CacheEntry<T> {
 }
 
 const rawPokemonCache = new Map<string, CacheEntry<PokemonApiResponse>>();
+// Peticiones en curso: evita pedir el mismo Pokémon dos veces cuando se cargan
+// listas en paralelo (por ejemplo, tipos y generaciones a la vez).
+const rawPokemonPending = new Map<string, Promise<PokemonApiResponse>>();
 const speciesCache = new Map<string, CacheEntry<SpeciesInfo>>();
 const evolutionChainCache = new Map<string, CacheEntry<EvolutionStage[]>>();
 const megaFormCache = new Map<string, CacheEntry<MegaForm>>();
@@ -660,12 +663,22 @@ async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> 
   const cached = cacheGet(rawPokemonCache, normalized);
   if (cached) return cached;
 
-  const { data } = await api.get<PokemonApiResponse>(
-    `/pokemon/${encodeURIComponent(normalized)}`
-  );
-  cacheSet(rawPokemonCache, normalized, data);
-  cacheSet(rawPokemonCache, String(data.id), data);
-  return data;
+  const pending = rawPokemonPending.get(normalized);
+  if (pending) return pending;
+
+  const request = api
+    .get<PokemonApiResponse>(`/pokemon/${encodeURIComponent(normalized)}`)
+    .then(({ data }) => {
+      cacheSet(rawPokemonCache, normalized, data);
+      cacheSet(rawPokemonCache, String(data.id), data);
+      return data;
+    })
+    .finally(() => {
+      rawPokemonPending.delete(normalized);
+    });
+
+  rawPokemonPending.set(normalized, request);
+  return request;
 }
 
 async function getSpeciesInfo(idOrName: number | string) {

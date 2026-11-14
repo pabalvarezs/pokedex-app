@@ -139,7 +139,7 @@ describe("App", () => {
 
   it("excluye un tipo al quitarlo después de pulsar Todos", async () => {
     vi.mocked(listPokemonByType).mockImplementation(async (type: string) => {
-      if (type === "poison") {
+      if (type === "grass" || type === "poison") {
         return {
           pokemon: [{ id: 1, name: "bulbasaur", types: ["grass", "poison"] }],
           total: 1,
@@ -169,6 +169,54 @@ describe("App", () => {
     expect(planta.getAttribute("aria-pressed")).toBe("true");
     expect(screen.queryByText("Sin Planta")).toBeNull();
     expect(await screen.findByText("bulbasaur")).toBeTruthy();
+  });
+
+  it("combina la exclusión de tipo y generación", async () => {
+    vi.mocked(listPokemonByGeneration).mockImplementation(async (gen: number) => {
+      const pokemon =
+        gen === 1
+          ? [
+              { id: 1, name: "bulbasaur", types: ["grass", "poison"] },
+              { id: 4, name: "charmander", types: ["fire"] },
+            ]
+          : gen === 2
+            ? [{ id: 152, name: "chikorita", types: ["grass"] }]
+            : [];
+      return { pokemon, total: pokemon.length, generation: gen };
+    });
+    vi.mocked(listPokemonByType).mockImplementation(async (type: string) => {
+      const pokemon =
+        type === "grass"
+          ? [
+              { id: 1, name: "bulbasaur", types: ["grass", "poison"] },
+              { id: 152, name: "chikorita", types: ["grass"] },
+            ]
+          : type === "poison"
+            ? [{ id: 1, name: "bulbasaur", types: ["grass", "poison"] }]
+            : type === "fire"
+              ? [{ id: 4, name: "charmander", types: ["fire"] }]
+              : [];
+      return { pokemon, total: pokemon.length, type };
+    });
+
+    renderApp();
+    await screen.findByText("bulbasaur");
+
+    // Activa "Todos" en ambos filtros
+    fireEvent.click(screen.getByRole("button", { name: /Tipo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Generación/i }));
+    const todos = screen.getAllByRole("button", { name: "Todos" });
+    fireEvent.click(todos[0]);
+    fireEvent.click(todos[1]);
+    expect(await screen.findByText("charmander")).toBeTruthy();
+
+    // Al excluir Planta se restan sus Pokémon de la unión de generaciones
+    fireEvent.click(screen.getByRole("button", { name: "Planta" }));
+
+    expect(screen.getByText("Sin Planta")).toBeTruthy();
+    expect(await screen.findByText("charmander")).toBeTruthy();
+    expect(screen.queryByText("bulbasaur")).toBeNull();
+    expect(screen.queryByText("chikorita")).toBeNull();
   });
 
   it("pide iniciar sesión en favoritos sin sesión", async () => {

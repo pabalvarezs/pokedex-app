@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { listPokemon, listPokemonByType, listPokemonByGeneration, type Pokemon } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonSearch from "../components/PokemonSearch";
@@ -67,89 +67,153 @@ export default function Home() {
     genMode === "include" ? activeGens.length === allGenIds.length : activeGens.length === 0;
   const hasFilters = typeFilterActive || genFilterActive || sortBy !== "id";
 
-  // Fetch según filtros activos
-  const { data, isLoading, isError, isFetching } = useQuery({
-    queryKey: [
-      "pokemon",
-      "filtered",
-      { typeMode, types: activeTypes, genMode, gens: activeGens, pageSize },
-    ],
-    // Conserva la lista anterior solo al paginar ("Cargar más"). Al cambiar
-    // filtros se muestra la carga para que el resultado anterior no quede
-    // pegado y parezca que el filtro no hizo efecto.
-    placeholderData: (previousData, previousQuery) => {
-      const prev = previousQuery?.queryKey[2] as
-        | { typeMode: "include" | "exclude"; types: string[]; genMode: "include" | "exclude"; gens: number[] }
-        | undefined;
-      if (
-        prev &&
-        prev.typeMode === typeMode &&
-        prev.types === activeTypes &&
-        prev.genMode === genMode &&
-        prev.gens === activeGens
-      ) {
-        return previousData;
-      }
-      return undefined;
-    },
+  // Listado general (paginado): solo cuando no hay filtros activos
+  const {
+    data: generalData,
+    isLoading: generalLoading,
+    isError: generalError,
+    isFetching: generalFetching,
+  } = useQuery({
+    queryKey: ["pokemon", "list", { pageSize }],
+    enabled: !typeFilterActive && !genFilterActive,
+    // Conserva la lista al pulsar "Cargar más" para no perder el scroll
+    placeholderData: keepPreviousData,
     queryFn: async () => {
-      // Sin filtros efectivos: paginación contra el listado general
-      if (!typeFilterActive && !genFilterActive) {
-        const page = await listPokemon(pageSize, 0);
-        return { pokemon: page.pokemon, total: page.total };
-      }
-
-      let pokemon: Pokemon[] = [];
-
-      if (typeFilterActive) {
-        const typesToFetch =
-          typeMode === "include"
-            ? activeTypes
-            : allTypeKeys.filter((t) => !activeTypes.includes(t));
-
-        // Unión de todos los tipos incluidos (OR)
-        const typeResults = await Promise.all(typesToFetch.map((t) => listPokemonByType(t)));
-        pokemon = dedupeById(typeResults.flatMap((tr) => tr.pokemon));
-
-        // En modo exclusión también se descartan los Pokémon de doble tipo que
-        // tengan alguno de los tipos excluidos.
-        if (typeMode === "exclude") {
-          const excluded = new Set(activeTypes);
-          pokemon = pokemon.filter((p) => !p.types?.some((t) => excluded.has(t)));
-        }
-      }
-
-      if (genFilterActive) {
-        const gensToFetch =
-          genMode === "include"
-            ? activeGens
-            : allGenIds.filter((id) => !activeGens.includes(id));
-
-        // Unión de todas las generaciones incluidas
-        const genResults = await Promise.all(gensToFetch.map((gen) => listPokemonByGeneration(gen)));
-        const genIds = new Set(genResults.flatMap((gr) => gr.pokemon.map((p) => p.id)));
-
-        if (typeFilterActive) {
-          // Intersección: tipo(s) AND generación(es)
-          pokemon = pokemon.filter((p) => genIds.has(p.id));
-        } else {
-          pokemon = dedupeById(genResults.flatMap((gr) => gr.pokemon));
-        }
-      }
-
-      return { pokemon, total: pokemon.length };
+      const page = await listPokemon(pageSize, 0);
+      return { pokemon: page.pokemon, total: page.total };
     },
   });
 
+  // Unión de generaciones. Su clave no cambia al tocar solo el filtro de tipos,
+  // así que excluir un tipo reutiliza estos datos en vez de recargarlos.
+  const {
+    data: genData,
+    isLoading: genLoading,
+    isError: genError,
+  } = useQuery({
+    queryKey: ["pokemon", "gens", { genMode, gens: activeGens }],
+    enabled: genFilterActive,
+    queryFn: async () => {
+      const gensToFetch =
+        genMode === "include"
+          ? activeGens
+          : allGenIds.filter((id) => !activeGens.includes(id));
+
+      const genResults = await Promise.all(
+        gensToFetch.map((gen) => listPokemonByGeneration(gen))
+      );
+      return dedupeById(genResults.flatMap((gr) => gr.pokemon));
+    },
+  });
+
+  // Tipos: en exclusión con generaciones activas solo se piden los tipos
+  // excluidos (se restan de la base de generaciones). Sin generaciones se pide
+  // el catálogo completo por tipos y también se resta.
+  const {
+    data: typeData,
+    isLoading: typeLoading,
+    isError: typeError,
+  } = useQuery({
+    queryKey: [
+      "pokemon",
+      "types",
+      { typeMode, types: activeTypes, withGens: genFilterActive },
+    ],
+    enabled: typeFilterActive,
+    queryFn: async (): Promise<{
+      base: Pokemon[] | null;
+      keepIds: Set<number> | null;
+      dropIds: Set<number> | null;
+    }> => {
+      const typesToFetch =
+        typeMode === "include"
+          ? activeTypes
+          : genFilterActive
+            ? activeTypes
+            : allTypeKeys;
+
+      const typeResults = await Promise.all(
+        typesToFetch.map((type) => listPokemonByType(type))
+      );
+
+      if (typeMode === "include") {
+        const keepIds = new Set(
+          typeResults.flatMap((tr) => tr.pokemon.map((p) => p.id))
+        );
+        return {
+          keepIds,
+          dropIds: null,
+          base: genFilterActive
+            ? null
+            : dedupeById(typeResults.flatMap((tr) => tr.pokemon)),
+        };
+      }
+
+      // Resta directa: la lista de un tipo ya trae todos sus Pokémon,
+      // incluidos los de doble tipo como Bulbasaur (Planta/Veneno).
+      const excluded = new Set(activeTypes);
+      const dropIds = new Set(
+        typeResults
+          .filter((tr) => excluded.has(tr.type))
+          .flatMap((tr) => tr.pokemon.map((p) => p.id))
+      );
+      return {
+        keepIds: null,
+        dropIds,
+        base: genFilterActive
+          ? null
+          : dedupeById(typeResults.flatMap((tr) => tr.pokemon)),
+      };
+    },
+  });
+
+  // Combina ambas consultas según los filtros activos
+  const filteredPokemon = (() => {
+    if (!typeFilterActive && !genFilterActive) return null;
+
+    if (genFilterActive) {
+      const base = genData ?? [];
+      if (!typeFilterActive || !typeData) return base;
+
+      if (typeMode === "include" && typeData.keepIds) {
+        return base.filter((p) => typeData.keepIds!.has(p.id));
+      }
+      if (typeData.dropIds) {
+        return base.filter((p) => !typeData.dropIds!.has(p.id));
+      }
+      return base;
+    }
+
+    const base = typeData?.base ?? [];
+    if (typeMode === "exclude" && typeData?.dropIds) {
+      return base.filter((p) => !typeData.dropIds!.has(p.id));
+    }
+    return base;
+  })();
+
+  const pokemonList = filteredPokemon ?? generalData?.pokemon ?? [];
+
+  const isLoading =
+    !typeFilterActive && !genFilterActive
+      ? generalLoading
+      : (genFilterActive && genLoading) || (typeFilterActive && typeLoading);
+
+  const isError =
+    (!typeFilterActive && !genFilterActive && generalError) ||
+    (genFilterActive && genError) ||
+    (typeFilterActive && typeError);
+
   // Ordenar en cliente
   const sortedPokemon = (() => {
-    const list = data?.pokemon ?? [];
+    const list = pokemonList;
     if (sortBy === "name") return [...list].sort((a, b) => a.name.localeCompare(b.name));
     if (sortBy === "name_desc") return [...list].sort((a, b) => b.name.localeCompare(a.name));
     return [...list].sort((a, b) => a.id - b.id);
   })();
 
-  const totalPokemon = data?.total ?? sortedPokemon.length;
+  const totalPokemon = filteredPokemon
+    ? filteredPokemon.length
+    : generalData?.total ?? sortedPokemon.length;
   const canLoadMore =
     !typeFilterActive &&
     !genFilterActive &&
@@ -465,10 +529,10 @@ export default function Home() {
             <div className="text-center mt-8">
               <button
                 onClick={() => setPageSize((size) => size + PAGE_SIZE)}
-                disabled={isFetching}
+                disabled={generalFetching}
                 className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-sm transition"
               >
-                {isFetching
+                {generalFetching
                   ? "Cargando más Pokémon..."
                   : `Cargar más Pokémon (${totalPokemon - sortedPokemon.length} restantes)`}
               </button>
