@@ -93,28 +93,28 @@ export default function PokemonDetail() {
   // Recopilar lista de todos los sprites disponibles para el modal
   const allSprites: SpriteItem[] = [];
   if (data.sprites?.front_default) {
-    allSprites.push({ key: "front_default", label: "Frente Normal", url: data.sprites.front_default });
+    allSprites.push({ key: "front_default", label: "Frente", url: data.sprites.front_default });
   }
   if (data.sprites?.back_default) {
-    allSprites.push({ key: "back_default", label: "Espalda Normal", url: data.sprites.back_default });
+    allSprites.push({ key: "back_default", label: "Espalda", url: data.sprites.back_default });
   }
   if (data.sprites?.front_shiny) {
-    allSprites.push({ key: "front_shiny", label: "Frente Shiny ✨", url: data.sprites.front_shiny });
+    allSprites.push({ key: "front_shiny", label: "Frente shiny ✨", url: data.sprites.front_shiny });
   }
   if (data.sprites?.back_shiny) {
-    allSprites.push({ key: "back_shiny", label: "Espalda Shiny ✨", url: data.sprites.back_shiny });
+    allSprites.push({ key: "back_shiny", label: "Espalda shiny ✨", url: data.sprites.back_shiny });
   }
   if (data.sprites?.other?.showdown?.front_default) {
-    allSprites.push({ key: "showdown_front", label: "Combate Animado (GIF)", url: data.sprites.other.showdown.front_default });
+    allSprites.push({ key: "showdown_front", label: "Animado pa' pelear (GIF)", url: data.sprites.other.showdown.front_default });
   }
   if (data.sprites?.other?.showdown?.front_shiny) {
-    allSprites.push({ key: "showdown_shiny", label: "Combate Animado Shiny ✨", url: data.sprites.other.showdown.front_shiny });
+    allSprites.push({ key: "showdown_shiny", label: "Animado pa' pelear shiny ✨", url: data.sprites.other.showdown.front_shiny });
   }
   if (data.sprites?.other?.["official-artwork"]?.front_default) {
-    allSprites.push({ key: "official", label: "Arte Oficial", url: data.sprites.other["official-artwork"].front_default });
+    allSprites.push({ key: "official", label: "Arte oficial", url: data.sprites.other["official-artwork"].front_default });
   }
   if (data.sprites?.other?.["official-artwork"]?.front_shiny) {
-    allSprites.push({ key: "official_shiny", label: "Arte Oficial Shiny ✨", url: data.sprites.other["official-artwork"].front_shiny });
+    allSprites.push({ key: "official_shiny", label: "Arte oficial shiny ✨", url: data.sprites.other["official-artwork"].front_shiny });
   }
   if (data.sprites?.other?.home?.front_default) {
     allSprites.push({ key: "home", label: "Modelo 3D HOME", url: data.sprites.other.home.front_default });
@@ -145,7 +145,7 @@ export default function PokemonDetail() {
           className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
         >
           <span>←</span>
-          <span>Volver a la lista</span>
+          <span>Volver 👈</span>
         </button>
         <div className="flex items-center gap-2">
           <FavoriteButton pokemonId={data.id} name={data.name} />
@@ -235,7 +235,7 @@ export default function PokemonDetail() {
                 }`}
               >
                 <span>✨</span>
-                <span>{showShiny ? "Ver Normal" : "Ver Variocolor (Shiny)"}</span>
+                <span>{showShiny ? "Versión normal" : "Ver variocolor (shiny)"}</span>
               </button>
 
               {data.cries?.latest && (
@@ -293,7 +293,7 @@ export default function PokemonDetail() {
               <div className="rounded-card border border-amber-200/80 bg-amber-50/70 p-6 shadow-sm">
                 <p className="mb-2 flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-amber-800">
                   <span>📖</span>
-                  <span>Entrada de la Pokédex:</span>
+                  <span>Entrá de la Pokédex:</span>
                 </p>
                 <p className="text-body italic leading-relaxed text-ink-700">
                   &ldquo;{data.description}&rdquo;
@@ -305,7 +305,7 @@ export default function PokemonDetail() {
             <div className="grid grid-cols-3 gap-3 rounded-card border border-line-soft bg-slate-50/80 p-6 text-center shadow-sm">
               <div>
                 <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
-                  Estatura
+                  Alto
                 </span>
                 <span className="text-value font-bold text-ink-900">
                   {data.height ? `${data.height / 10} m` : "Desconocida"}
@@ -313,7 +313,7 @@ export default function PokemonDetail() {
               </div>
               <div>
                 <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
-                  Peso
+                  Pesado
                 </span>
                 <span className="text-value font-bold text-ink-900">
                   {data.weight ? `${data.weight / 10} kg` : "Desconocido"}
@@ -333,7 +333,7 @@ export default function PokemonDetail() {
             <div>
               <div className="mb-2 flex items-baseline justify-between">
                 <h3 className="text-section font-bold uppercase tracking-wider text-ink-500">
-                  Estadísticas de Combate
+                  Stats de combate
                 </h3>
                 <span className="text-sm font-semibold text-ink-700">
                   Total: <span className="text-value font-extrabold text-red-600">{totalStats}</span>
@@ -378,7 +378,7 @@ export default function PokemonDetail() {
             {data.abilities && data.abilities.length > 0 && (
               <div>
                 <h3 className="mb-2 text-section font-bold uppercase tracking-wider text-ink-500">
-                  Habilidades (en Español)
+                  Habilidades
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {data.abilities.map((a) => (
@@ -393,7 +393,7 @@ export default function PokemonDetail() {
                       <span>{a.name}</span>
                       {a.is_hidden && (
                         <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded font-black">
-                          Oculta
+                          Escondía
                         </span>
                       )}
                     </div>
@@ -406,7 +406,7 @@ export default function PokemonDetail() {
             {data.moves && data.moves.length > 0 && (
               <div>
                 <h3 className="mb-2 text-section font-bold uppercase tracking-wider text-ink-500">
-                  Movimientos Destacados (en Español)
+                  Movimientos destacados
                 </h3>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 scrollbar-thin">
                   {data.moves.map((m) => (

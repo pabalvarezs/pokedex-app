@@ -44,7 +44,7 @@ export default function MegaForms({ forms }: MegaFormsProps) {
               Megaevoluciones
             </h2>
             <p className="mt-1 max-w-2xl text-xs font-medium text-indigo-100 sm:text-sm">
-              Formas temporales de combate. No son una evolución permanente.
+              Formas de pelea temporales. No son evolución permanente.
             </p>
           </div>
 

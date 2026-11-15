@@ -20,11 +20,11 @@ function NavigationHeader() {
   }, [location.pathname]);
 
   const links = [
-    { to: "/", label: "Inicio", icon: "🏠" },
+    { to: "/", label: "Portá", icon: "🏠" },
     { to: "/favorites", label: "Mis Regalones", icon: "⭐" },
   ];
   if (isAdmin) {
-    links.push({ to: "/admin", label: "Administración", icon: "🛡️" });
+    links.push({ to: "/admin", label: "Admin", icon: "🛡️" });
   }
 
   const desktopLinkClass = (path: string) =>
@@ -66,7 +66,7 @@ function NavigationHeader() {
             {user ? (
               <div className="flex items-center gap-2 ml-2 pl-2 border-l border-red-500">
                 <span className="text-xs font-bold text-amber-200 hidden lg:inline max-w-[120px] truncate">
-                  Hola, {user.name} 👋
+                  Wena, {user.name} 👋
                 </span>
                 <button
                   onClick={logout}
@@ -117,7 +117,7 @@ function NavigationHeader() {
             {user ? (
               <div className="mt-1.5 pt-2.5 border-t border-red-500/60 flex items-center justify-between gap-3">
                 <span className="text-xs font-bold text-amber-200 truncate">
-                  Hola, {user.name} 👋
+                  Wena, {user.name} 👋
                 </span>
                 <button
                   onClick={logout}
@@ -137,7 +137,7 @@ function NavigationHeader() {
                 }`}
               >
                 <span>🔐</span>
-                <span>Acceso entrenador</span>
+                <span>Meterse, po</span>
               </Link>
             )}
           </nav>

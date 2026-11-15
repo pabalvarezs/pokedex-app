@@ -122,7 +122,7 @@ export default function UsersAdmin() {
     setNotice(null);
 
     if (!form.name.trim()) {
-      setFormError("El nombre del entrenador es obligatorio.");
+      setFormError("El nombre del entrenador es obligatorio, po.");
       return;
     }
     if (!editing && !/^[a-z0-9_.-]{3,30}$/i.test(form.username.trim())) {
@@ -286,7 +286,7 @@ export default function UsersAdmin() {
         <div className="text-center py-12 text-sm text-gray-500 font-medium">Cargando entrenadores...</div>
       ) : isError ? (
         <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-semibold">
-          No pudimos cargar los entrenadores. Revisa tu sesión e inténtalo de nuevo.
+          No se pudieron cargar los entrenadores. Revisa tu sesión e inténtalo de nuevo.
         </div>
       ) : users.length === 0 ? (
         <div className="text-center py-12 bg-white border border-gray-200 rounded-2xl text-sm text-gray-500">

@@ -378,7 +378,7 @@ export default function Home() {
       <header className="mb-5 sm:mb-6">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
-          Pokédex digital
+          Pokédex a la chilena
         </span>
         <h1 className="mt-3 flex items-center gap-3 text-display font-extrabold text-ink-900">
           <span
@@ -496,7 +496,7 @@ export default function Home() {
                 className="inline-flex min-h-[44px] items-center rounded-control border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
               >
                 <span aria-hidden="true" className="mr-1">✕</span>
-                Limpiar todo
+                Limpiar fil
               </button>
             )}
           </div>
@@ -514,7 +514,7 @@ export default function Home() {
               id="type-filter-heading"
               className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-500"
             >
-              {typeMode === "exclude" ? "Quita un tipo para excluirlo:" : "Selecciona un tipo:"}
+              {typeMode === "exclude" ? "Saca un tipo pa' excluirlo:" : "Elige un tipo:"}
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -546,7 +546,7 @@ export default function Home() {
               ))}
             </div>
             <p className="mt-2 text-[11px] font-medium text-ink-500">
-              Los tipos y las generaciones se combinan entre sí. El orden se aplica al resultado final.
+              Los tipos y generaciones se combinan entre sí. El orden se aplica al final, po.
             </p>
           </div>
         )}
@@ -563,7 +563,7 @@ export default function Home() {
               id="gen-filter-heading"
               className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-500"
             >
-              {genMode === "exclude" ? "Quita una generación para excluirla:" : "Selecciona una generación:"}
+              {genMode === "exclude" ? "Saca una generación pa' excluirla:" : "Elige una generación:"}
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -709,7 +709,7 @@ export default function Home() {
               onClick={clearFilters}
               className="ml-auto inline-flex min-h-[36px] items-center rounded-control border border-line bg-white px-3 py-1 text-[11px] font-bold text-ink-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
             >
-              Limpiar filtros
+              Limpiar filt
             </button>
           </div>
         )}
@@ -759,7 +759,7 @@ export default function Home() {
                   onClick={clearFilters}
                   className="inline-flex min-h-[44px] items-center rounded-control border border-line bg-white px-4 py-2 text-sm font-bold text-ink-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
                 >
-                  Limpiar filtros
+                  Limpiar filt
                 </button>
               )}
             </div>
@@ -776,8 +776,8 @@ export default function Home() {
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
                 {hasFiltering
-                  ? `${sortedPokemon.length} Pokémon encontrados`
-                  : `Mostrando ${sortedPokemon.length} de ${totalPokemon} Pokémon`}
+                  ? `${sortedPokemon.length} Pokémon pillados`
+                  : `Viendo ${sortedPokemon.length} de ${totalPokemon} Pokémon`}
               </span>
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink-500">
                 <svg
@@ -808,7 +808,7 @@ export default function Home() {
                 className="mx-auto mt-8 flex max-w-xl flex-wrap items-center justify-center gap-3 rounded-card border border-red-200 bg-red-50 px-4 py-3 text-center"
               >
                 <p className="text-sm font-bold text-red-700">
-                  No pudimos cargar más Pokémon. El catálogo sigue disponible.
+                  No se pudieron cargar más Pokémon. El catálogo sigue aquí, si se puede.
                 </p>
                 <button
                   type="button"
@@ -837,9 +837,9 @@ export default function Home() {
                     </>
                   ) : (
                     <>
-                      Cargar más Pokémon
+                      Cargar más Pokémon 👇
                       <span className="rounded-full bg-red-700/60 px-2 py-0.5 text-[11px] font-bold">
-                        {totalPokemon - sortedPokemon.length} restantes
+                        {totalPokemon - sortedPokemon.length} faltan
                       </span>
                     </>
                   )}
@@ -854,13 +854,13 @@ export default function Home() {
           >
             <span className="mb-4 block text-4xl" aria-hidden="true">🔍</span>
             <p className="mb-2 text-lg font-bold text-ink-900">¡Chuta! No pillamos ningún Pokémon con esos filtros.</p>
-            <p className="mb-4 text-sm text-ink-500">Prueba cambiando el tipo o la generación.</p>
+            <p className="mb-4 text-sm text-ink-500">Prueba cambiando el tipo o la generación, a ver si aparece algo.</p>
             <button
               type="button"
               onClick={clearFilters}
               className="inline-flex min-h-[44px] items-center rounded-control bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
             >
-              Ver todos los Pokémon
+              Ver todos los Pokémon 👈
             </button>
           </div>
         )}

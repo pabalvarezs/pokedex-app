@@ -269,8 +269,8 @@ export default function PokemonSearch() {
       </form>
 
       <p id="pokemon-search-help" className="sr-only">
-        Escribe al menos {MIN_QUERY_LENGTH} caracteres. Usa las flechas arriba y
-        abajo para recorrer las sugerencias, Enter para abrir la ficha y Escape
+        Escribe al menos {MIN_QUERY_LENGTH} caracteres. Usa las flechas pa'
+        abajo pa' recorrer las sugerencias, Enter pa' abrir la ficha y Escape
         para cerrar o limpiar la búsqueda.
       </p>
 
@@ -353,7 +353,7 @@ export default function PokemonSearch() {
                 No pudimos consultar el buscador.
               </p>
               <p className="mt-0.5 text-xs text-ink-500">
-                Revisa tu conexión e inténtalo de nuevo.
+                Revisa tu conexión y prueba de nuevo.
               </p>
               <button
                 type="button"
@@ -369,7 +369,7 @@ export default function PokemonSearch() {
                 No pillamos ningún Pokémon para “{trimmedTerm}”.
               </p>
               <p className="mt-0.5 text-xs text-ink-500">
-                Prueba con el nombre en inglés o con su número de la Pokédex.
+                Prueba con el nombre en inglés o con el número de la Pokédex.
               </p>
               <button
                 type="button"
@@ -428,7 +428,7 @@ export default function PokemonSearch() {
                 })}
               </ul>
               <div className="border-t border-line-soft bg-slate-50 px-3.5 py-2 text-[11px] font-medium text-ink-500">
-                Usa ↑ ↓ para moverte, Enter para abrir y Esc para cerrar.
+                Usa ↑↓ pa' moverte, Enter pa' abrir y Esc pa' cerrar.
               </div>
             </>
           )}

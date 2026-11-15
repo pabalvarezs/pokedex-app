@@ -40,12 +40,12 @@ export default function EvolutionChain({ stages, currentId }: EvolutionChainProp
             <span aria-hidden="true" className="text-2xl sm:text-3xl">
               🧬
             </span>
-            Cadena evolutiva
+            Cadena de evolución
           </h2>
           <p className="mt-1 text-sm text-gray-500">
             {totalMembers > 1
-              ? "Toca una especie para abrir su ficha."
-              : "Este Pokémon no tiene evoluciones."}
+              ? "Toca un Pokémon pa' abrir su ficha."
+              : "Este Pokémon no evoluciona, po."}
           </p>
         </div>
 

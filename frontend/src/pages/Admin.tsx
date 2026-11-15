@@ -17,8 +17,8 @@ export default function Admin() {
         <h1 className="text-xl font-black text-gray-800 mb-2">Acceso restringido</h1>
         <p className="text-sm text-gray-500 mb-6">
           {user
-            ? "Tu cuenta de entrenador no tiene permisos de administración."
-            : "Inicia sesión con una cuenta de administrador para gestionar el sitio."}
+            ? "Tu cuenta no tiene permisos de admin, po."
+            : "Conéctate con una cuenta de admin pa' gestionar el sitio."}
         </p>
         <Link
           to={user ? "/" : "/login"}
@@ -39,7 +39,7 @@ export default function Admin() {
           </span>
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-black text-gray-800 truncate">
-              Panel de administración
+              Panel de admin
             </h1>
             <p className="text-xs text-gray-500 truncate">
               Hola, {user?.name}. Administra los entrenadores y sus regalones.

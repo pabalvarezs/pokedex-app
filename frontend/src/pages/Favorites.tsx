@@ -37,7 +37,7 @@ export default function Favorites() {
     return (
       <div className="text-center py-16">
         <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent mb-3"></div>
-        <p className="text-gray-600 font-medium">Buscando a tus regalones en la base de datos...</p>
+        <p className="text-gray-600 font-medium">Buscando a tus regalones...</p>
       </div>
     );
 
@@ -68,14 +68,14 @@ export default function Favorites() {
             Mis Regalones ⭐ ({favorites.length})
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Tus Pokémon favoritos guardados en la base de datos local
+            Tus regalones guardados en la base de datos
           </p>
         </div>
         <Link
           to="/"
           className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline"
         >
-          + Agregar más Pokémon
+          + Agregar más
         </Link>
       </div>
 
@@ -116,7 +116,7 @@ export default function Favorites() {
                   to={`/pokemon/${f.pokemonId}`}
                   className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition hidden sm:inline-block"
                 >
-                  Ver ficha completa →
+                  Ver ficha →
                 </Link>
                 <FavoriteButton pokemonId={f.pokemonId} name={f.name} />
               </div>

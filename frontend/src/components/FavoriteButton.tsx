@@ -38,7 +38,7 @@ export default function FavoriteButton({ pokemonId, name }: Props) {
         className="px-4 py-2 rounded-control text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
       >
         <span>🔐</span>
-        <span>Inicia sesión para guardar</span>
+        <span>Conéctate para guardar</span>
       </Link>
     );
   }

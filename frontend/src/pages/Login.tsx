@@ -54,7 +54,7 @@ export default function Login() {
             to="/admin"
             className="inline-block w-full mt-3 py-3 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-900 transition shadow-sm"
           >
-            Ir al panel de administración 🛡️
+            Ir al panel de admin 🛡️
           </Link>
         )}
       </div>
@@ -70,7 +70,7 @@ export default function Login() {
             ⚡
           </div>
           <h1 className="text-2xl font-black text-gray-800">
-            Acceso Entrenadores
+            Acceso de entrenadores
           </h1>
           <p className="text-xs text-gray-500 mt-1">
             Ingresa a tu cuenta para administrar la Pokédex y tus regalones
@@ -100,7 +100,7 @@ export default function Login() {
 
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Contraseña secreta:
+              Contraseña:
             </label>
             <input
               type="password"
@@ -125,7 +125,7 @@ export default function Login() {
             to="/"
             className="text-xs font-semibold text-gray-500 hover:text-red-600 transition"
           >
-            ← Volver a explorar sin iniciar sesión
+            ← Volver a la portá sin conectarse
           </Link>
         </div>
       </div>

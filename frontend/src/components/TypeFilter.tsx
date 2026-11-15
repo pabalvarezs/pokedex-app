@@ -11,7 +11,7 @@ export default function TypeFilter() {
     <div className="my-3">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Filtrar por Tipo de Pokémon:
+          Filtrar por tipo de Pokémon:
         </span>
         {activeType && (
           <button

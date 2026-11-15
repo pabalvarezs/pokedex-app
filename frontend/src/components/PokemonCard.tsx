@@ -67,7 +67,7 @@ export default function PokemonCard({ pokemon }: Props) {
     } catch {
       setFeedback({
         kind: "error",
-        message: "No se pudo guardar. Inténtalo de nuevo.",
+        message: "No se pudo guardar. Intenta de nuevo.",
       });
     } finally {
       setPending(false);
@@ -147,7 +147,7 @@ export default function PokemonCard({ pokemon }: Props) {
                 <circle cx="32" cy="32" r="8" fill="white" />
               </svg>
               <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                Sin imagen
+                Sin foto
               </span>
             </div>
           )}
@@ -255,12 +255,12 @@ export default function PokemonCard({ pokemon }: Props) {
         ) : (
           <Link
             to="/login"
-            aria-label={`Inicia sesión para guardar a ${pokemon.name} en tus regalones`}
-            title="Inicia sesión para guardar favoritos"
+            aria-label={`Conéctate para guardar a ${pokemon.name} en tus regalones`}
+            title="Conéctate para guardar favoritos"
             className="flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-control border border-line bg-slate-50 px-3 py-2.5 text-xs font-bold text-ink-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
           >
             <span aria-hidden="true">🔐</span>
-            <span>Inicia sesión</span>
+            <span>Conéctate</span>
           </Link>
         )}
       </div>

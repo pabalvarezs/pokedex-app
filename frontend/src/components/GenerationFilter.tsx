@@ -10,7 +10,7 @@ export default function GenerationFilter() {
     <div className="my-3">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Filtrar por Generación:
+          Filtrar por generación:
         </span>
         {activeGen && (
           <button

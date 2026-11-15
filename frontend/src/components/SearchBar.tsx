@@ -17,7 +17,7 @@ export default function SearchBar() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Busca un Pokémon al tiro (ej: pikachu, mewtwo)..."
+          placeholder="Busca un Pokémon (ej: pikachu, mewtwo)..."
           className="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-sm"
         />
         {q && (
