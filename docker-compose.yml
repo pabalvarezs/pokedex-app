@@ -32,15 +32,15 @@ services:
     command: sh -c "npx prisma generate && npx prisma db push && npm run seed && npm run dev"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
     container_name: pokedex-frontend
     depends_on:
       - backend
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
     ports:
-      - "5173:5173"
-    command: npm run dev -- --host
+      - "5173:80"
 
 volumes:
   postgres_data:
