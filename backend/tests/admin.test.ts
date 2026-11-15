@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { startServer, stopServer } from "./test-helpers";
+import { startServer, stopServer, BASE_URL } from "./test-helpers";
 
-const base = "http://localhost:5000";
+const base = BASE_URL;
 const suffix = Date.now().toString(36);
 const username = `entrenador_${suffix}`;
 

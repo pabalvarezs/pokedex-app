@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import http from "http";
-import { startServer, stopServer } from "./test-helpers";
+import { startServer, stopServer, BASE_URL } from "./test-helpers";
 
 describe("backend health", () => {
   beforeAll(async () => {
@@ -12,7 +12,7 @@ describe("backend health", () => {
   it("returns ok", async () => {
     const body = await new Promise<string>((resolve, reject) => {
       http
-        .get("http://localhost:5000/health", (res) => {
+        .get(`${BASE_URL}/health`, (res) => {
           let data = "";
           res.on("data", (c) => (data += c));
           res.on("end", () => resolve(data));

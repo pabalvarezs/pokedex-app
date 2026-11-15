@@ -4,7 +4,8 @@ import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 
 const BACKEND_DIR = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
-const BASE_URL = "http://localhost:5000";
+const TEST_PORT = Number(process.env.TEST_PORT) || 5000;
+export const BASE_URL = process.env.TEST_BASE_URL ?? `http://localhost:${TEST_PORT}`;
 
 let serverPid: number | null = null;
 let ownsServer = false;
@@ -32,6 +33,7 @@ export async function startServer() {
     const proc = spawn("npx", ["tsx", "src/index.ts"], {
       cwd: BACKEND_DIR,
       shell: process.platform === "win32",
+      env: { ...process.env, PORT: String(TEST_PORT) },
       stdio: ["ignore", "pipe", "pipe"],
     });
     serverPid = proc.pid ?? null;
