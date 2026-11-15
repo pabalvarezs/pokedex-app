@@ -60,6 +60,25 @@ export async function findById(id: number) {
   return prisma.user.findUnique({ where: { id } });
 }
 
+/**
+ * El email es opcional y no lleva índice único en la base para que
+ * `prisma db push` pueda aplicarse en producción sin --accept-data-loss.
+ * La unicidad se valida acá antes de crear o editar un entrenador.
+ */
+export async function isEmailTaken(email: string, exceptUserId?: number): Promise<boolean> {
+  if (!email) return false;
+
+  const existing = await prisma.user.findFirst({
+    where: {
+      email,
+      ...(exceptUserId ? { id: { not: exceptUserId } } : {}),
+    },
+    select: { id: true },
+  });
+
+  return Boolean(existing);
+}
+
 export async function listUsers(): Promise<PublicUser[]> {
   const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
   return users.map(toPublicUser);

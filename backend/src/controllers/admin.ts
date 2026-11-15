@@ -62,6 +62,10 @@ export async function createUser(req: Request, res: Response) {
     res.status(400).json({ error: "El email no tiene un formato válido." });
     return;
   }
+  if (email && (await usersService.isEmailTaken(email))) {
+    res.status(409).json({ error: "Ese email ya está registrado por otro entrenador." });
+    return;
+  }
 
   try {
     const user = await usersService.createUser({
@@ -115,6 +119,10 @@ export async function updateUser(req: Request, res: Response) {
   }
   if (emailProvided && email && !EMAIL_PATTERN.test(email)) {
     res.status(400).json({ error: "El email no tiene un formato válido." });
+    return;
+  }
+  if (email && (await usersService.isEmailTaken(email, id))) {
+    res.status(409).json({ error: "Ese email ya está registrado por otro entrenador." });
     return;
   }
   if (role && target.role === "admin" && role !== "admin") {

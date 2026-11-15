@@ -104,6 +104,17 @@ npx prisma db push
 
 Ambos cambios son compatibles hacia atrás: `email` es nullable y la tabla es nueva.
 
+> **Unicidad del email:** se valida en la aplicación al crear o editar entrenadores. El esquema no declara un índice único para que `prisma db push` no se detenga con el aviso de pérdida de datos en despliegues automáticos.
+
+Si un `db push` anterior dejó el contenedor en crash-loop por el aviso de la columna `email`, puedes aplicar ese cambio puntual de forma segura (la columna es nueva y todos sus valores son `NULL`):
+
+```bash
+docker compose run --rm backend npx prisma db push --accept-data-loss
+docker compose up -d
+```
+
+Después actualiza al esquema actual, que ya no requiere ese flag.
+
 ### 4. Configura el correo (opcional pero recomendado)
 
 Con [Resend](https://resend.com):

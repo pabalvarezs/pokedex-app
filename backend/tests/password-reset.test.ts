@@ -86,6 +86,23 @@ describe("recuperación de contraseña", () => {
     expect(data.devResetUrl).toBeUndefined();
   });
 
+  it("impide registrar dos entrenadores con el mismo email", async () => {
+    const res = await fetch(`${base}/api/admin/users`, {
+      method: "POST",
+      headers: jsonHeaders(adminToken),
+      body: JSON.stringify({
+        username: `dup_${suffix}`,
+        password: "clave123",
+        name: "Entrenador Duplicado",
+        role: "trainer",
+        email: `${username}@example.com`,
+      }),
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/email/i);
+  });
+
   it("genera un enlace de un solo uso, guarda solo el hash y cambia la contraseña", async () => {
     const res = await forgotPassword(username);
     expect(res.status).toBe(200);
