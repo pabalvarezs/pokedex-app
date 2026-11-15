@@ -44,7 +44,7 @@ describe("MegaForms", () => {
     expect(screen.getByText("Mega Charizard Y")).toBeTruthy();
     expect(screen.getByText("Dragón")).toBeTruthy();
     expect(screen.getByText("Volador")).toBeTruthy();
-    expect(screen.getByText(/No son una evolución permanente/i)).toBeTruthy();
+    expect(screen.getByText(/No son evolución permanente/i)).toBeTruthy();
   });
 
   it("enlaza cada forma a su propia ficha", () => {

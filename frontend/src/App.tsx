@@ -4,6 +4,8 @@ import Home from "./pages/Home";
 import PokemonDetail from "./pages/PokemonDetail";
 import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import TypePage from "./pages/TypePage";
 import Admin from "./pages/Admin";
 import ScrollToTop from "./components/ScrollToTop";
@@ -160,6 +162,8 @@ export default function App() {
             <Route path="/search/:name" element={<PokemonDetail />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/recuperar" element={<ForgotPassword />} />
+            <Route path="/restablecer/:token" element={<ResetPassword />} />
             <Route path="/type/:type" element={<TypePage />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>

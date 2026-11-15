@@ -11,6 +11,8 @@ router.get("/users", asyncHandler(adminController.listUsers));
 router.post("/users", asyncHandler(adminController.createUser));
 router.put("/users/:id", asyncHandler(adminController.updateUser));
 router.delete("/users/:id", asyncHandler(adminController.deleteUser));
+router.get("/password-resets", asyncHandler(adminController.listPasswordResets));
+router.post("/users/:id/password-reset", asyncHandler(adminController.createUserPasswordReset));
 
 router.get("/favorites", asyncHandler(adminController.listFavorites));
 router.post("/favorites", asyncHandler(adminController.createFavorite));

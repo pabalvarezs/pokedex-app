@@ -21,11 +21,15 @@ vi.mock("../src/services/api", () => ({
   loginUser: vi.fn(),
   logoutUser: vi.fn(),
   getCurrentUser: vi.fn(() => null),
+  requestPasswordReset: vi.fn(),
+  resetPassword: vi.fn(),
   getPokemon: vi.fn(),
   searchPokemon: vi.fn(),
   suggestPokemon: vi.fn(async () => []),
   adminListUsers: vi.fn(async () => []),
   adminListFavorites: vi.fn(async () => []),
+  adminListPasswordResets: vi.fn(async () => []),
+  adminCreatePasswordReset: vi.fn(),
   adminCreateUser: vi.fn(),
   adminUpdateUser: vi.fn(),
   adminDeleteUser: vi.fn(),
@@ -63,7 +67,7 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "PokeChile" })).toBeTruthy();
     expect(await screen.findByText("bulbasaur")).toBeTruthy();
-    expect(screen.getByText(/Mostrando 1 de 1 Pokémon/i)).toBeTruthy();
+    expect(screen.getByText(/Viendo 1 de 1 Pokémon/i)).toBeTruthy();
     expect(screen.getByText("Planta")).toBeTruthy();
     expect(screen.getByText("Veneno")).toBeTruthy();
   });
@@ -94,11 +98,11 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(19);
     expect(screen.getByText("Todos los tipos")).toBeTruthy();
     // "Todos" es un estado de filtro: debe poder limpiarse aunque no restrinja
-    expect(screen.getByRole("button", { name: /Limpiar todo/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Limpiar filt/i })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Todos" }));
     expect(screen.queryByText("Todos los tipos")).toBeNull();
-    expect(screen.queryByRole("button", { name: /Limpiar todo/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Limpiar filt/i })).toBeNull();
   });
 
   it("selecciona todas las generaciones con la opción Todos", async () => {
@@ -112,11 +116,11 @@ describe("App", () => {
     // 9 generaciones más el propio botón "Todos"
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(10);
     expect(screen.getByText("Todas las generaciones")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Limpiar todo/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Limpiar filt/i })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Todos" }));
     expect(screen.queryByText("Todas las generaciones")).toBeNull();
-    expect(screen.queryByRole("button", { name: /Limpiar todo/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Limpiar filt/i })).toBeNull();
   });
 
   it("quita los Pokémon de una generación al desmarcarla", async () => {
@@ -239,10 +243,18 @@ describe("App", () => {
   it("no muestra las credenciales de prueba en el login", () => {
     renderApp(["/login"]);
 
-    expect(screen.getByText(/Acceso Entrenador/i)).toBeTruthy();
+    expect(screen.getByText(/Acceso de entrenadores/i)).toBeTruthy();
     expect(screen.queryByText(/Credenciales de prueba/i)).toBeNull();
     expect(screen.queryByText(/pablito2026/i)).toBeNull();
     expect(screen.queryByText(/Pablito/i)).toBeNull();
+  });
+
+  it("ofrece recuperar la contraseña desde el login", () => {
+    renderApp(["/login"]);
+
+    expect(
+      screen.getByRole("link", { name: /¿Olvidaste tu contraseña\?/i })
+    ).toBeTruthy();
   });
 
   it("muestra y limpia el estado de búsqueda activa", async () => {
@@ -282,7 +294,7 @@ describe("App", () => {
       await screen.findByText(/No pillamos ningún Pokémon con esos filtros/i)
     ).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", { name: "Ver todos los Pokémon" })
+      screen.getByRole("button", { name: /Ver todos los Pokémon/i })
     );
 
     expect(await screen.findByText("bulbasaur")).toBeTruthy();

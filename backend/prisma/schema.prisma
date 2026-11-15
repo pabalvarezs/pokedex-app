@@ -14,10 +14,29 @@ model User {
   name         String
   role         String   @default("trainer")
   avatar       String   @default("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png")
+  email        String?  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  passwordResets PasswordReset[]
+
   @@map("users")
+}
+
+/// Enlaces de recuperación de contraseña. Solo se guarda el hash del token.
+model PasswordReset {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String    @unique
+  source    String    @default("self") // "self" (lo pidió el usuario) | "admin"
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@map("password_resets")
 }
 
 model Favorite {

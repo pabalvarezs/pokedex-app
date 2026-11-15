@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
+import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
 
-type Tab = "users" | "favorites";
+type Tab = "users" | "favorites" | "resets";
 
 export default function Admin() {
   const { user, isAdmin } = useAuth();
@@ -71,9 +72,26 @@ export default function Admin() {
           <span>⭐</span>
           <span>Regalones</span>
         </button>
+        <button
+          onClick={() => setTab("resets")}
+          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
+            tab === "resets"
+              ? "bg-slate-800 text-white shadow-sm"
+              : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          <span>🔑</span>
+          <span>Recuperaciones</span>
+        </button>
       </div>
 
-      {tab === "users" ? <UsersAdmin /> : <FavoritesAdmin />}
+      {tab === "users" ? (
+        <UsersAdmin />
+      ) : tab === "favorites" ? (
+        <FavoritesAdmin />
+      ) : (
+        <PasswordResetsAdmin />
+      )}
     </div>
   );
 }

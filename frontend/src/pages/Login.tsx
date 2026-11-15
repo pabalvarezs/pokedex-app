@@ -109,6 +109,14 @@ export default function Login() {
               placeholder="••••••••"
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
             />
+            <div className="text-right mt-1.5">
+              <Link
+                to="/recuperar"
+                className="text-xs font-semibold text-red-600 hover:text-red-700 transition"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </div>
 
           <button

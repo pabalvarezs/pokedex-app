@@ -9,6 +9,7 @@ export interface PublicUser {
   name: string;
   role: UserRole;
   avatar: string;
+  email: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -19,6 +20,7 @@ export interface UserInput {
   name: string;
   role?: string;
   avatar?: string;
+  email?: string | null;
 }
 
 export const DEFAULT_AVATAR =
@@ -34,6 +36,7 @@ export function toPublicUser(user: {
   name: string;
   role: string;
   avatar: string;
+  email?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }): PublicUser {
@@ -43,6 +46,7 @@ export function toPublicUser(user: {
     name: user.name,
     role: normalizeRole(user.role),
     avatar: user.avatar,
+    email: user.email ?? null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -73,6 +77,7 @@ export async function createUser(input: UserInput): Promise<PublicUser> {
       name: input.name,
       role: normalizeRole(input.role),
       avatar: input.avatar || DEFAULT_AVATAR,
+      email: input.email || null,
     },
   });
   return toPublicUser(user);
@@ -84,6 +89,7 @@ export async function updateUser(id: number, input: Partial<UserInput>): Promise
   if (input.name !== undefined) data.name = input.name;
   if (input.role !== undefined) data.role = normalizeRole(input.role);
   if (input.avatar !== undefined) data.avatar = input.avatar || DEFAULT_AVATAR;
+  if (input.email !== undefined) data.email = input.email || null;
   if (input.password) data.passwordHash = hashPassword(input.password);
 
   const user = await prisma.user.update({ where: { id }, data });

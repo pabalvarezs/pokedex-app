@@ -54,6 +54,10 @@ npm run dev
 | `PORT` | backend | Puerto de la API (5000 por defecto) |
 | `AUTH_SECRET` | backend | Secreto para firmar tokens HMAC. **Obligatorio en producción** |
 | `CORS_ORIGIN` | backend | Origen permitido (`*` por defecto) |
+| `APP_URL` | backend | URL pública del frontend para armar el enlace de recuperación (si falta, usa `CORS_ORIGIN`) |
+| `PASSWORD_RESET_TTL_MINUTES` | backend | Vigencia del enlace de recuperación (30 por defecto) |
+| `RESEND_API_KEY` | backend | API key de Resend para enviar el correo de recuperación (opcional) |
+| `EMAIL_FROM` | backend | Remitente verificado en Resend, ej. `PokeChile <no-reply@tudominio.cl>` |
 | `VITE_API_URL` | frontend | URL pública de la API |
 
 ## Cuenta administradora
@@ -68,8 +72,9 @@ El seed crea esta cuenta solo si no existe. Las contraseñas se guardan hasheada
 
 Disponible en `/admin` para cuentas con rol `admin`:
 
-- **Entrenadores:** crear, listar, editar (nombre, rol, avatar y contraseña) y eliminar cuentas. No permite eliminar la propia cuenta ni dejar el sitio sin administradores.
+- **Entrenadores:** crear, listar, editar (nombre, rol, avatar, email y contraseña) y eliminar cuentas. No permite eliminar la propia cuenta ni dejar el sitio sin administradores.
 - **Regalones:** ver los favoritos de todos los entrenadores y crear, editar o eliminar registros.
+- **Recuperaciones:** ver las solicitudes de contraseña vigentes y generar un enlace de un solo uso para entregárselo al entrenador (o enviarlo por correo si tiene email registrado).
 
 Al eliminar un entrenador también se eliminan sus regalones.
 
@@ -79,6 +84,8 @@ Al eliminar un entrenador también se eliminan sus regalones.
 |---|---|---|
 | `GET` | `/health` | Estado del servicio |
 | `POST` | `/api/auth/login` | Devuelve usuario y token firmado |
+| `POST` | `/api/auth/forgot-password` | Solicita enlace de recuperación (`{ username }`) |
+| `POST` | `/api/auth/reset-password` | Cambia la contraseña con un token (`{ token, password }`) |
 | `GET` | `/api/pokemon?limit=&offset=` | Listado paginado (incluye tipos y total) |
 | `GET` | `/api/pokemon/suggest?q=` | Sugerencias predictivas por nombre o número |
 | `GET` | `/api/pokemon/type/:type` | Pokémon por tipo |
@@ -93,12 +100,16 @@ Al eliminar un entrenador también se eliminan sus regalones.
 | `POST` | `/api/admin/users` | Crea entrenador (solo admin) |
 | `PUT` | `/api/admin/users/:id` | Actualiza entrenador (solo admin) |
 | `DELETE` | `/api/admin/users/:id` | Elimina entrenador y sus regalones (solo admin) |
+| `GET` | `/api/admin/password-resets` | Solicitudes de recuperación vigentes (solo admin) |
+| `POST` | `/api/admin/users/:id/password-reset` | Genera (y envía si hay email) un enlace de recuperación (solo admin) |
 | `GET` | `/api/admin/favorites` | Lista regalones de todos (solo admin) |
 | `POST` | `/api/admin/favorites` | Crea regalón para un entrenador (solo admin) |
 | `PUT` | `/api/admin/favorites/:id` | Actualiza regalón (solo admin) |
 | `DELETE` | `/api/admin/favorites/:id` | Elimina regalón (solo admin) |
 
 Las rutas de favoritos requieren `Authorization: Bearer <token>`. Las rutas `/api/admin/*` además exigen rol `admin`, validado contra la base de datos en cada petición.
+
+El flujo completo de recuperación de contraseña (funcionamiento, variables, despliegue y seguridad) está documentado en [`GUIA-RECUPERACION-PASSWORD.md`](GUIA-RECUPERACION-PASSWORD.md).
 
 ## Tests
 
@@ -141,6 +152,7 @@ frontend/
 ## Decisiones y límites conocidos
 
 - **Usuarios en base de datos:** contraseñas con scrypt y tokens HMAC firmados con `AUTH_SECRET`.
+- **Recuperación de contraseña:** enlaces de un solo uso, guardados solo como hash SHA-256, con vigencia de 30 minutos (configurable), límite de solicitudes y respuesta genérica para no enumerar cuentas. Si no hay proveedor de correo configurado, el admin genera el enlace desde el panel.
 - **Administración por rol:** el rol se valida en el backend contra la base de datos en cada petición; no se confía en datos del cliente.
 - **Favoritos aislados por usuario:** el backend deriva el `userId` del token firmado, nunca de un header manipulable.
 - **Regalones al eliminar cuentas:** al borrar un entrenador se eliminan también sus regalones.

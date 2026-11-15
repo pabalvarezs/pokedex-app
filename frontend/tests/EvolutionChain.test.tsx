@@ -26,7 +26,7 @@ describe("EvolutionChain", () => {
   it("muestra las etapas, condiciones y la especie actual", () => {
     renderChain(STAGES, 2);
 
-    expect(screen.getByRole("heading", { name: /Cadena evolutiva/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Cadena de evolución/i })).toBeTruthy();
     expect(screen.getByText("Bulbasaur")).toBeTruthy();
     expect(screen.getByText("Ivysaur")).toBeTruthy();
     expect(screen.getByText("Venusaur")).toBeTruthy();

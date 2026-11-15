@@ -2,6 +2,8 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AdminUser,
+  GeneratedPasswordReset,
+  adminCreatePasswordReset,
   adminCreateUser,
   adminDeleteUser,
   adminListUsers,
@@ -18,6 +20,7 @@ interface FormState {
   password: string;
   role: Role;
   avatar: string;
+  email: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -26,6 +29,7 @@ const EMPTY_FORM: FormState = {
   password: "",
   role: "trainer",
   avatar: "",
+  email: "",
 };
 
 function roleBadge(role: string) {
@@ -49,6 +53,7 @@ export default function UsersAdmin() {
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [resetLink, setResetLink] = useState<GeneratedPasswordReset | null>(null);
 
   const closeForm = () => {
     setShowForm(false);
@@ -72,6 +77,7 @@ export default function UsersAdmin() {
       password: "",
       role: user.role,
       avatar: user.avatar,
+      email: user.email ?? "",
     });
     setFormError(null);
     setShowForm(true);
@@ -85,6 +91,7 @@ export default function UsersAdmin() {
           role: form.role,
           avatar: form.avatar.trim(),
           password: form.password || undefined,
+          email: form.email.trim() || null,
         });
       }
       return adminCreateUser({
@@ -93,6 +100,7 @@ export default function UsersAdmin() {
         password: form.password,
         role: form.role,
         avatar: form.avatar.trim() || undefined,
+        email: form.email.trim() || undefined,
       });
     },
     onSuccess: () => {
@@ -116,6 +124,32 @@ export default function UsersAdmin() {
     onError: (error) => setActionError(getApiErrorMessage(error)),
   });
 
+  const generateReset = useMutation({
+    mutationFn: (id: number) => adminCreatePasswordReset(id),
+    onSuccess: (data) => {
+      setResetLink(data);
+      setNotice(
+        data.emailSent
+          ? `Enlace generado y enviado por correo a @${data.username}.`
+          : `Enlace generado para @${data.username}. Cópialo y entrégaselo.`
+      );
+      setActionError(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "password-resets"] });
+    },
+    onError: (error) => setActionError(getApiErrorMessage(error)),
+  });
+
+  const copyResetLink = async () => {
+    if (!resetLink) return;
+    try {
+      await navigator.clipboard.writeText(resetLink.url);
+      setNotice("Enlace copiado al portapapeles.");
+      setActionError(null);
+    } catch {
+      setActionError("No se pudo copiar automáticamente; selecciona el enlace y cópialo a mano.");
+    }
+  };
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     setFormError(null);
@@ -137,8 +171,19 @@ export default function UsersAdmin() {
       setFormError("La nueva contraseña debe tener al menos 6 caracteres.");
       return;
     }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setFormError("El email no tiene un formato válido.");
+      return;
+    }
 
     save.mutate();
+  };
+
+  const handleGenerateReset = (user: AdminUser) => {
+    setNotice(null);
+    setActionError(null);
+    setResetLink(null);
+    generateReset.mutate(user.id);
   };
 
   const handleDelete = (user: AdminUser) => {
@@ -176,6 +221,49 @@ export default function UsersAdmin() {
       {actionError && (
         <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
           ⚠️ {actionError}
+        </div>
+      )}
+
+      {resetLink && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-amber-900">
+                🔑 Enlace de recuperación para @{resetLink.username}
+              </p>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Vence el {new Date(resetLink.expiresAt).toLocaleString("es-CL")}.{" "}
+                {resetLink.emailSent
+                  ? "También se envió al correo registrado."
+                  : resetLink.hasEmail
+                    ? "No se pudo enviar por correo; compártelo tú."
+                    : "El entrenador no tiene email registrado; compártelo tú."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setResetLink(null)}
+              aria-label="Cerrar enlace"
+              className="shrink-0 w-7 h-7 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-black transition"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
+            <input
+              readOnly
+              value={resetLink.url}
+              onFocus={(event) => event.currentTarget.select()}
+              className="flex-1 min-w-0 border border-amber-300 rounded-xl px-3 py-2 text-xs bg-white text-amber-900 font-mono"
+            />
+            <button
+              type="button"
+              onClick={copyResetLink}
+              className="shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl text-xs font-bold transition"
+            >
+              Copiar enlace
+            </button>
+          </div>
         </div>
       )}
 
@@ -220,6 +308,22 @@ export default function UsersAdmin() {
                 className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="ej: Ash Ketchum"
               />
+            </label>
+
+            <label className="block">
+              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                Email (opcional)
+              </span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="entrenador@correo.cl"
+              />
+              <span className="block text-[10px] text-gray-400 mt-1">
+                Se usa para enviar el enlace de recuperación de contraseña.
+              </span>
             </label>
 
             <label className="block">
@@ -323,6 +427,9 @@ export default function UsersAdmin() {
                               {user.name} {isSelf && <span className="text-[10px] text-red-600">(tú)</span>}
                             </p>
                             <p className="text-xs text-gray-400 truncate">@{user.username}</p>
+                            {user.email && (
+                              <p className="text-[11px] text-gray-400 truncate">✉️ {user.email}</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -336,6 +443,14 @@ export default function UsersAdmin() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleGenerateReset(user)}
+                            disabled={generateReset.isPending}
+                            title="Generar enlace de recuperación"
+                            className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Enlace
+                          </button>
                           <button
                             onClick={() => openEdit(user)}
                             className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition"
@@ -377,6 +492,9 @@ export default function UsersAdmin() {
                         {user.name} {isSelf && <span className="text-[10px] text-red-600">(tú)</span>}
                       </p>
                       <p className="text-xs text-gray-400 truncate">@{user.username}</p>
+                      {user.email && (
+                        <p className="text-[11px] text-gray-400 truncate">✉️ {user.email}</p>
+                      )}
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border shrink-0 ${badge.className}`}>
                       {badge.label}
@@ -386,6 +504,13 @@ export default function UsersAdmin() {
                     Creado el {new Date(user.createdAt).toLocaleDateString("es-CL")}
                   </p>
                   <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleGenerateReset(user)}
+                      disabled={generateReset.isPending}
+                      className="flex-1 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Enlace
+                    </button>
                     <button
                       onClick={() => openEdit(user)}
                       className="flex-1 px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition"

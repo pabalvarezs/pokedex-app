@@ -132,6 +132,41 @@ export function logoutUser(): void {
   localStorage.removeItem("pokedex_token");
 }
 
+// --- Recuperación de contraseña ---
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  /** Solo se incluye en desarrollo para probar el flujo sin proveedor de correo. */
+  devResetUrl?: string;
+}
+
+export async function requestPasswordReset(username: string): Promise<ForgotPasswordResponse> {
+  try {
+    const { data } = await api.post<ForgotPasswordResponse>("/api/auth/forgot-password", {
+      username,
+    });
+    return data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "No pudimos procesar la solicitud."));
+  }
+}
+
+export async function resetPassword(
+  token: string,
+  password: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data } = await api.post<{ success: boolean; message: string }>(
+      "/api/auth/reset-password",
+      { token, password }
+    );
+    return data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "No pudimos actualizar tu contraseña."));
+  }
+}
+
 export async function listPokemon(limit = 20, offset = 0) {
   const { data } = await api.get<{
     pokemon: Pokemon[];
@@ -206,6 +241,7 @@ export interface AdminUser {
   name: string;
   role: "admin" | "trainer";
   avatar: string;
+  email: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -216,6 +252,26 @@ export interface AdminUserInput {
   name: string;
   role: "admin" | "trainer";
   avatar?: string;
+  email?: string | null;
+}
+
+export interface PasswordResetRequest {
+  id: number;
+  userId: number;
+  username: string;
+  name: string;
+  email: string | null;
+  source: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface GeneratedPasswordReset {
+  username: string;
+  url: string;
+  expiresAt: string;
+  hasEmail: boolean;
+  emailSent: boolean;
 }
 
 export interface AdminFavorite {
@@ -254,6 +310,18 @@ export async function adminUpdateUser(id: number, input: Omit<AdminUserInput, "u
 
 export async function adminDeleteUser(id: number) {
   await api.delete(`/api/admin/users/${id}`);
+}
+
+export async function adminListPasswordResets() {
+  const { data } = await api.get<PasswordResetRequest[]>("/api/admin/password-resets");
+  return data;
+}
+
+export async function adminCreatePasswordReset(userId: number) {
+  const { data } = await api.post<GeneratedPasswordReset>(
+    `/api/admin/users/${userId}/password-reset`
+  );
+  return data;
 }
 
 export async function adminListFavorites() {
