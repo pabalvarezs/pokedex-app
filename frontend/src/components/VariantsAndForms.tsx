@@ -4,6 +4,7 @@ import type {
   PokemonVariantFamily,
   PokemonVariant,
   PokemonVariantCategory,
+  ParadoxRelative,
 } from "../services/api";
 import { getTypeBadge } from "../utils/pokemon";
 import PokemonArtwork from "./PokemonArtwork";
@@ -164,9 +165,85 @@ export default function VariantsAndForms({ family }: Props) {
                 />
               ))}
           </div>
+
+          {/* Pokémon paradoja relacionados */}
+          {family.paradoxRelatives && family.paradoxRelatives.length > 0 && (
+            <div className="mt-6 border-t border-line-soft pt-5">
+              <h3 className="mb-3 flex items-center gap-2 text-section font-bold uppercase tracking-wider text-ink-500">
+                <span>🔄</span>
+                <span>Pokémon paradoja relacionados</span>
+              </h3>
+              <p className="mb-4 text-xs text-ink-500">
+                Según el lore de Pokémon Escarlata y Púrpura, estos Pokémon
+                paradoja guardan relación con esta especie.
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {family.paradoxRelatives.map((relative) => (
+                  <ParadoxCard key={relative.id} relative={relative} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
+  const eraLabel = relative.era === "past" ? "Pasado" : "Futuro";
+  const eraBadge =
+    relative.era === "past"
+      ? "bg-amber-600 text-white"
+      : "bg-cyan-600 text-white";
+  const eraEmoji = relative.era === "past" ? "🦴" : "🤖";
+
+  return (
+    <Link
+      to={`/pokemon/${relative.id}`}
+      className="group relative flex flex-col items-center rounded-lg border border-purple-200 bg-gradient-to-b from-purple-50 to-white p-3 text-center transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      {/* Badge de era */}
+      <span
+        className={`mb-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${eraBadge}`}
+      >
+        <span>{eraEmoji}</span>
+        <span>{eraLabel}</span>
+      </span>
+
+      {/* Arte */}
+      <PokemonArtwork
+        id={relative.id}
+        name={relative.name}
+        src={relative.artwork}
+        className="h-20 w-20 object-contain drop-shadow-sm transition group-hover:scale-105 sm:h-24 sm:w-24"
+      />
+
+      {/* Nombre */}
+      <p className="mt-1.5 w-full truncate text-xs font-extrabold text-ink-900">
+        {relative.displayName}
+      </p>
+
+      {/* Tipos */}
+      <div className="mt-1.5 flex flex-wrap justify-center gap-1">
+        {relative.types.map((type) => {
+          const badge = getTypeBadge(type);
+          return (
+            <span
+              key={type}
+              className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
+            >
+              {badge.es}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Descripción */}
+      <p className="mt-1.5 line-clamp-2 text-[9px] leading-tight text-ink-400">
+        {relative.description}
+      </p>
+    </Link>
   );
 }
 

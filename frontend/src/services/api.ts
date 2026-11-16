@@ -108,6 +108,17 @@ export interface PokemonVariant {
   types?: string[];
 }
 
+export interface ParadoxRelative {
+  id: number;
+  name: string;
+  displayName: string;
+  era: "past" | "future";
+  description: string;
+  sprite: string;
+  artwork: string;
+  types: string[];
+}
+
 export interface PokemonVariantFamily {
   speciesId: number;
   speciesName: string;
@@ -124,6 +135,8 @@ export interface PokemonVariantFamily {
   isDefault: boolean;
   total: number;
   variants: PokemonVariant[];
+  /** Pokémon paradoja relacionados por lore. */
+  paradoxRelatives?: ParadoxRelative[];
 }
 
 export interface Pokemon {

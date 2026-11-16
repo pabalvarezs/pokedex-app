@@ -111,6 +111,8 @@ export interface PokemonVariantFamily {
   isDefault: boolean;
   total: number;
   variants: PokemonVariant[];
+  /** Pokémon paradoja relacionados por lore (no por varieties de PokéAPI). */
+  paradoxRelatives?: ParadoxRelative[];
 }
 
 /** Entrada mínima de `pokemon-species.varieties`. */
@@ -1591,6 +1593,11 @@ export function buildVariantFamily(
       ? undefined
       : classifyVariant(input.currentName, input.speciesName);
 
+  const paradoxRelatives = buildParadoxRelatives(
+    input.speciesId,
+    input.typesById
+  );
+
   return {
     speciesId: input.speciesId,
     speciesName: input.speciesName,
@@ -1616,7 +1623,194 @@ export function buildVariantFamily(
     isDefault: input.currentId === baseId,
     total: variants.length,
     variants,
+    ...(paradoxRelatives.length > 0 ? { paradoxRelatives } : {}),
   };
+}
+
+/**
+ * Pares de Pokémon paradoja: relaciona una especie presente con su contrapartida
+ * paradoja (del pasado o del futuro). PokéAPI NO las vincula mediante `varieties`;
+ * la relación es lore y se mantiene aquí como catálogo curado.
+ *
+ * Estructura: [presentDaySpeciesId, paradoxSpeciesId]
+ */
+export const PARADOX_PAIRS: [number, number][] = [
+  // --- Pasado (Escarlata) ---
+  [232, 984],    // Donphan → Colmilargo (Great Tusk)
+  [39, 985],     // Jigglypuff → Colagrito (Scream Tail)
+  [756, 986],    // Amoonguss → Furioseta (Brute Bonnet)
+  [200, 987],    // Misdreavus → Melenaleteo (Flutter Mane)
+  [637, 988],    // Volcarona → Reptalada (Slither Wing)
+  [82, 989],     // Magneton → Pelarena (Sandy Shocks)
+  [373, 994],    // Salamence → Bramaluna (Roaring Moon)
+  [967, 1007],   // Cyclizar → Koraidon
+  [245, 1009],   // Suicune → Ondulagua (Walking Wake) — DLC
+  [244, 1010],   // Entei → Flamariete (Raging Bolt) — DLC
+  [243, 1011],   // Raikou → Electrofuria (Gouging Fire) — DLC
+
+  // --- Futuro (Púrpura) ---
+  [232, 990],    // Donphan → Ferrodada (Iron Treads)
+  [225, 991],    // Delibird → Ferrosaco (Iron Bundle)
+  [297, 992],    // Hariyama → Ferropalmas (Iron Hands)
+  [635, 993],    // Hydreigon → Ferrocuello (Iron Jugulis)
+  [637, 994],    // Volcarona → Ferropolilla (Iron Moth)
+  [248, 995],    // Tyranitar → Ferropúas (Iron Thorns)
+  [282, 1006],   // Gardevoir → Ferropaladín (Iron Valiant)
+  [967, 1008],   // Cyclizar → Miraidon
+  [640, 1021],   // Virizion → Ferroverdor (Iron Leaves) — DLC
+  [376, 1022],   // Metagross → Ferrotesta (Iron Crown) — DLC
+  [479, 1023],   // Rotom → Ferromole (Iron Boulder) — DLC
+  [461, 1024],   // Weavile → Ferrofilo (Iron Jugulis alt) — placeholder
+];
+
+/**
+ * Relaciones de especies paradoja. Se construye a partir de PARADOX_PAIRS para
+ * poder mirar en ambas direcciones.
+ */
+const PARADOX_MAP = new Map<number, number[]>();
+
+for (const [present, paradox] of PARADOX_PAIRS) {
+  if (!PARADOX_MAP.has(present)) PARADOX_MAP.set(present, []);
+  if (!PARADOX_MAP.has(paradox)) PARADOX_MAP.set(paradox, []);
+  PARADOX_MAP.get(present)!.push(paradox);
+  PARADOX_MAP.get(paradox)!.push(present);
+}
+
+export interface ParadoxRelative {
+  id: number;
+  name: string;
+  displayName: string;
+  /** "past" si es una forma antigua, "future" si es futurista. */
+  era: "past" | "future";
+  description: string;
+  sprite: string;
+  artwork: string;
+  types: string[];
+}
+
+const PARADOX_DISPLAY_NAMES: Record<number, string> = {
+  984: "Colmilargo",
+  985: "Colagrito",
+  986: "Furioseta",
+  987: "Melenaleteo",
+  988: "Reptalada",
+  989: "Pelarena",
+  994: "Bramaluna",
+  990: "Ferrodada",
+  991: "Ferrosaco",
+  992: "Ferropalmas",
+  993: "Ferrocuello",
+  995: "Ferropúas",
+  1006: "Ferropaladín",
+  1007: "Koraidon",
+  1008: "Miraidon",
+  1009: "Ondulagua",
+  1010: "Flamariete",
+  1011: "Electrofuria",
+  1021: "Ferroverdor",
+  1022: "Ferrotesta",
+  1023: "Ferromole",
+  1024: "Ferrofilo",
+};
+
+const PARADOX_DESCRIPTIONS: Record<number, string> = {
+  984: "Pokémon paradoja del pasado relacionado con Donphan.",
+  985: "Pokémon paradoja del pasado relacionado con Jigglypuff.",
+  986: "Pokémon paradoja del pasado relacionado con Amoonguss.",
+  987: "Pokémon paradoja del pasado relacionado con Misdreavus.",
+  988: "Pokémon paradoja del pasado relacionado con Volcarona.",
+  989: "Pokémon paradoja del pasado relacionado con Magneton.",
+  994: "Pokémon paradoja del pasado relacionado con Salamence.",
+  990: "Pokémon paradoja del futuro relacionado con Donphan.",
+  991: "Pokémon paradoja del futuro relacionado con Delibird.",
+  992: "Pokémon paradoja del futuro relacionado con Hariyama.",
+  993: "Pokémon paradoja del futuro relacionado con Hydreigon.",
+  995: "Pokémon paradoja del futuro relacionado con Tyranitar.",
+  1006: "Pokémon paradoja del futuro relacionado con Gardevoir/Gallade.",
+  1007: "Pokémon paradoja del pasado; guarda similitudes con Cyclizar.",
+  1008: "Pokémon paradoja del futuro; guarda similitudes con Cyclizar.",
+  1009: "Pokémon paradoja del pasado relacionado con Suicune.",
+  1010: "Pokémon paradoja del pasado relacionado con Entei.",
+  1011: "Pokémon paradoja del pasado relacionado con Raikou.",
+  1021: "Pokémon paradoja del futuro relacionado con Virizion.",
+  1022: "Pokémon paradoja del futuro relacionado con Metagross.",
+  1023: "Pokémon paradoja del futuro relacionado con Rotom.",
+  1024: "Pokémon paradoja del futuro relacionado con Weavile.",
+};
+
+const PARADOX_TYPE_BY_ID: Record<number, string[]> = {
+  984: ["ground", "fighting"],
+  985: ["fairy", "psychic"],
+  986: ["grass", "dark"],
+  987: ["ghost", "fairy"],
+  988: ["bug", "fighting"],
+  989: ["electric", "ground"],
+  994: ["dragon", "dark"],
+  990: ["ground", "steel"],
+  991: ["ice", "water"],
+  992: ["fighting", "electric"],
+  993: ["dark", "flying"],
+  995: ["rock", "electric"],
+  1006: ["fairy", "fighting"],
+  1007: ["fighting", "dragon"],
+  1008: ["electric", "dragon"],
+  1009: ["water", "dragon"],
+  1010: ["fire", "dragon"],
+  1011: ["electric", "dragon"],
+  1021: ["grass", "psychic"],
+  1022: ["steel", "psychic"],
+  1023: ["rock", "electric"],
+  1024: ["dark", "ice"],
+};
+
+/** IDs de Pokémon paradoja del pasado (Escarlata). */
+const PAST_PARADOX = new Set([984, 985, 986, 987, 988, 989, 994, 1007, 1009, 1010, 1011]);
+
+const PARADOX_ID_TO_SLUG: Record<number, string> = {
+  984: "great-tusk",
+  985: "scream-tail",
+  986: "brute-bonnet",
+  987: "flutter-mane",
+  988: "slither-wing",
+  989: "sandy-shocks",
+  994: "roaring-moon",
+  990: "iron-treads",
+  991: "iron-bundle",
+  992: "iron-hands",
+  993: "iron-jugulis",
+  995: "iron-thorns",
+  1006: "iron-valiant",
+  1007: "koraidon",
+  1008: "miraidon",
+  1009: "walking-wake",
+  1010: "raging-bolt",
+  1011: "gouging-fire",
+  1021: "iron-leaves",
+  1022: "iron-crown",
+  1023: "iron-boulder",
+  1024: "dark-weavile-alt",
+};
+
+export function buildParadoxRelatives(
+  speciesId: number,
+  typesById?: Record<number, string[]>
+): ParadoxRelative[] {
+  const relatedIds = PARADOX_MAP.get(speciesId);
+  if (!relatedIds?.length) return [];
+
+  return relatedIds.map((id) => {
+    const slug = PARADOX_ID_TO_SLUG[id] ?? `pokemon-${id}`;
+    return {
+      id,
+      name: slug,
+      displayName: PARADOX_DISPLAY_NAMES[id] ?? prettyName(slug),
+      era: PAST_PARADOX.has(id) ? "past" : "future",
+      description: PARADOX_DESCRIPTIONS[id] ?? "Pokémon paradoja.",
+      sprite: variantSpriteUrl(id),
+      artwork: variantArtworkUrl(id),
+      types: typesById?.[id] ?? PARADOX_TYPE_BY_ID[id] ?? ["unknown"],
+    };
+  });
 }
 
 export const WIKIDEX_VARIANTS_URL = WIKIDEX;

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   classifyVariant,
   buildVariantFamily,
+  buildParadoxRelatives,
   getVariantCategory,
   variantSpriteUrl,
   variantArtworkUrl,
@@ -388,5 +389,47 @@ describe("getVariantCategory", () => {
   it("devuelve alt-form como fallback para keys desconocidas", () => {
     const fallback = getVariantCategory("unknown" as any);
     expect(fallback.key).toBe("alt-form");
+  });
+});
+
+describe("buildParadoxRelatives", () => {
+  it("devuelve paradox relatives para Jigglypuff (presente ↔ pasado)", () => {
+    const relatives = buildParadoxRelatives(39);
+    expect(relatives.length).toBeGreaterThanOrEqual(1);
+    const screamTail = relatives.find((r) => r.id === 985);
+    expect(screamTail).toBeDefined();
+    expect(screamTail!.displayName).toBe("Colagrito");
+    expect(screamTail!.era).toBe("past");
+    expect(screamTail!.types).toContain("fairy");
+    expect(screamTail!.types).toContain("psychic");
+  });
+
+  it("devuelve paradox relatives para Donphan (pasado y futuro)", () => {
+    const relatives = buildParadoxRelatives(232);
+    expect(relatives.length).toBe(2);
+    const past = relatives.find((r) => r.id === 984);
+    const future = relatives.find((r) => r.id === 990);
+    expect(past).toBeDefined();
+    expect(past!.era).toBe("past");
+    expect(future).toBeDefined();
+    expect(future!.era).toBe("future");
+  });
+
+  it("Contragolpe: Scream Tail también ve a Jigglypuff como relativo", () => {
+    const relatives = buildParadoxRelatives(985);
+    expect(relatives.length).toBeGreaterThanOrEqual(1);
+    expect(relatives.some((r) => r.id === 39)).toBe(true);
+  });
+
+  it("devuelve lista vacía para Pokémon sin relación paradoja", () => {
+    const relatives = buildParadoxRelatives(1); // Bulbasaur
+    expect(relatives).toHaveLength(0);
+  });
+
+  it("incluye sprites y artworks desde el ID", () => {
+    const relatives = buildParadoxRelatives(39);
+    const screamTail = relatives.find((r) => r.id === 985)!;
+    expect(screamTail.sprite).toContain("985.png");
+    expect(screamTail.artwork).toContain("985.png");
   });
 });
