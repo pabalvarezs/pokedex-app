@@ -1,17 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPokemon, searchPokemon } from "../services/api";
 import FavoriteButton from "../components/FavoriteButton";
 import EvolutionChain from "../components/EvolutionChain";
 import MegaForms from "../components/MegaForms";
+import SpriteLightbox from "../components/SpriteLightbox";
+import type { SpriteItem } from "../components/SpriteLightbox";
 import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
-
-interface SpriteItem {
-  key: string;
-  label: string;
-  url: string;
-}
 
 export default function PokemonDetail() {
   const { id, name } = useParams();
@@ -29,21 +25,6 @@ export default function PokemonDetail() {
     queryFn: () => (pokemonId ? getPokemon(pokemonId) : searchPokemon(name!)),
     enabled: !!id || !!name,
   });
-
-  // Cerrar modal con tecla Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setModalOpen(false);
-    };
-    if (modalOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "auto";
-    };
-  }, [modalOpen]);
 
   const playCry = (url?: string) => {
     if (!url) return;
@@ -121,7 +102,20 @@ export default function PokemonDetail() {
   }
 
   const openSpriteModal = (sprite?: SpriteItem) => {
-    setSelectedSprite(sprite || allSprites[0] || null);
+    // Si se abre desde la ilustración principal, arrancamos con el arte
+    // oficial (o el modelo 3D HOME) en lugar del sprite pequeño de 96 px.
+    const fallback =
+      allSprites.find((s) => s.key === (showShiny ? "official_shiny" : "official")) ||
+      allSprites.find((s) => s.key === "official") ||
+      allSprites.find((s) => s.key === "official_shiny") ||
+      allSprites.find((s) => s.key === "home") ||
+      allSprites.find((s) =>
+        showShiny ? s.key === "front_shiny" : s.key === "front_default"
+      ) ||
+      allSprites[0] ||
+      null;
+
+    setSelectedSprite(sprite || fallback);
     setModalOpen(true);
   };
 
@@ -439,87 +433,16 @@ export default function PokemonDetail() {
         <MegaForms forms={data.megaForms} />
       )}
 
-      {/* VENTANA MODAL DE VISTA PREVIA DE SPRITES */}
-      {modalOpen && selectedSprite && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-card border border-line bg-surface p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header del modal */}
-            <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
-              <div>
-                <h3 className="text-lg font-black text-gray-900 capitalize">
-                  {data.name} #{formattedId}
-                </h3>
-                <p className="text-xs text-gray-500 font-medium">
-                  {selectedSprite.label}
-                </p>
-              </div>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-sm transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Visualizador central grande del sprite */}
-            <div className="artwork-frame relative mb-4 flex h-64 w-full items-center justify-center rounded-card border border-slate-200 p-4 shadow-inner">
-              <img
-                src={selectedSprite.url}
-                alt={selectedSprite.label}
-                className="max-h-full max-w-full object-contain filter drop-shadow-xl"
-              />
-              <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
-                {selectedSprite.label}
-              </span>
-            </div>
-
-            {/* Selector de miniaturas en el modal */}
-            <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Selecciona otra vista:
-              </p>
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-40 overflow-y-auto p-1">
-                {allSprites.map((sprite) => (
-                  <button
-                    key={sprite.key}
-                    onClick={() => setSelectedSprite(sprite)}
-                    className={`flex flex-col items-center rounded-control border p-1.5 text-center transition ${
-                      selectedSprite.key === sprite.key
-                        ? "border-red-500 bg-red-50 ring-2 ring-red-400"
-                        : "border-gray-200 bg-gray-50 hover:bg-gray-100"
-                    }`}
-                  >
-                    <img
-                      src={sprite.url}
-                      alt={sprite.label}
-                      className="w-12 h-12 object-contain"
-                    />
-                    <span className="text-[9px] font-bold text-gray-600 truncate max-w-full block mt-0.5">
-                      {sprite.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Botón de cerrar */}
-            <div className="mt-5 pt-3 border-t border-gray-100 text-right">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="rounded-control bg-gray-800 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-gray-900"
-              >
-                Cerrar vista previa
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* VENTANA MODAL DE VISTA AMPLIADA DE SPRITES */}
+      <SpriteLightbox
+        open={modalOpen}
+        pokemonName={data.name}
+        pokemonId={formattedId}
+        sprites={allSprites}
+        selected={selectedSprite}
+        onSelect={setSelectedSprite}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }
