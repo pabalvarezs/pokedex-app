@@ -66,6 +66,7 @@ export interface Pokemon {
   description?: string;
   evolutionChain?: EvolutionStage[];
   megaForms?: MegaForm[];
+  gmaxForms?: GmaxForm[];
 }
 
 export interface EvolutionMember {
@@ -86,6 +87,20 @@ export interface MegaForm {
   types: string[];
   sprite?: string;
   artwork?: string;
+}
+
+export interface GmaxForm {
+  id: number;
+  name: string;
+  baseName: string;
+  /** Etiqueta de la forma cuando la especie tiene más de una (Aguda, Grave, Brusca, Fluida). */
+  variant?: string;
+  types: string[];
+  sprite?: string;
+  artwork?: string;
+  shinyArtwork?: string;
+  /** Altura en decímetros, como la entrega PokeAPI. */
+  height?: number;
 }
 
 interface SpeciesVariety {
@@ -157,6 +172,7 @@ const rawPokemonPending = new Map<string, Promise<PokemonApiResponse>>();
 const speciesCache = new Map<string, CacheEntry<SpeciesInfo>>();
 const evolutionChainCache = new Map<string, CacheEntry<EvolutionStage[]>>();
 const megaFormCache = new Map<string, CacheEntry<MegaForm>>();
+const gmaxFormCache = new Map<string, CacheEntry<GmaxForm>>();
 const detailCache = new Map<string, CacheEntry<Pokemon>>();
 
 function cacheGet<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
@@ -658,6 +674,84 @@ async function getMegaForms(stages: EvolutionStage[]): Promise<MegaForm[]> {
   });
 }
 
+/**
+ * De todas las variedades de una especie, deja solo las Gigamax. Excluye
+ * deliberadamente Megas, Eternamax y cualquier otra variante.
+ */
+export function pickGmaxVarieties<T extends { name: string }>(
+  varieties: T[] | undefined
+): T[] {
+  return (varieties ?? []).filter((variety) => /-gmax$/.test(variety.name));
+}
+
+const GMAX_VARIANT_LABELS: Record<string, string> = {
+  "toxtricity-amped": "Aguda",
+  "toxtricity-low-key": "Grave",
+  "urshifu-single-strike": "Brusca",
+  "urshifu-rapid-strike": "Fluida",
+};
+
+/** Etiqueta localizada para las especies con más de una forma Gigamax. */
+export function gmaxVariantLabel(name: string): string | undefined {
+  return GMAX_VARIANT_LABELS[name.replace(/-gmax$/, "")];
+}
+
+async function getGmaxForm(
+  variety: SpeciesVariety,
+  baseName: string
+): Promise<GmaxForm | null> {
+  const cached = cacheGet(gmaxFormCache, variety.name);
+  if (cached) return cached;
+
+  try {
+    const { data } = await api.get<PokemonApiResponse>(
+      `/pokemon/${encodeURIComponent(variety.name)}`
+    );
+    const variant = gmaxVariantLabel(variety.name);
+    const form: GmaxForm = {
+      id: data.id,
+      name: data.name,
+      baseName,
+      ...(variant ? { variant } : {}),
+      types: data.types.map((t) => t.type.name),
+      sprite: data.sprites?.front_default,
+      artwork: data.sprites?.other?.["official-artwork"]?.front_default,
+      shinyArtwork: data.sprites?.other?.["official-artwork"]?.front_shiny,
+      ...(typeof data.height === "number" ? { height: data.height } : {}),
+    };
+
+    cacheSet(gmaxFormCache, variety.name, form);
+    return form;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Busca las formas Gigamax de la especie que se está viendo. A diferencia de
+ * las Megas (que viven en la última etapa evolutiva), Pikachu, Eevee y Meowth
+ * pueden evolucionar y aun así Gigamaxizar, así que se usan las variedades de
+ * la especie actual.
+ */
+async function getGmaxForms(
+  speciesInfo: SpeciesInfo,
+  baseName: string
+): Promise<GmaxForm[]> {
+  const varieties = pickGmaxVarieties(speciesInfo.varieties);
+  if (varieties.length === 0) return [];
+
+  const forms = await Promise.all(
+    varieties.map((variety) => getGmaxForm(variety, baseName))
+  );
+
+  const seen = new Set<number>();
+  return forms.filter((form): form is GmaxForm => {
+    if (!form || seen.has(form.id)) return false;
+    seen.add(form.id);
+    return true;
+  });
+}
+
 async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> {
   const normalized = String(key).trim().toLowerCase();
   const cached = cacheGet(rawPokemonCache, normalized);
@@ -807,6 +901,10 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
   ]);
 
   const megaForms = await getMegaForms(evolutionChain);
+  const gmaxForms = await getGmaxForms(
+    speciesInfo,
+    data.species?.name ?? data.name
+  );
 
   const pokemon: Pokemon = {
     id: data.id,
@@ -828,6 +926,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     description: speciesInfo.description,
     evolutionChain,
     megaForms,
+    gmaxForms,
   };
 
   cacheSet(detailCache, cacheKey, pokemon);
