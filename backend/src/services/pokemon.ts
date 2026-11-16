@@ -1,4 +1,5 @@
 import axios from "axios";
+import { gmaxMoveFor, type GmaxMove } from "./gmaxMoves";
 
 const POKEAPI = "https://pokeapi.co/api/v2";
 const api = axios.create({ baseURL: POKEAPI, timeout: 10000 });
@@ -101,6 +102,8 @@ export interface GmaxForm {
   shinyArtwork?: string;
   /** Altura en decímetros, como la entrega PokeAPI. */
   height?: number;
+  /** Movimiento G-Max exclusivo de la forma, si está en el catálogo curado. */
+  gmaxMove?: GmaxMove;
 }
 
 interface SpeciesVariety {
@@ -708,6 +711,7 @@ async function getGmaxForm(
       `/pokemon/${encodeURIComponent(variety.name)}`
     );
     const variant = gmaxVariantLabel(variety.name);
+    const gmaxMove = gmaxMoveFor(variety.name);
     const form: GmaxForm = {
       id: data.id,
       name: data.name,
@@ -718,6 +722,7 @@ async function getGmaxForm(
       artwork: data.sprites?.other?.["official-artwork"]?.front_default,
       shinyArtwork: data.sprites?.other?.["official-artwork"]?.front_shiny,
       ...(typeof data.height === "number" ? { height: data.height } : {}),
+      ...(gmaxMove ? { gmaxMove } : {}),
     };
 
     cacheSet(gmaxFormCache, variety.name, form);
