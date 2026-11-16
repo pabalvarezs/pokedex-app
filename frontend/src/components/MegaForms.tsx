@@ -2,8 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MegaForm, PokemonStat } from "../services/api";
 import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
-import { getTypeBadge, STAT_NAMES } from "../utils/pokemon";
+import { STAT_NAMES } from "../utils/pokemon";
 import PokemonArtwork from "./PokemonArtwork";
+import {
+  FormHero,
+  FormSummary,
+  TypePills,
+  formArtwork,
+  formatFormId,
+  prettyFormName,
+} from "./forms/FormPrimitives";
 
 export interface MegaBaseForm {
   id: number;
@@ -19,47 +27,9 @@ interface MegaFormsProps {
   base?: MegaBaseForm;
 }
 
-function prettyName(name: string) {
-  return name
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 function megaTitle(form: MegaForm) {
-  const base = prettyName(form.baseName);
+  const base = prettyFormName(form.baseName);
   return form.variant ? `Mega ${base} ${form.variant}` : `Mega ${base}`;
-}
-
-function artworkFor(form: MegaForm) {
-  return (
-    form.artwork ??
-    form.sprite ??
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${form.id}.png`
-  );
-}
-
-function formatId(id: number) {
-  return `#${String(id).padStart(3, "0")}`;
-}
-
-function TypePills({ types, dense = false }: { types: string[]; dense?: boolean }) {
-  return (
-    <div className={`flex flex-wrap items-center gap-1.5 ${dense ? "justify-center" : ""}`}>
-      {types.map((type) => {
-        const badge = getTypeBadge(type);
-        return (
-          <span
-            key={type}
-            className={`rounded-full border font-extrabold uppercase tracking-wide ${
-              dense ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
-            } ${badge.bg} ${badge.text} ${badge.border}`}
-          >
-            {badge.es}
-          </span>
-        );
-      })}
-    </div>
-  );
 }
 
 interface MegaCardProps {
@@ -131,14 +101,14 @@ function MegaCard({ form, selected, onSelect }: MegaCardProps) {
           <PokemonArtwork
             id={form.id}
             name={title}
-            src={artworkFor(form)}
+            src={formArtwork(form)}
             className="relative z-10 h-[160px] w-[160px] object-contain drop-shadow-[0_10px_18px_rgba(91,33,182,0.22)] transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none sm:h-[180px] sm:w-[180px]"
           />
         </div>
 
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-            Forma Mega de {prettyName(form.baseName)}
+            Forma Mega de {prettyFormName(form.baseName)}
           </p>
           <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-ink-900 transition-colors group-hover:text-violet-700">
             {title}
@@ -163,7 +133,7 @@ function MegaCard({ form, selected, onSelect }: MegaCardProps) {
               {selected ? "Comparando formas" : "Seleccionar para comparar"}
             </span>
             <span className="text-[10px] font-black text-violet-300">
-              {formatId(form.id)}
+              {formatFormId(form.id)}
             </span>
           </div>
         </div>
@@ -190,59 +160,6 @@ function MegaCard({ form, selected, onSelect }: MegaCardProps) {
             <path d="m13 6 6 6-6 6" />
           </svg>
         </Link>
-      </div>
-    </div>
-  );
-}
-
-function FormSummary({
-  label,
-  name,
-  id,
-  types,
-  artwork,
-  tone,
-}: {
-  label: string;
-  name: string;
-  id: number;
-  types: string[];
-  artwork?: string;
-  tone: "base" | "mega";
-}) {
-  return (
-    <div
-      className={`flex flex-col items-center rounded-[12px] border p-3 text-center ${
-        tone === "mega"
-          ? "border-violet-200 bg-gradient-to-b from-violet-50 to-white"
-          : "border-line bg-white"
-      }`}
-    >
-      <div className="flex w-full items-center justify-between gap-1">
-        <span
-          className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] ${
-            tone === "mega"
-              ? "bg-violet-600 text-white"
-              : "bg-slate-100 text-ink-500"
-          }`}
-        >
-          {label}
-        </span>
-        <span className="text-[9px] font-bold text-ink-500">{formatId(id)}</span>
-      </div>
-
-      <PokemonArtwork
-        id={id}
-        name={name}
-        src={artwork}
-        className="mt-1 h-24 w-24 object-contain drop-shadow-sm sm:h-28 sm:w-28"
-      />
-
-      <p className="w-full truncate text-xs font-extrabold capitalize text-ink-900">
-        {name}
-      </p>
-      <div className="mt-1.5">
-        <TypePills types={types} dense />
       </div>
     </div>
   );
@@ -390,8 +307,8 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
   const title = selectedForm ? megaTitle(selectedForm) : "";
   const megaArtwork =
     selectedForm &&
-    artworkFor(selectedForm) !== undefined
-      ? selectedPreview?.artwork ?? artworkFor(selectedForm)
+    formArtwork(selectedForm) !== undefined
+      ? selectedPreview?.artwork ?? formArtwork(selectedForm)
       : undefined;
 
   const canCompare = Boolean(base && base.stats?.length);
@@ -402,39 +319,19 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
       aria-labelledby="mega-title"
       className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
     >
-      <div className="relative overflow-hidden bg-gradient-to-r from-violet-700 via-indigo-600 to-fuchsia-700 px-6 py-6 text-white sm:px-8">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full border-[38px] border-white/10"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-fuchsia-300/20 blur-3xl"
-        />
-
-        <div className="relative flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-50 backdrop-blur-sm">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-fuchsia-300" />
-              Energía Mega
-            </span>
-            <h2
-              id="mega-title"
-              className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl"
-            >
-              <span aria-hidden="true">💥</span>
-              Megaevoluciones
-            </h2>
-            <p className="mt-1 max-w-2xl text-xs font-medium text-violet-100 sm:text-sm">
-              Formas de pelea temporales. No son evolución permanente.
-            </p>
-          </div>
-
+      <FormHero
+        tone="violet"
+        badge="Energía Mega"
+        emoji="💥"
+        title="Megaevoluciones"
+        titleId="mega-title"
+        subtitle="Formas de pelea temporales. No son evolución permanente."
+        aside={
           <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold ring-1 ring-white/25">
             {forms.length} {forms.length === 1 ? "forma" : "formas"}
           </span>
-        </div>
-      </div>
+        }
+      />
 
       <div className="bg-gradient-to-b from-white via-white to-violet-50/40 p-5 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -459,7 +356,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
                   Comparación de formas
                 </h3>
                 <p className="mt-0.5 text-[11px] font-semibold text-ink-500">
-                  {prettyName(base.name)} frente a {title}
+                  {prettyFormName(base.name)} frente a {title}
                 </p>
               </div>
               <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-700">
@@ -471,7 +368,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
               <div className="grid grid-cols-2 gap-3">
                 <FormSummary
                   label="Original"
-                  name={prettyName(base.name)}
+                  name={prettyFormName(base.name)}
                   id={base.id}
                   types={base.types}
                   artwork={base.artwork}
@@ -490,7 +387,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
               <div className="min-w-0">
                 {hasStats && (
                   <StatComparison
-                    baseName={prettyName(base.name)}
+                    baseName={prettyFormName(base.name)}
                     megaName={title}
                     baseStats={base.stats ?? []}
                     megaStats={selectedPreview?.stats ?? []}
@@ -537,4 +434,4 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
   );
 }
 
-export { prettyName as prettyMegaName };
+export { prettyFormName as prettyMegaName };
