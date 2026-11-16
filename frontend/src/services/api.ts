@@ -45,6 +45,20 @@ export interface MegaForm {
   artwork?: string;
 }
 
+export interface GmaxForm {
+  id: number;
+  name: string;
+  baseName: string;
+  /** Etiqueta para las especies con más de una forma: Aguda, Grave, Brusca o Fluida. */
+  variant?: string;
+  types: string[];
+  sprite?: string;
+  artwork?: string;
+  shinyArtwork?: string;
+  /** Altura en decímetros, como la entrega PokeAPI. */
+  height?: number;
+}
+
 export interface Pokemon {
   id: number;
   name: string;
@@ -84,6 +98,7 @@ export interface Pokemon {
   description?: string;
   evolutionChain?: EvolutionStage[];
   megaForms?: MegaForm[];
+  gmaxForms?: GmaxForm[];
 }
 
 export interface Favorite {
