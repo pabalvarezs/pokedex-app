@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import type { GmaxForm, PokemonStat } from "../services/api";
+import type { GmaxForm, GmaxRelative, PokemonStat } from "../services/api";
 import {
   dynamaxHp,
   dynamaxLevelLabel,
@@ -39,6 +39,8 @@ interface DynamaxFormsProps {
   forms: GmaxForm[];
   base: DynamaxBaseForm;
   speciesId?: number;
+  /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
+  gmaxRelatives?: GmaxRelative[];
 }
 
 const ETERNAMAX_ID = 10190;
@@ -686,20 +688,69 @@ function GmaxDetail({
   );
 }
 
-function NoGmaxNotice() {
+function joinNames(relatives: GmaxRelative[]) {
+  const pretty = relatives.map((relative) => prettyFormName(relative.name));
+  if (pretty.length === 1) return pretty[0];
+  return `${pretty.slice(0, -1).join(", ")} y ${pretty[pretty.length - 1]}`;
+}
+
+function NoGmaxNotice({ relatives }: { relatives: GmaxRelative[] }) {
+  const later = relatives.filter((relative) => relative.direction === "later");
+  const earlier = relatives.filter(
+    (relative) => relative.direction === "earlier"
+  );
+  const hasRelatives = relatives.length > 0;
+
+  const title = !hasRelatives
+    ? "Sin forma Gigamax"
+    : later.length > 0 && earlier.length === 0
+      ? "La evolución sí Gigamaxiza"
+      : earlier.length > 0 && later.length === 0
+        ? "La preevolución sí Gigamaxiza"
+        : "Otra etapa sí Gigamaxiza";
+
   return (
     <div className="mt-6 flex flex-col items-center gap-3 rounded-card border border-dashed border-rose-200 bg-rose-50/40 p-5 text-center sm:flex-row sm:text-left">
       <span aria-hidden="true" className="text-3xl">
-        🌱
+        {hasRelatives ? "🧬" : "🌱"}
       </span>
       <div>
         <h3 className="text-sm font-black uppercase tracking-wider text-ink-700">
-          Sin forma Gigamax
+          {title}
         </h3>
-        <p className="mt-1 text-[11px] font-semibold text-ink-500">
-          Este Pokémon puede Dinamaxizar, pero su especie no tiene Factor
-          Gigamax. Solo 32 especies pueden Gigamaxizar.
-        </p>
+        {!hasRelatives ? (
+          <p className="mt-1 text-[11px] font-semibold text-ink-500">
+            Este Pokémon puede Dinamaxizar, pero ni él ni su línea evolutiva
+            tienen Factor Gigamax. Solo 32 especies pueden Gigamaxizar.
+          </p>
+        ) : (
+          <div className="mt-1 space-y-1 text-[11px] font-semibold text-ink-500">
+            {later.length > 0 && (
+              <p>
+                Este Pokémon puede Dinamaxizar, pero su etapa actual no tiene
+                Factor Gigamax. Cuando evolucione a {joinNames(later)}{" "}
+                {later.length === 1 ? "sí va" : "sí van"} a poder Gigamaxizar.
+              </p>
+            )}
+            {earlier.length > 0 && (
+              <p>
+                {later.length > 0
+                  ? "Además, "
+                  : "Este Pokémon puede Dinamaxizar, pero perdió el Factor Gigamax al evolucionar. "}
+                {earlier.length === 1 ? "Su preevolución" : "Sus preevoluciones"}{" "}
+                {joinNames(earlier)}{" "}
+                {earlier.length === 1 ? "sí puede" : "sí pueden"} Gigamaxizar:
+                si todavía {earlier.length === 1 ? "lo tienes" : "los tienes"}{" "}
+                en esa etapa,{" "}
+                {earlier.length === 1 ? "aprovéchalo" : "aprovéchalos"} antes de
+                evolucionar.
+              </p>
+            )}
+            <p>
+              Solo 32 especies tienen el Factor Gigamax, así que no te extrañe.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -758,6 +809,7 @@ export default function DynamaxForms({
   forms,
   base,
   speciesId,
+  gmaxRelatives = [],
 }: DynamaxFormsProps) {
   const [level, setLevel] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(
@@ -847,7 +899,9 @@ export default function DynamaxForms({
           </div>
         )}
 
-        {!blocked && forms.length === 0 && <NoGmaxNotice />}
+        {!blocked && forms.length === 0 && (
+          <NoGmaxNotice relatives={gmaxRelatives} />
+        )}
         {speciesId === 890 && <EternamaxCard />}
       </div>
     </section>

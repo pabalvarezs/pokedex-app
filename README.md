@@ -131,6 +131,7 @@ La ficha de detalle agrega una sección **Dinamax y Gigamax** después de las Me
 - **Toxtricity** (Aguda/Grave) y **Urshifu** (Brusca/Fluida) tienen dos formas: se muestran ambas tarjetas y se puede alternar la selección.
 - **Eternamax** no es una forma Gigamax obtenible: aparece como tarjeta informativa en la ficha de Eternatus, marcada como forma de jefe no disponible para el jugador.
 - Si la especie puede Dinamaxizar pero no tiene forma Gigamax, la sección sigue visible con un aviso que explica que solo 32 especies pueden Gigamaxizar.
+- Ese aviso revisa la cadena evolutiva (`gmaxRelatives`): si una preevolución o una evolución posterior sí tiene Factor Gigamax, el mensaje nombra esa etapa en vez de decir que toda la especie no puede. Por ejemplo, Charmeleon avisa que Charizard sí Gigamaxiza y Persian recuerda que Meowth sí podía antes de evolucionar.
 
 ### Datos y límites
 
@@ -139,7 +140,7 @@ La ficha de detalle agrega una sección **Dinamax y Gigamax** después de las Me
 - El peso de las formas Gigamax no se muestra porque PokéAPI entrega `10000` como valor de relleno. La altura se presenta como aproximada ("Más de X m").
 - No hay selector shiny para el arte Gigamax en esta versión.
 
-El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork`, `height` (en decímetros) y `gmaxMove` (`name`, `type`, `effect` y `fixedPower` opcional).
+El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork`, `height` (en decímetros) y `gmaxMove` (`name`, `type`, `effect` y `fixedPower` opcional). Cuando la especie actual no tiene forma Gigamax, `gmaxRelatives` lista las otras etapas de su cadena que sí la tienen, con `id`, `name` y `direction` (`earlier` o `later`).
 
 ## Tests
 

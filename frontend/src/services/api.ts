@@ -69,6 +69,14 @@ export interface GmaxForm {
   gmaxMove?: GmaxMove;
 }
 
+/** Etapa de la cadena que puede Gigamaxizar cuando la especie actual no puede. */
+export interface GmaxRelative {
+  id: number;
+  name: string;
+  /** "earlier" para una preevolución y "later" para una evolución posterior. */
+  direction: "earlier" | "later";
+}
+
 export interface Pokemon {
   id: number;
   name: string;
@@ -109,6 +117,8 @@ export interface Pokemon {
   evolutionChain?: EvolutionStage[];
   megaForms?: MegaForm[];
   gmaxForms?: GmaxForm[];
+  /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
+  gmaxRelatives?: GmaxRelative[];
 }
 
 export interface Favorite {

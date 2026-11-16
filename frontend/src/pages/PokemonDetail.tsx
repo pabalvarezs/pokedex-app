@@ -468,6 +468,7 @@ export default function PokemonDetail() {
           height: data.height,
         }}
         speciesId={data.speciesId}
+        gmaxRelatives={data.gmaxRelatives ?? []}
       />
 
       {/* VENTANA MODAL DE VISTA AMPLIADA DE SPRITES */}

@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DynamaxForms from "../src/components/DynamaxForms";
-import type { GmaxForm } from "../src/services/api";
+import type { GmaxForm, GmaxRelative } from "../src/services/api";
 
 const CHARIZARD_BASE = {
   id: 6,
@@ -75,14 +75,21 @@ function renderSection({
   forms = [CHARIZARD_GMAX],
   base = CHARIZARD_BASE,
   speciesId = 6,
+  gmaxRelatives = [],
 }: {
   forms?: GmaxForm[];
   base?: typeof CHARIZARD_BASE;
   speciesId?: number;
+  gmaxRelatives?: GmaxRelative[];
 } = {}) {
   return render(
     <MemoryRouter>
-      <DynamaxForms forms={forms} base={base} speciesId={speciesId} />
+      <DynamaxForms
+        forms={forms}
+        base={base}
+        speciesId={speciesId}
+        gmaxRelatives={gmaxRelatives}
+      />
     </MemoryRouter>
   );
 }
@@ -184,6 +191,71 @@ describe("DynamaxForms", () => {
     expect(
       screen.getByRole("heading", { name: /Movimientos Max/i })
     ).toBeTruthy();
+  });
+
+  it("avisa que la evolución final sí puede Gigamaxizar", () => {
+    renderSection({
+      forms: [],
+      base: {
+        ...CHARIZARD_BASE,
+        id: 5,
+        name: "charmeleon",
+        types: ["fire"],
+        stats: [{ name: "hp", base_stat: 58 }],
+      },
+      speciesId: 5,
+      gmaxRelatives: [
+        { id: 6, name: "charizard", direction: "later" },
+      ],
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "La evolución sí Gigamaxiza" })
+    ).toBeTruthy();
+    expect(screen.getByText(/Cuando evolucione a Charizard/)).toBeTruthy();
+    expect(screen.getByText(/sí va a poder Gigamaxizar/)).toBeTruthy();
+    expect(screen.queryByText("Sin forma Gigamax")).toBeNull();
+  });
+
+  it("avisa que la preevolución sí puede Gigamaxizar", () => {
+    renderSection({
+      forms: [],
+      base: {
+        ...CHARIZARD_BASE,
+        id: 53,
+        name: "persian",
+        types: ["normal"],
+      },
+      speciesId: 53,
+      gmaxRelatives: [{ id: 52, name: "meowth", direction: "earlier" }],
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "La preevolución sí Gigamaxiza" })
+    ).toBeTruthy();
+    expect(screen.getByText(/perdió el Factor Gigamax al evolucionar/)).toBeTruthy();
+    expect(screen.getByText(/Su preevolución Meowth sí puede/)).toBeTruthy();
+    expect(screen.getByText(/aprovéchalo antes de evolucionar/)).toBeTruthy();
+  });
+
+  it("nombra todas las etapas de la cadena que pueden Gigamaxizar", () => {
+    renderSection({
+      forms: [],
+      base: {
+        ...CHARIZARD_BASE,
+        id: 840,
+        name: "applin",
+        types: ["grass", "dragon"],
+      },
+      speciesId: 840,
+      gmaxRelatives: [
+        { id: 841, name: "flapple", direction: "later" },
+        { id: 842, name: "appletun", direction: "later" },
+      ],
+    });
+
+    expect(screen.getByText(/Cuando evolucione a Flapple y Appletun/)).toBeTruthy();
+    expect(screen.getByText(/sí van a poder Gigamaxizar/)).toBeTruthy();
   });
 
   it("bloquea a Zacian, Zamazenta y Eternatus", () => {

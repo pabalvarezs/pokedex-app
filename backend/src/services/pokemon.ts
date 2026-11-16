@@ -68,6 +68,19 @@ export interface Pokemon {
   evolutionChain?: EvolutionStage[];
   megaForms?: MegaForm[];
   gmaxForms?: GmaxForm[];
+  /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
+  gmaxRelatives?: GmaxRelative[];
+}
+
+/**
+ * Etapa de la cadena evolutiva que puede Gigamaxizar aunque la especie que se
+ * está viendo no tenga Factor Gigamax.
+ */
+export interface GmaxRelative {
+  id: number;
+  name: string;
+  /** "earlier" para una preevolución y "later" para una evolución posterior. */
+  direction: "earlier" | "later";
 }
 
 export interface EvolutionMember {
@@ -757,6 +770,46 @@ async function getGmaxForms(
   });
 }
 
+/**
+ * Revisa qué otras especies de la cadena evolutiva tienen forma Gigamax.
+ * Sirve para explicar, por ejemplo, que Charmeleon no Gigamaxiza pero su
+ * evolución final Charizard sí.
+ */
+async function getGmaxRelatives(
+  stages: EvolutionStage[],
+  currentSpeciesId?: number
+): Promise<GmaxRelative[]> {
+  if (stages.length < 2) return [];
+
+  const candidates = stages.flatMap((stage, index) =>
+    stage.members
+      .filter((member) => member.id !== currentSpeciesId)
+      .map((member) => ({ member, index }))
+  );
+  const currentStage = stages.findIndex((stage) =>
+    stage.members.some((member) => member.id === currentSpeciesId)
+  );
+
+  const found = await mapWithConcurrency(
+    candidates,
+    8,
+    async ({ member, index }): Promise<GmaxRelative | null> => {
+      const speciesInfo = await getSpeciesInfo(member.id);
+      if (pickGmaxVarieties(speciesInfo.varieties).length === 0) return null;
+      return {
+        id: member.id,
+        name: member.name,
+        direction:
+          currentStage >= 0 && index < currentStage ? "earlier" : "later",
+      };
+    }
+  );
+
+  return found.filter(
+    (relative): relative is GmaxRelative => relative !== null
+  );
+}
+
 async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> {
   const normalized = String(key).trim().toLowerCase();
   const cached = cacheGet(rawPokemonCache, normalized);
@@ -910,6 +963,10 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     speciesInfo,
     data.species?.name ?? data.name
   );
+  const gmaxRelatives =
+    gmaxForms.length === 0
+      ? await getGmaxRelatives(evolutionChain, speciesId)
+      : [];
 
   const pokemon: Pokemon = {
     id: data.id,
@@ -932,6 +989,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     evolutionChain,
     megaForms,
     gmaxForms,
+    gmaxRelatives,
   };
 
   cacheSet(detailCache, cacheKey, pokemon);
