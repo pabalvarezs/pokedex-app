@@ -1,9 +1,22 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import type { MegaForm } from "../services/api";
-import { getTypeBadge } from "../utils/pokemon";
+import type { MegaForm, PokemonStat } from "../services/api";
+import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
+import { getTypeBadge, STAT_NAMES } from "../utils/pokemon";
+import PokemonArtwork from "./PokemonArtwork";
+
+export interface MegaBaseForm {
+  id: number;
+  name: string;
+  types: string[];
+  stats?: PokemonStat[];
+  artwork?: string;
+}
 
 interface MegaFormsProps {
   forms: MegaForm[];
+  /** Ficha original para habilitar la comparación de formas. */
+  base?: MegaBaseForm;
 }
 
 function prettyName(name: string) {
@@ -25,17 +38,386 @@ function artworkFor(form: MegaForm) {
   );
 }
 
-export default function MegaForms({ forms }: MegaFormsProps) {
+function formatId(id: number) {
+  return `#${String(id).padStart(3, "0")}`;
+}
+
+function TypePills({ types, dense = false }: { types: string[]; dense?: boolean }) {
+  return (
+    <div className={`flex flex-wrap items-center gap-1.5 ${dense ? "justify-center" : ""}`}>
+      {types.map((type) => {
+        const badge = getTypeBadge(type);
+        return (
+          <span
+            key={type}
+            className={`rounded-full border font-extrabold uppercase tracking-wide ${
+              dense ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
+            } ${badge.bg} ${badge.text} ${badge.border}`}
+          >
+            {badge.es}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+interface MegaCardProps {
+  form: MegaForm;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function MegaCard({ form, selected, onSelect }: MegaCardProps) {
+  const title = megaTitle(form);
+
+  return (
+    <div
+      className={`group relative flex flex-col overflow-hidden rounded-card border bg-surface transition duration-200 ${
+        selected
+          ? "border-violet-400 shadow-ambient ring-2 ring-violet-200"
+          : "border-violet-100 shadow-card hover:-translate-y-1 hover:border-violet-300 hover:shadow-ambient motion-reduce:hover:translate-y-0"
+      }`}
+    >
+      {selected && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 z-20 h-1.5 bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500"
+        />
+      )}
+
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        aria-label={`Seleccionar ${title} para comparar`}
+        className="flex flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-violet-300"
+      >
+        <div className="relative flex h-[196px] items-center justify-center overflow-hidden bg-gradient-to-br from-violet-50 via-indigo-50/70 to-fuchsia-50 sm:h-[212px]">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full border-[22px] border-white/50"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-violet-200/40 blur-2xl"
+          />
+
+          <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-700 to-indigo-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm ring-1 ring-white/30">
+            <span aria-hidden="true" className="text-[11px] leading-none">
+              ⚡
+            </span>
+            MEGA{form.variant ? ` ${form.variant}` : ""}
+          </span>
+
+          {selected && (
+            <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-700 shadow-sm ring-1 ring-violet-200 backdrop-blur-sm">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-2.5 w-2.5"
+                aria-hidden="true"
+              >
+                <path d="m5 12 4.5 4.5L19 7" />
+              </svg>
+              Elegida
+            </span>
+          )}
+
+          <PokemonArtwork
+            id={form.id}
+            name={title}
+            src={artworkFor(form)}
+            className="relative z-10 h-[160px] w-[160px] object-contain drop-shadow-[0_10px_18px_rgba(91,33,182,0.22)] transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none sm:h-[180px] sm:w-[180px]"
+          />
+        </div>
+
+        <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+            Forma Mega de {prettyName(form.baseName)}
+          </p>
+          <h3 className="mt-0.5 truncate text-lg font-black tracking-tight text-ink-900 transition-colors group-hover:text-violet-700">
+            {title}
+          </h3>
+
+          <div className="mt-2">
+            <TypePills types={form.types} />
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-violet-100/80 pt-2.5">
+            <span
+              className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${
+                selected ? "text-violet-700" : "text-ink-500"
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`h-1.5 w-1.5 rounded-full ${
+                  selected ? "bg-violet-500" : "bg-violet-300"
+                }`}
+              />
+              {selected ? "Comparando formas" : "Seleccionar para comparar"}
+            </span>
+            <span className="text-[10px] font-black text-violet-300">
+              {formatId(form.id)}
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <div className="border-t border-violet-100 bg-violet-50/40 px-4 py-2.5">
+        <Link
+          to={`/pokemon/${form.id}`}
+          title={`Ver la ficha de ${title}`}
+          className="inline-flex w-full items-center justify-between gap-2 text-xs font-black text-violet-700 transition hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+        >
+          <span>Ver ficha completa</span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.6}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function FormSummary({
+  label,
+  name,
+  id,
+  types,
+  artwork,
+  tone,
+}: {
+  label: string;
+  name: string;
+  id: number;
+  types: string[];
+  artwork?: string;
+  tone: "base" | "mega";
+}) {
+  return (
+    <div
+      className={`flex flex-col items-center rounded-[12px] border p-3 text-center ${
+        tone === "mega"
+          ? "border-violet-200 bg-gradient-to-b from-violet-50 to-white"
+          : "border-line bg-white"
+      }`}
+    >
+      <div className="flex w-full items-center justify-between gap-1">
+        <span
+          className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] ${
+            tone === "mega"
+              ? "bg-violet-600 text-white"
+              : "bg-slate-100 text-ink-500"
+          }`}
+        >
+          {label}
+        </span>
+        <span className="text-[9px] font-bold text-ink-500">{formatId(id)}</span>
+      </div>
+
+      <PokemonArtwork
+        id={id}
+        name={name}
+        src={artwork}
+        className="mt-1 h-24 w-24 object-contain drop-shadow-sm sm:h-28 sm:w-28"
+      />
+
+      <p className="w-full truncate text-xs font-extrabold capitalize text-ink-900">
+        {name}
+      </p>
+      <div className="mt-1.5">
+        <TypePills types={types} dense />
+      </div>
+    </div>
+  );
+}
+
+function StatComparison({
+  baseName,
+  megaName,
+  baseStats,
+  megaStats,
+}: {
+  baseName: string;
+  megaName: string;
+  baseStats: PokemonStat[];
+  megaStats: PokemonStat[];
+}) {
+  const megaByName = useMemo(
+    () => new Map(megaStats.map((stat) => [stat.name, stat.base_stat])),
+    [megaStats]
+  );
+
+  const rows = baseStats
+    .map((stat) => {
+      const megaValue = megaByName.get(stat.name);
+      if (typeof megaValue !== "number") return null;
+      return {
+        name: stat.name,
+        label: STAT_NAMES[stat.name] ?? stat.name,
+        base: stat.base_stat,
+        mega: megaValue,
+        delta: megaValue - stat.base_stat,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
+
+  if (rows.length === 0) return null;
+
+  const baseTotal = rows.reduce((total, row) => total + row.base, 0);
+  const megaTotal = rows.reduce((total, row) => total + row.mega, 0);
+  const totalDelta = megaTotal - baseTotal;
+
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-black uppercase tracking-wider text-ink-700">
+            Estadísticas base
+          </h4>
+          <p className="text-[11px] font-semibold text-ink-500">
+            {baseName} vs. {megaName}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-ink-500">
+          <span>Total</span>
+          <span className="text-ink-900">{baseTotal}</span>
+          <span aria-hidden="true">→</span>
+          <span className="text-violet-700">{megaTotal}</span>
+          <span
+            className={`rounded-full px-1.5 py-0.5 ${
+              totalDelta > 0
+                ? "bg-emerald-100 text-emerald-700"
+                : totalDelta < 0
+                  ? "bg-red-100 text-red-700"
+                  : "bg-slate-100 text-ink-500"
+            }`}
+          >
+            {totalDelta > 0 ? `+${totalDelta}` : totalDelta}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-2.5">
+        {rows.map((row) => {
+          const baseWidth = Math.min(100, Math.round((row.base / 200) * 100));
+          const megaWidth = Math.min(100, Math.round((row.mega / 200) * 100));
+
+          return (
+            <div key={row.name} className="flex items-center gap-2.5">
+              <span className="w-[74px] shrink-0 truncate text-[11px] font-bold text-ink-700">
+                {row.label}
+              </span>
+
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 shrink-0 text-right text-[10px] font-bold text-ink-500">
+                    {row.base}
+                  </span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-slate-400"
+                      style={{ width: `${baseWidth}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-7 shrink-0 text-right text-[10px] font-black text-violet-700">
+                    {row.mega}
+                  </span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-violet-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                      style={{ width: `${megaWidth}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <span
+                className={`w-9 shrink-0 rounded-full px-1 py-0.5 text-center text-[10px] font-black ${
+                  row.delta > 0
+                    ? "bg-emerald-50 text-emerald-700"
+                    : row.delta < 0
+                      ? "bg-red-50 text-red-700"
+                      : "bg-slate-100 text-ink-500"
+                }`}
+              >
+                {row.delta > 0 ? `+${row.delta}` : row.delta}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function MegaForms({ forms, base }: MegaFormsProps) {
+  const [selectedId, setSelectedId] = useState<number | null>(forms[0]?.id ?? null);
+
+  useEffect(() => {
+    setSelectedId((current) =>
+      current && forms.some((form) => form.id === current)
+        ? current
+        : forms[0]?.id ?? null
+    );
+  }, [forms]);
+
+  const selectedForm = forms.find((form) => form.id === selectedId) ?? forms[0];
+  const previewIds = base && selectedForm ? [selectedForm.id] : [];
+  const { previews, pending, failed } = usePokemonPreviews(previewIds);
+  const selectedPreview = selectedForm ? previews[selectedForm.id] : undefined;
+
   if (forms.length === 0) return null;
+
+  const title = selectedForm ? megaTitle(selectedForm) : "";
+  const megaArtwork =
+    selectedForm &&
+    artworkFor(selectedForm) !== undefined
+      ? selectedPreview?.artwork ?? artworkFor(selectedForm)
+      : undefined;
+
+  const canCompare = Boolean(base && base.stats?.length);
+  const hasStats = Boolean(canCompare && selectedPreview?.stats?.length);
 
   return (
     <section
       aria-labelledby="mega-title"
-      className="mt-6 overflow-hidden rounded-3xl border border-indigo-200 bg-white shadow-sm"
+      className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
     >
-      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-6 py-5 text-white sm:px-8 sm:py-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="relative overflow-hidden bg-gradient-to-r from-violet-700 via-indigo-600 to-fuchsia-700 px-6 py-6 text-white sm:px-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full border-[38px] border-white/10"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-fuchsia-300/20 blur-3xl"
+        />
+
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
+            <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-50 backdrop-blur-sm">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-fuchsia-300" />
+              Energía Mega
+            </span>
             <h2
               id="mega-title"
               className="flex items-center gap-2 text-xl font-black tracking-tight sm:text-2xl"
@@ -43,7 +425,7 @@ export default function MegaForms({ forms }: MegaFormsProps) {
               <span aria-hidden="true">💥</span>
               Megaevoluciones
             </h2>
-            <p className="mt-1 max-w-2xl text-xs font-medium text-indigo-100 sm:text-sm">
+            <p className="mt-1 max-w-2xl text-xs font-medium text-violet-100 sm:text-sm">
               Formas de pelea temporales. No son evolución permanente.
             </p>
           </div>
@@ -54,57 +436,105 @@ export default function MegaForms({ forms }: MegaFormsProps) {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {forms.map((form) => {
-            const title = megaTitle(form);
-
-            return (
-              <Link
-                key={form.id}
-                to={`/pokemon/${form.id}`}
-                title={`Ver la ficha de ${title}`}
-                className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-4 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
-              >
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-white shadow-inner ring-1 ring-indigo-100 sm:h-28 sm:w-28">
-                  <img
-                    src={artworkFor(form)}
-                    alt={title}
-                    loading="lazy"
-                    className="h-20 w-20 object-contain drop-shadow-md transition-transform group-hover:scale-110 sm:h-24 sm:w-24"
-                  />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
-                    Mega{form.variant ? ` ${form.variant}` : ""}
-                  </span>
-                  <h3 className="mt-1.5 truncate text-base font-black text-gray-900 sm:text-lg">
-                    {title}
-                  </h3>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                    {prettyName(form.baseName)}
-                  </p>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {form.types.map((type) => {
-                      const badge = getTypeBadge(type);
-                      return (
-                        <span
-                          key={type}
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-                        >
-                          {badge.es}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+      <div className="bg-gradient-to-b from-white via-white to-violet-50/40 p-5 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {forms.map((form) => (
+            <MegaCard
+              key={form.id}
+              form={form}
+              selected={form.id === selectedForm?.id}
+              onSelect={() => setSelectedId(form.id)}
+            />
+          ))}
         </div>
+
+        {canCompare && selectedForm && base && (
+          <div className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-50/80 to-white px-5 py-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
+                  <span aria-hidden="true" className="text-base">
+                    ⚖️
+                  </span>
+                  Comparación de formas
+                </h3>
+                <p className="mt-0.5 text-[11px] font-semibold text-ink-500">
+                  {prettyName(base.name)} frente a {title}
+                </p>
+              </div>
+              <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-700">
+                Datos de la Pokédex
+              </span>
+            </div>
+
+            <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] lg:gap-6">
+              <div className="grid grid-cols-2 gap-3">
+                <FormSummary
+                  label="Original"
+                  name={prettyName(base.name)}
+                  id={base.id}
+                  types={base.types}
+                  artwork={base.artwork}
+                  tone="base"
+                />
+                <FormSummary
+                  label={selectedForm.variant ? `MEGA ${selectedForm.variant}` : "MEGA"}
+                  name={title}
+                  id={selectedForm.id}
+                  types={selectedForm.types}
+                  artwork={megaArtwork}
+                  tone="mega"
+                />
+              </div>
+
+              <div className="min-w-0">
+                {hasStats && (
+                  <StatComparison
+                    baseName={prettyName(base.name)}
+                    megaName={title}
+                    baseStats={base.stats ?? []}
+                    megaStats={selectedPreview?.stats ?? []}
+                  />
+                )}
+
+                {!hasStats && pending && (
+                  <div
+                    className="space-y-3"
+                    role="status"
+                    aria-label="Cargando estadísticas de la Megaevolución"
+                  >
+                    <div className="skeleton h-4 w-40 rounded" />
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="skeleton h-7 w-full rounded-lg" />
+                    ))}
+                    <p className="text-[11px] font-semibold text-ink-500">
+                      Consultando las estadísticas de esta forma…
+                    </p>
+                  </div>
+                )}
+
+                {!hasStats && !pending && (
+                  <div className="flex h-full min-h-[120px] flex-col items-center justify-center rounded-[12px] border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
+                    <span aria-hidden="true" className="text-2xl">
+                      🔎
+                    </span>
+                    <p className="mt-2 text-xs font-bold text-ink-700">
+                      {failed || !selectedPreview
+                        ? "No hay datos de estadísticas disponibles para esta forma."
+                        : "Esta forma no trae estadísticas comparables."}
+                    </p>
+                    <p className="mt-1 text-[11px] text-ink-500">
+                      Puedes revisar el detalle completo en su ficha.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 }
+
+export { prettyName as prettyMegaName };

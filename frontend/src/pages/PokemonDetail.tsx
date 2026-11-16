@@ -130,6 +130,15 @@ export default function PokemonDetail() {
 
   const totalStats = (data.stats ?? []).reduce((acc, s) => acc + s.base_stat, 0);
 
+  // La comparación de Megaevoluciones solo tiene sentido cuando estamos en la
+  // ficha de la especie original (no en la ficha de una Mega concreta).
+  const baseArtwork =
+    data.sprites?.other?.["official-artwork"]?.front_default ??
+    data.sprites?.front_default ??
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.id}.png`;
+  const canCompareMega =
+    data.megaForms?.some((form) => form.baseName === data.name) ?? false;
+
   return (
     <div className="mx-auto w-full max-w-ficha pb-12">
       {/* Botón Volver y Header superior */}
@@ -430,7 +439,20 @@ export default function PokemonDetail() {
 
       {/* Ficha aparte de Megaevoluciones */}
       {data.megaForms && data.megaForms.length > 0 && (
-        <MegaForms forms={data.megaForms} />
+        <MegaForms
+          forms={data.megaForms}
+          base={
+            canCompareMega
+              ? {
+                  id: data.id,
+                  name: data.name,
+                  types: data.types ?? [],
+                  stats: data.stats,
+                  artwork: baseArtwork,
+                }
+              : undefined
+          }
+        />
       )}
 
       {/* VENTANA MODAL DE VISTA AMPLIADA DE SPRITES */}
