@@ -134,12 +134,12 @@ La ficha de detalle agrega una sección **Dinamax y Gigamax** después de las Me
 
 ### Datos y límites
 
-- PokéAPI no incluye los movimientos G-Max entre sus movimientos y la potencia de los Max Moves viene como valor de relleno. Por eso los nombres en español, tipos y efectos se mantienen en mapas curados en `frontend/src/utils/gmaxMoves.ts` (19 Max Moves y 34 formas G-Max).
+- PokéAPI no incluye los movimientos G-Max entre sus movimientos y la potencia de los Max Moves viene como valor de relleno. Los **19 Max Moves** genéricos (tipo, nombre y efecto) se mantienen en `frontend/src/utils/maxMoves.ts` porque alimentan el selector visual. Los **34 G-Max Moves** viven en `backend/src/services/gmaxMoves.ts` y llegan adjuntos como `gmaxMove` en cada forma de `gmaxForms`.
 - La potencia de los movimientos G-Max depende del movimiento original (90–150); Rillaboom, Cinderace e Inteleon siempre usan 160.
 - El peso de las formas Gigamax no se muestra porque PokéAPI entrega `10000` como valor de relleno. La altura se presenta como aproximada ("Más de X m").
 - No hay selector shiny para el arte Gigamax en esta versión.
 
-El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork` y `height` (en decímetros).
+El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork`, `height` (en decímetros) y `gmaxMove` (`name`, `type`, `effect` y `fixedPower` opcional).
 
 ## Tests
 
@@ -167,6 +167,7 @@ backend/
   src/routes/              # definición de endpoints (incluye /api/admin)
   src/controllers/         # validación HTTP
   src/services/            # lógica de negocio, auth, contraseñas y caché de PokéAPI
+  src/services/gmaxMoves.ts # catálogo curado de los 34 G-Max Moves
   src/middleware/          # auth por token/rol y manejo de errores
   tests/
 frontend/
@@ -175,7 +176,7 @@ frontend/
   src/components/          # buscador predictivo, card, cadena evolutiva, megas, dinamax y filtros
   src/components/forms/    # primitivas compartidas de Megaevoluciones y Gigamax
   src/utils/dynamax.ts     # multiplicador de PS, niveles y restricciones de Dinamax
-  src/utils/gmaxMoves.ts   # Max Moves y G-Max Moves curados en español
+  src/utils/maxMoves.ts    # Max Moves genéricos y nota de potencia
   src/services/api.ts      # cliente Axios tipado
   src/context/AuthContext  # sesión, rol y localStorage
   public/                  # favicon original (SVG, ICO y PNG)
@@ -191,7 +192,7 @@ frontend/
 - **Regalones al eliminar cuentas:** al borrar un entrenador se eliminan también sus regalones.
 - **Caché en memoria:** las respuestas de PokéAPI se guardan 10 minutos por proceso. Con varias instancias cada una tiene su propia caché.
 - **Dinamax calculado en el cliente:** PokéAPI no expone la transformación ni sus PS; el multiplicador y las restricciones viven en `frontend/src/utils/dynamax.ts`. Las formas Gigamax sí llegan desde la API como variedades de la especie.
-- **Movimientos Max y G-Max curados:** PokéAPI no incluye los G-Max Moves y usa potencias de relleno para los Max Moves, así que los nombres en español, tipos y efectos se mantienen a mano y deben revisarse al añadir especies nuevas.
+- **Movimientos Max y G-Max curados:** PokéAPI no incluye los G-Max Moves y usa potencias de relleno para los Max Moves. Los Max Moves genéricos viven en el frontend; el G-Max Move de cada forma lo resuelve el backend y viaja en `gmaxForms[].gmaxMove`. Ambos catálogos deben revisarse al añadir especies nuevas.
 - **Peso Gigamax omitido:** PokéAPI entrega `10000` como peso de relleno; se prefiere no mostrar un dato incorrecto.
 - **Listados enriquecidos:** los tipos se obtienen con concurrencia limitada; la primera carga de una generación puede tardar unos segundos y luego queda en caché.
 - **Esquema con `db push`:** no hay historial de migraciones; es un proyecto de demostración.
