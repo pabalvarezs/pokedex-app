@@ -5,6 +5,7 @@ import { getPokemon, searchPokemon } from "../services/api";
 import FavoriteButton from "../components/FavoriteButton";
 import EvolutionChain from "../components/EvolutionChain";
 import MegaForms from "../components/MegaForms";
+import DynamaxForms from "../components/DynamaxForms";
 import SpriteLightbox from "../components/SpriteLightbox";
 import type { SpriteItem } from "../components/SpriteLightbox";
 import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
@@ -454,6 +455,20 @@ export default function PokemonDetail() {
           }
         />
       )}
+
+      {/* Ficha aparte de Dinamax y Gigamax */}
+      <DynamaxForms
+        forms={data.gmaxForms ?? []}
+        base={{
+          id: data.id,
+          name: data.name,
+          types: data.types ?? [],
+          stats: data.stats,
+          artwork: baseArtwork,
+          height: data.height,
+        }}
+        speciesId={data.speciesId}
+      />
 
       {/* VENTANA MODAL DE VISTA AMPLIADA DE SPRITES */}
       <SpriteLightbox
