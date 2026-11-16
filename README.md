@@ -91,7 +91,7 @@ Al eliminar un entrenador también se eliminan sus regalones.
 | `GET` | `/api/pokemon/type/:type` | Pokémon por tipo |
 | `GET` | `/api/pokemon/generation/:gen` | Pokémon por generación (1-9) |
 | `GET` | `/api/pokemon/search/:name` | Búsqueda por nombre |
-| `GET` | `/api/pokemon/:id` | Ficha completa (cadena evolutiva, Megaevoluciones y formas Gigamax) |
+| `GET` | `/api/pokemon/:id` | Ficha completa (cadena evolutiva, Megaevoluciones, formas Gigamax y variantes/formas) |
 | `GET` | `/api/favorites` | Favoritos del usuario autenticado |
 | `POST` | `/api/favorites` | Agrega favorito (`{ pokemonId, name }`) |
 | `DELETE` | `/api/favorites/:pokemonId` | Elimina favorito |
@@ -142,6 +142,158 @@ La ficha de detalle agrega una sección **Dinamax y Gigamax** después de las Me
 
 El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork`, `height` (en decímetros) y `gmaxMove` (`name`, `type`, `effect` y `fixedPower` opcional). Cuando la especie actual no tiene forma Gigamax, `gmaxRelatives` lista las otras etapas de su cadena que sí la tienen, con `id`, `name` y `direction` (`earlier` o `later`).
 
+## Variantes y formas
+
+La ficha individual de cada Pokémon incluye una sección **Variantes y formas** inmediatamente después de la cadena evolutiva. Muestra todas las variedades que PokéAPI asocia a la especie mediante `pokemon-species.varieties` y las clasifica según la taxonomía de [WikiDex](https://www.wikidex.net/wiki/Lista_de_Pok%C3%A9mon_con_diferentes_formas).
+
+### Clasificación
+
+| Categoría | Etiqueta | Ejemplos |
+|---|---|---|
+| `regional` | Formas regionales | Alola, Galar, Hisui, Paldea |
+| `mega` | Megaevoluciones | Delegado a la sección existente |
+| `primal` | Formas primigenias | Kyogre y Groudon primigenios |
+| `gmax` | Gigamax | Delegado a la sección Dinamax |
+| `battle` | Formas de combate | Zacian coronado, Aegislash filo, Palafin héroe |
+| `cosmetic` | Variantes estéticas | Minior colores, Squawkabilly plumajes, tamaños |
+| `attire` | Atuendos y accesorios | Gorras de Pikachu, cosplay, Zarude papá |
+| `gender` | Variantes de género | Indeedee, Meowstic, Basculegion hembra |
+| `alt-form` | Formas alternativas | Deoxys, Rotom, Kyurem, Oricorio, Calyrex |
+| `totem` | Formas totémicas | Raticate, Marowak, Mimikyu totémicos |
+| `special` | Variantes especiales | Pikachu/Eevee de compañero, Ursaluna luna carmesí |
+| `non-playable` | Formas no jugables | Eternamax Eternatus, Floette eterna |
+
+Las categorías `mega` y `gmax` se delegan visualmente a las secciones «Megaevoluciones» y «Dinamax/Gigamax» existentes mediante enlaces de ancla, evitando duplicar datos y componentes.
+
+### Arquitectura
+
+La pertenencia de una forma a una especie **no** se decide por nombres: se toma de `pokemon-species.varieties`, que PokéAPI ya entrega al cargar la ficha. Cada variedad incluye `is_default`, nombre y URL (de donde se obtiene el ID numérico).
+
+```
+Pokémon 145 (Zapdos, is_default: true)
+  ├── 145   zapdos
+  └── 10170 zapdos-galar
+```
+
+**Backend:** `backend/src/services/variants.ts` contiene:
+
+- **Registro de categorías** (`VARIANT_CATEGORIES`): etiqueta, tono visual, emoji, sección de destino, permanencia y efectos por defecto.
+- **Reglas de clasificación** (`CLASSIFICATION_RULES`): expresiones regulares ordenadas de lo más específico a lo general. Una forma desconocida cae en `alt-form`.
+- **Metadatos curados** (`VARIANT_METADATA`): descripciones, condiciones, región y nombres en español para cada variante conocida.
+- **Constructor puro** `buildVariantFamily()`: recibe las variedades de `getSpeciesInfo()` y los tipos ya conocidos (`typesById`), sin hacer peticiones adicionales.
+
+El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo de imports entre `pokemon.ts` (que importa `buildVariantFamily`) y `variants.ts` (que necesita la etiqueta de variantes Gigamax).
+
+**Frontend:** `frontend/src/components/VariantsAndForms.tsx`:
+
+- Sección colapsable con chips de categoría y grid responsive de tarjetas.
+- Cada tarjeta muestra: badge de categoría con su emoji, artwork/sprite, nombre, tipos, región (si aplica), etiqueta de permanencia y condición.
+- Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.
+- No se renderiza si `total === 0`.
+- Las variantes `mega` y `gmax` se filtran del grid y se muestran como enlaces a sus secciones dedicadas.
+
+**Sin tabla Prisma:** Los Pokémon no viven en PostgreSQL. El catálogo backend versionado (`variants.ts`) es la fuente de metadatos, siguiendo el patrón de `gmaxMoves.ts`.
+
+### Estructura de datos
+
+**Respuesta de `GET /api/pokemon/:id`:**
+
+```json
+{
+  "speciesId": 25,
+  "variantFamily": {
+    "speciesId": 25,
+    "speciesName": "pikachu",
+    "baseId": 25,
+    "baseName": "pikachu",
+    "baseDisplayName": "Pikachu",
+    "currentId": 10094,
+    "isDefault": false,
+    "total": 15,
+    "variants": [
+      {
+        "id": 10094,
+        "name": "pikachu-original-cap",
+        "displayName": "Pikachu con gorra original",
+        "category": {
+          "key": "attire",
+          "label": "Atuendos y accesorios",
+          "shortLabel": "Atuendo",
+          "emoji": "🎩",
+          "tone": "fuchsia",
+          "section": "variants"
+        },
+        "description": "Pikachu con la gorra clásica de la región de Kanto.",
+        "condition": "Evento de Pokémon Sol y Luna",
+        "permanence": "permanent",
+        "affects": "appearance",
+        "availability": "event",
+        "kind": "record",
+        "navigable": true,
+        "isCurrent": true,
+        "sprite": "https://.../10094.png",
+        "artwork": "https://.../10094.png",
+        "types": ["electric"]
+      }
+    ]
+  }
+}
+```
+
+El campo `variantFamily` solo se incluye cuando hay variantes (`total > 0`).
+
+### Cómo añadir categorías o variantes
+
+**Añadir una categoría:** registrar la entrada en `VARIANT_CATEGORIES` (definición, tono, sección, orden). El frontend la pinta automáticamente.
+
+**Añadir metadatos de una variante:** agregar una entrada en `VARIANT_METADATA` con el slug (ej. `"pikachu-world-cap"`), especificando solo los campos que difieren del valor por defecto de la categoría.
+
+**Clasificar una forma nueva:** si no casa con las reglas existentes, añadir una regla en `CLASSIFICATION_RULES` o crear una entrada en `VARIANT_METADATA` con la categoría deseada.
+
+No hace falta tocar el frontend para añadir variantes: si PokéAPI las publica en `varieties`, aparecen automáticamente.
+
+### Rendimiento
+
+- No se consulta `/pokemon/{id}` por cada variante: el arte y sprite se derivan del ID.
+- Se reutiliza la caché de especie del detalle (10 minutos en memoria).
+- Los tipos de cada variante se obtienen del `typesById` que ya reúne la ficha (tipos base, Megas y Gigamax).
+- Las imágenes cargan de forma diferida (`loading="lazy"`).
+- Las categorías Mega y Gigamax no duplican datos en la respuesta: el frontend las redirige a las secciones ya existentes.
+
+### Ejemplos reales
+
+| Pokémon | Especie | Variantes | Categorías |
+|---|---|---|---|
+| Pikachu (#25) | 25 | ~16 (gorras, cosplay, Gigamax, compañero) | `attire`, `gmax`, `special` |
+| Zacian (#888) | 888 | 1 (`zacian-crowned`) | `battle` (permanente) |
+| Zapdos (#145) | 145 | 1 (`zapdos-galar`) | `regional` |
+| Charizard (#6) | 6 | 3 (Mega X, Mega Y, Gigamax) | `mega`, `gmax` |
+| Bulbasaur (#1) | 1 | 0 | — |
+
+### Modelo de datos de variantes
+
+Cada variante incluye:
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `kind` | `"record" \| "state"` | `record` para formas con ID propio; `state` reservado para estados sin registro (ej. Ilusión de Zoroark) |
+| `navigable` | `boolean` | `true` si la forma tiene ruta `/pokemon/:id` |
+| `permanence` | `"permanent" \| "temporary" \| "battle"` | Clasificación de la duración del cambio |
+| `affects` | `"appearance" \| "stats" \| "both"` | Qué aspecto altera la variante |
+| `availability` | `"playable" \| "event" \| "npc" \| "unavailable"` | Cómo se obtiene |
+
+### Validaciones realizadas
+
+- Pikachu: todas sus variedades, incluidas gorras (como `attire`), cosplay y Gigamax.
+- Zacian coronado: clasificado como `battle` con `permanence: "permanent"` y condición «Equipar la Espada Oxidada».
+- Zapdos de Galar: clasificado como `regional` con `region: "Galar"`.
+- Pokémon con variantes regionales de Alola, Galar, Hisui y Paldea.
+- Pokémon con varias categorías (Charizard: Mega + Gigamax).
+- Pokémon sin variantes (Bulbasaur): la sección no se renderiza.
+- Navegación inversa: desde una variante se puede volver a la especie principal.
+- Pikachu-alola-cap clasificado como `attire`, no como `regional`.
+- Zacian crowned con `permanence: "permanent"` (permanece mientras lleva el objeto).
+
 ## Tests
 
 ```bash
@@ -169,12 +321,14 @@ backend/
   src/controllers/         # validación HTTP
   src/services/            # lógica de negocio, auth, contraseñas y caché de PokéAPI
   src/services/gmaxMoves.ts # catálogo curado de los 34 G-Max Moves
+  src/services/gmaxLabels.ts # etiquetas para variantes G-Max dobles (desacoplado de pokemon.ts)
+  src/services/variants.ts   # catálogo de categorías, clasificación y constructor de variantes
   src/middleware/          # auth por token/rol y manejo de errores
   tests/
 frontend/
   src/pages/               # Home, detalle, favoritos, login, tipo y admin
   src/components/admin/    # CRUD de entrenadores y regalones
-  src/components/          # buscador predictivo, card, cadena evolutiva, megas, dinamax y filtros
+  src/components/          # buscador predictivo, card, cadena evolutiva, megas, dinamax, variantes y filtros
   src/components/forms/    # primitivas compartidas de Megaevoluciones y Gigamax
   src/utils/dynamax.ts     # multiplicador de PS, niveles y restricciones de Dinamax
   src/utils/maxMoves.ts    # Max Moves genéricos y nota de potencia
