@@ -1,6 +1,6 @@
 # PokeChile
 
-PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador. La ficha de cada Pokémon incluye su cadena evolutiva con las condiciones para evolucionar y una ficha aparte con sus Megaevoluciones cuando existen. Incluye un favicon original inspirado en una Poké Ball con los colores y la estrella de la bandera de Chile.
+PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de forma predictiva, filtra por tipo y generación, revisa estadísticas, sprites, gritos y guarda tus favoritos ("regalones") por entrenador. La ficha de cada Pokémon incluye su cadena evolutiva con las condiciones para evolucionar, una ficha aparte con sus Megaevoluciones cuando existen y una sección de Dinamax y Gigamax con sus formas, movimientos exclusivos y el cálculo de PS según el nivel Dinamax. Incluye un favicon original inspirado en una Poké Ball con los colores y la estrella de la bandera de Chile.
 
 ## Stack
 
@@ -91,7 +91,7 @@ Al eliminar un entrenador también se eliminan sus regalones.
 | `GET` | `/api/pokemon/type/:type` | Pokémon por tipo |
 | `GET` | `/api/pokemon/generation/:gen` | Pokémon por generación (1-9) |
 | `GET` | `/api/pokemon/search/:name` | Búsqueda por nombre |
-| `GET` | `/api/pokemon/:id` | Ficha completa (cadena evolutiva y Megaevoluciones) |
+| `GET` | `/api/pokemon/:id` | Ficha completa (cadena evolutiva, Megaevoluciones y formas Gigamax) |
 | `GET` | `/api/favorites` | Favoritos del usuario autenticado |
 | `POST` | `/api/favorites` | Agrega favorito (`{ pokemonId, name }`) |
 | `DELETE` | `/api/favorites/:pokemonId` | Elimina favorito |
@@ -110,6 +110,36 @@ Al eliminar un entrenador también se eliminan sus regalones.
 Las rutas de favoritos requieren `Authorization: Bearer <token>`. Las rutas `/api/admin/*` además exigen rol `admin`, validado contra la base de datos en cada petición.
 
 El flujo completo de recuperación de contraseña (funcionamiento, variables, despliegue y seguridad) está documentado en [`GUIA-RECUPERACION-PASSWORD.md`](GUIA-RECUPERACION-PASSWORD.md).
+
+## Dinamax y Gigamax
+
+La ficha de detalle agrega una sección **Dinamax y Gigamax** después de las Megaevoluciones. Se calcula en el frontend porque PokéAPI no modela la transformación Dinamax: solo existen las formas Gigamax como variedades.
+
+### Reglas que muestra la ficha
+
+- **Disponibilidad:** todos los Pokémon pueden Dinamaxizar salvo Zacian (#888), Zamazenta (#889) y Eternatus (#890). Para esos tres se muestra un aviso y se ocultan los paneles de PS y movimientos.
+- **Duración:** 3 turnos; termina antes si el Pokémon cambia o se retira.
+- **Frecuencia:** una vez por combate y requiere la Banda Dinamax.
+- **Movimientos:** todos los ataques se convierten en el Max Move de su tipo; los movimientos de estado se convierten en Maxibarrera.
+- **PS:** se usa el multiplicador `1.5 + 0.05 × nivel`, con nivel Dinamax de 0 a 10 (de ×1,50 a ×2,00). El cálculo es una referencia sobre la estadística base de PS, igual que el resto de la ficha. Shedinja conserva siempre 1 PS.
+- **Selector de nivel:** un control deslizante actualiza en vivo los PS resultantes y el multiplicador.
+
+### Formas Gigamax
+
+- Se obtienen de las variedades `-gmax` de la **especie actual**, no de la última evolución. Así Pikachu, Eevee y Meowth pueden mostrar su forma Gigamax aunque puedan evolucionar.
+- Cada forma incluye arte oficial, tipos, altura aproximada, disponibilidad y requisito (Factor Gigamax), además de su movimiento G-Max exclusivo.
+- **Toxtricity** (Aguda/Grave) y **Urshifu** (Brusca/Fluida) tienen dos formas: se muestran ambas tarjetas y se puede alternar la selección.
+- **Eternamax** no es una forma Gigamax obtenible: aparece como tarjeta informativa en la ficha de Eternatus, marcada como forma de jefe no disponible para el jugador.
+- Si la especie puede Dinamaxizar pero no tiene forma Gigamax, la sección sigue visible con un aviso que explica que solo 32 especies pueden Gigamaxizar.
+
+### Datos y límites
+
+- PokéAPI no incluye los movimientos G-Max entre sus movimientos y la potencia de los Max Moves viene como valor de relleno. Por eso los nombres en español, tipos y efectos se mantienen en mapas curados en `frontend/src/utils/gmaxMoves.ts` (19 Max Moves y 34 formas G-Max).
+- La potencia de los movimientos G-Max depende del movimiento original (90–150); Rillaboom, Cinderace e Inteleon siempre usan 160.
+- El peso de las formas Gigamax no se muestra porque PokéAPI entrega `10000` como valor de relleno. La altura se presenta como aproximada ("Más de X m").
+- No hay selector shiny para el arte Gigamax en esta versión.
+
+El detalle expone las formas en `gmaxForms` con `id`, `name`, `baseName`, `variant` (solo en formas dobles), `types`, `sprite`, `artwork`, `shinyArtwork` y `height` (en decímetros).
 
 ## Tests
 
@@ -142,7 +172,10 @@ backend/
 frontend/
   src/pages/               # Home, detalle, favoritos, login, tipo y admin
   src/components/admin/    # CRUD de entrenadores y regalones
-  src/components/          # buscador predictivo, card, cadena evolutiva, megas, filtros
+  src/components/          # buscador predictivo, card, cadena evolutiva, megas, dinamax y filtros
+  src/components/forms/    # primitivas compartidas de Megaevoluciones y Gigamax
+  src/utils/dynamax.ts     # multiplicador de PS, niveles y restricciones de Dinamax
+  src/utils/gmaxMoves.ts   # Max Moves y G-Max Moves curados en español
   src/services/api.ts      # cliente Axios tipado
   src/context/AuthContext  # sesión, rol y localStorage
   public/                  # favicon original (SVG, ICO y PNG)
@@ -157,6 +190,9 @@ frontend/
 - **Favoritos aislados por usuario:** el backend deriva el `userId` del token firmado, nunca de un header manipulable.
 - **Regalones al eliminar cuentas:** al borrar un entrenador se eliminan también sus regalones.
 - **Caché en memoria:** las respuestas de PokéAPI se guardan 10 minutos por proceso. Con varias instancias cada una tiene su propia caché.
+- **Dinamax calculado en el cliente:** PokéAPI no expone la transformación ni sus PS; el multiplicador y las restricciones viven en `frontend/src/utils/dynamax.ts`. Las formas Gigamax sí llegan desde la API como variedades de la especie.
+- **Movimientos Max y G-Max curados:** PokéAPI no incluye los G-Max Moves y usa potencias de relleno para los Max Moves, así que los nombres en español, tipos y efectos se mantienen a mano y deben revisarse al añadir especies nuevas.
+- **Peso Gigamax omitido:** PokéAPI entrega `10000` como peso de relleno; se prefiere no mostrar un dato incorrecto.
 - **Listados enriquecidos:** los tipos se obtienen con concurrencia limitada; la primera carga de una generación puede tardar unos segundos y luego queda en caché.
 - **Esquema con `db push`:** no hay historial de migraciones; es un proyecto de demostración.
 - **Favicon original:** el arte se dibujó desde cero (Poké Ball con paleta y estrella chilena) para no reutilizar fan art ni recursos de terceros. Pokémon y Poké Ball son marcas de Nintendo/Game Freak.
