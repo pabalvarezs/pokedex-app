@@ -830,8 +830,9 @@ export default function DynamaxForms({
 
   return (
     <section
+      id="dynamax-title"
       aria-labelledby="dynamax-title"
-      className="mt-6 overflow-hidden rounded-card border border-rose-200 bg-surface shadow-card"
+      className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-rose-200 bg-surface shadow-card"
     >
       <FormHero
         tone="rose"

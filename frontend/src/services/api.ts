@@ -77,6 +77,55 @@ export interface GmaxRelative {
   direction: "earlier" | "later";
 }
 
+export interface PokemonVariantCategory {
+  key: string;
+  label: string;
+  shortLabel: string;
+  description: string;
+  emoji: string;
+  tone: string;
+  section: string;
+}
+
+export interface PokemonVariant {
+  id: number;
+  name: string;
+  displayName: string;
+  category: PokemonVariantCategory;
+  description: string;
+  condition?: string;
+  region?: string;
+  permanence: string;
+  affects: string;
+  availability: string;
+  kind: string;
+  navigable: boolean;
+  order: number;
+  isDefault: boolean;
+  isCurrent: boolean;
+  sprite: string;
+  artwork: string;
+  types?: string[];
+}
+
+export interface PokemonVariantFamily {
+  speciesId: number;
+  speciesName: string;
+  baseId: number;
+  baseName: string;
+  baseDisplayName: string;
+  baseSprite: string;
+  baseArtwork: string;
+  baseTypes?: string[];
+  currentId: number;
+  currentName: string;
+  currentDisplayName: string;
+  currentCategory?: PokemonVariantCategory;
+  isDefault: boolean;
+  total: number;
+  variants: PokemonVariant[];
+}
+
 export interface Pokemon {
   id: number;
   name: string;
@@ -119,6 +168,8 @@ export interface Pokemon {
   gmaxForms?: GmaxForm[];
   /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
   gmaxRelatives?: GmaxRelative[];
+  /** Familia de variantes y formas de la especie. */
+  variantFamily?: PokemonVariantFamily;
 }
 
 export interface Favorite {

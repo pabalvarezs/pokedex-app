@@ -316,8 +316,9 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
 
   return (
     <section
+      id="mega-title"
       aria-labelledby="mega-title"
-      className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
+      className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
     >
       <FormHero
         tone="violet"

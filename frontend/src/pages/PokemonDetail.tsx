@@ -8,6 +8,7 @@ import MegaForms from "../components/MegaForms";
 import DynamaxForms from "../components/DynamaxForms";
 import SpriteLightbox from "../components/SpriteLightbox";
 import type { SpriteItem } from "../components/SpriteLightbox";
+import VariantsAndForms from "../components/VariantsAndForms";
 import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
 
 export default function PokemonDetail() {
@@ -437,6 +438,9 @@ export default function PokemonDetail() {
           </div>
         )}
       </div>
+
+      {/* Variantes y formas: justo debajo de la cadena evolutiva */}
+      {data.variantFamily && <VariantsAndForms family={data.variantFamily} />}
 
       {/* Ficha aparte de Megaevoluciones */}
       {data.megaForms && data.megaForms.length > 0 && (
