@@ -23,6 +23,12 @@ const CHARIZARD_GMAX: GmaxForm = {
   types: ["fire", "flying"],
   artwork: "https://example.com/charizard-gmax.png",
   height: 280,
+  gmaxMove: {
+    name: "Gigallamarada",
+    type: "fire",
+    effect:
+      "Inflige daño durante 4 turnos a los rivales que no sean de tipo Fuego.",
+  },
 };
 
 const TOXTRICITY_BASE = {
@@ -43,6 +49,11 @@ const TOXTRICITY_FORMS: GmaxForm[] = [
     types: ["electric", "poison"],
     artwork: "https://example.com/toxtricity-amped-gmax.png",
     height: 240,
+    gmaxMove: {
+      name: "Gigadescarga",
+      type: "electric",
+      effect: "Envenena o paraliza a todos los rivales.",
+    },
   },
   {
     id: 10220,
@@ -52,6 +63,11 @@ const TOXTRICITY_FORMS: GmaxForm[] = [
     types: ["electric", "poison"],
     artwork: "https://example.com/toxtricity-low-key-gmax.png",
     height: 240,
+    gmaxMove: {
+      name: "Gigadescarga",
+      type: "electric",
+      effect: "Envenena o paraliza a todos los rivales.",
+    },
   },
 ];
 
@@ -91,6 +107,32 @@ describe("DynamaxForms", () => {
       screen.getByText(
         /Los movimientos de tipo Fuego se convierten en Gigallamarada/
       )
+    ).toBeTruthy();
+  });
+
+  it("usa el movimiento G-Max que entrega la API", () => {
+    renderSection({
+      forms: [
+        {
+          ...CHARIZARD_GMAX,
+          gmaxMove: {
+            name: "Gigaprueba",
+            type: "fire",
+            effect: "Efecto entregado por el backend.",
+          },
+        },
+      ],
+    });
+
+    expect(screen.getByText("Gigaprueba")).toBeTruthy();
+    expect(screen.getByText("Efecto entregado por el backend.")).toBeTruthy();
+  });
+
+  it("avisa cuando la forma no trae movimiento G-Max", () => {
+    renderSection({ forms: [{ ...CHARIZARD_GMAX, gmaxMove: undefined }] });
+
+    expect(
+      screen.getByText(/No hay datos curados del movimiento G-Max/)
     ).toBeTruthy();
   });
 

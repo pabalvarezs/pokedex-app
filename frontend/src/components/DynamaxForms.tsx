@@ -12,9 +12,8 @@ import {
   GMAX_POWER_NOTE,
   MAX_GUARD,
   MAX_MOVES,
-  gmaxMoveFor,
   type MaxMove,
-} from "../utils/gmaxMoves";
+} from "../utils/maxMoves";
 import { getTypeBadge } from "../utils/pokemon";
 import PokemonArtwork from "./PokemonArtwork";
 import {
@@ -516,7 +515,7 @@ function GmaxDetail({
   base: DynamaxBaseForm;
   form: GmaxForm;
 }) {
-  const move = gmaxMoveFor(form.name);
+  const move = form.gmaxMove;
   const samePage = base.id === form.id;
   const badge = move ? getTypeBadge(move.type) : undefined;
 

@@ -7,13 +7,11 @@ import {
   isDynamaxBlocked,
 } from "../src/utils/dynamax";
 import {
-  GMAX_MOVES,
   GMAX_POWER_NOTE,
   MAX_GUARD,
   MAX_MOVE_BY_TYPE,
   MAX_MOVES,
-  gmaxMoveFor,
-} from "../src/utils/gmaxMoves";
+} from "../src/utils/maxMoves";
 import { POKEMON_TYPES } from "../src/utils/pokemon";
 
 describe("reglas de Dinamax", () => {
@@ -83,46 +81,8 @@ describe("Max Moves", () => {
     expect(MAX_MOVE_BY_TYPE.water.name).toBe("Maxichorro");
     expect(MAX_MOVE_BY_TYPE.fairy.name).toBe("Maxiestela");
   });
-});
 
-describe("G-Max Moves", () => {
-  it("cubre las 34 formas de PokeAPI", () => {
-    expect(GMAX_MOVES).toHaveLength(34);
-    expect(new Set(GMAX_MOVES.map((move) => move.formSlug)).size).toBe(34);
-  });
-
-  it("usa tipos válidos y textos completos", () => {
-    for (const move of GMAX_MOVES) {
-      expect(POKEMON_TYPES[move.type], move.formSlug).toBeTruthy();
-      expect(move.name.length).toBeGreaterThan(0);
-      expect(move.effect.length).toBeGreaterThan(0);
-    }
-  });
-
-  it("resuelve las especies con más de una forma", () => {
-    expect(gmaxMoveFor("charizard-gmax")?.name).toBe("Gigallamarada");
-    expect(gmaxMoveFor("toxtricity-amped-gmax")?.name).toBe("Gigadescarga");
-    expect(gmaxMoveFor("toxtricity-low-key-gmax")?.name).toBe("Gigadescarga");
-    expect(gmaxMoveFor("urshifu-single-strike-gmax")?.name).toBe(
-      "Gigagolpe Brusco"
-    );
-    expect(gmaxMoveFor("urshifu-rapid-strike-gmax")?.name).toBe(
-      "Gigagolpe Fluido"
-    );
-  });
-
-  it("normaliza el slug y tolera formas desconocidas", () => {
-    expect(gmaxMoveFor("  CHARIZARD-GMAX  ")?.name).toBe("Gigallamarada");
-    expect(gmaxMoveFor("bulbasaur-gmax")).toBeUndefined();
-  });
-
-  it("marca solo las tres potencias fijas de 160", () => {
-    const fixed = GMAX_MOVES.filter((move) => move.fixedPower);
-    expect(fixed.map((move) => move.formSlug).sort()).toEqual([
-      "cinderace-gmax",
-      "inteleon-gmax",
-      "rillaboom-gmax",
-    ]);
+  it("explica la potencia de los movimientos G-Max", () => {
     expect(GMAX_POWER_NOTE).toMatch(/160/);
   });
 });

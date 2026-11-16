@@ -45,6 +45,14 @@ export interface MegaForm {
   artwork?: string;
 }
 
+export interface GmaxMove {
+  name: string;
+  type: string;
+  effect: string;
+  /** Rillaboom, Cinderace e Inteleon siempre tienen 160 de potencia. */
+  fixedPower?: boolean;
+}
+
 export interface GmaxForm {
   id: number;
   name: string;
@@ -57,6 +65,8 @@ export interface GmaxForm {
   shinyArtwork?: string;
   /** Altura en decímetros, como la entrega PokeAPI. */
   height?: number;
+  /** Movimiento G-Max exclusivo que entrega la API. */
+  gmaxMove?: GmaxMove;
 }
 
 export interface Pokemon {
