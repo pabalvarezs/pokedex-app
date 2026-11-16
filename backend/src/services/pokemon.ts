@@ -1,5 +1,12 @@
 import axios from "axios";
 import { gmaxMoveFor, type GmaxMove } from "./gmaxMoves";
+import { gmaxVariantLabel } from "./gmaxLabels";
+import {
+  buildVariantFamily,
+  type PokemonVariantFamily,
+} from "./variants";
+
+export { gmaxVariantLabel } from "./gmaxLabels";
 
 const POKEAPI = "https://pokeapi.co/api/v2";
 const api = axios.create({ baseURL: POKEAPI, timeout: 10000 });
@@ -70,6 +77,8 @@ export interface Pokemon {
   gmaxForms?: GmaxForm[];
   /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
   gmaxRelatives?: GmaxRelative[];
+  /** Familia de variantes de la especie, con navegación inversa incluida. */
+  variantFamily?: PokemonVariantFamily;
 }
 
 /**
@@ -122,6 +131,7 @@ export interface GmaxForm {
 interface SpeciesVariety {
   name: string;
   url: string;
+  isDefault?: boolean;
 }
 
 interface SpeciesInfo {
@@ -700,18 +710,6 @@ export function pickGmaxVarieties<T extends { name: string }>(
   return (varieties ?? []).filter((variety) => /-gmax$/.test(variety.name));
 }
 
-const GMAX_VARIANT_LABELS: Record<string, string> = {
-  "toxtricity-amped": "Aguda",
-  "toxtricity-low-key": "Grave",
-  "urshifu-single-strike": "Brusca",
-  "urshifu-rapid-strike": "Fluida",
-};
-
-/** Etiqueta localizada para las especies con más de una forma Gigamax. */
-export function gmaxVariantLabel(name: string): string | undefined {
-  return GMAX_VARIANT_LABELS[name.replace(/-gmax$/, "")];
-}
-
 async function getGmaxForm(
   variety: SpeciesVariety,
   baseName: string
@@ -852,6 +850,7 @@ async function getSpeciesInfo(idOrName: number | string) {
           .map((variety: any) => ({
             name: variety.pokemon?.name,
             url: variety.pokemon?.url,
+            isDefault: Boolean(variety.is_default),
           }))
           .filter(
             (variety: SpeciesVariety): variety is SpeciesVariety =>
@@ -968,6 +967,26 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
       ? await getGmaxRelatives(evolutionChain, speciesId)
       : [];
 
+  const typesById: Record<number, string[]> = {
+    [data.id]: data.types.map((t) => t.type.name),
+  };
+  for (const form of megaForms) typesById[form.id] = form.types;
+  for (const form of gmaxForms) typesById[form.id] = form.types;
+
+  const speciesName = data.species?.name ?? data.name;
+  const variantFamily = buildVariantFamily({
+    speciesId:
+      speciesId && Number.isInteger(speciesId) && speciesId > 0
+        ? speciesId
+        : data.id,
+    speciesName,
+    currentId: data.id,
+    currentName: data.name,
+    currentTypes: typesById[data.id],
+    varieties: speciesInfo.varieties,
+    typesById,
+  });
+
   const pokemon: Pokemon = {
     id: data.id,
     name: data.name,
@@ -990,6 +1009,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     megaForms,
     gmaxForms,
     gmaxRelatives,
+    ...(variantFamily.total > 0 ? { variantFamily } : {}),
   };
 
   cacheSet(detailCache, cacheKey, pokemon);
