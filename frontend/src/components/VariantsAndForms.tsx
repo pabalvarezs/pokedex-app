@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type {
   PokemonVariantFamily,
@@ -12,24 +12,101 @@ interface Props {
   family: PokemonVariantFamily;
 }
 
-const TONE_BG: Record<string, string> = {
-  teal: "bg-teal-500",
-  violet: "bg-violet-500",
-  indigo: "bg-indigo-500",
-  rose: "bg-rose-500",
-  amber: "bg-amber-500",
-  sky: "bg-sky-500",
-  fuchsia: "bg-fuchsia-500",
-  emerald: "bg-emerald-500",
-  slate: "bg-slate-500",
-  orange: "bg-orange-500",
-  stone: "bg-stone-500",
+interface ToneStyle {
+  badge: string;
+  surface: string;
+  hoverBorder: string;
+  nameHover: string;
+}
+
+const TONE_STYLES: Record<string, ToneStyle> = {
+  teal: {
+    badge: "border-teal-200/80 bg-white/90 text-teal-800",
+    surface: "from-teal-50 via-white to-teal-50/70",
+    hoverBorder: "hover:border-teal-300",
+    nameHover: "group-hover:text-teal-700",
+  },
+  violet: {
+    badge: "border-violet-200/80 bg-white/90 text-violet-800",
+    surface: "from-violet-50 via-white to-violet-50/70",
+    hoverBorder: "hover:border-violet-300",
+    nameHover: "group-hover:text-violet-700",
+  },
+  indigo: {
+    badge: "border-indigo-200/80 bg-white/90 text-indigo-800",
+    surface: "from-indigo-50 via-white to-indigo-50/70",
+    hoverBorder: "hover:border-indigo-300",
+    nameHover: "group-hover:text-indigo-700",
+  },
+  rose: {
+    badge: "border-rose-200/80 bg-white/90 text-rose-800",
+    surface: "from-rose-50 via-white to-rose-50/70",
+    hoverBorder: "hover:border-rose-300",
+    nameHover: "group-hover:text-rose-700",
+  },
+  amber: {
+    badge: "border-amber-200/80 bg-white/90 text-amber-800",
+    surface: "from-amber-50 via-white to-amber-50/70",
+    hoverBorder: "hover:border-amber-300",
+    nameHover: "group-hover:text-amber-700",
+  },
+  sky: {
+    badge: "border-sky-200/80 bg-white/90 text-sky-800",
+    surface: "from-sky-50 via-white to-sky-50/70",
+    hoverBorder: "hover:border-sky-300",
+    nameHover: "group-hover:text-sky-700",
+  },
+  fuchsia: {
+    badge: "border-fuchsia-200/80 bg-white/90 text-fuchsia-800",
+    surface: "from-fuchsia-50 via-white to-fuchsia-50/70",
+    hoverBorder: "hover:border-fuchsia-300",
+    nameHover: "group-hover:text-fuchsia-700",
+  },
+  emerald: {
+    badge: "border-emerald-200/80 bg-white/90 text-emerald-800",
+    surface: "from-emerald-50 via-white to-emerald-50/70",
+    hoverBorder: "hover:border-emerald-300",
+    nameHover: "group-hover:text-emerald-700",
+  },
+  slate: {
+    badge: "border-slate-200/80 bg-white/90 text-slate-800",
+    surface: "from-slate-50 via-white to-slate-50/70",
+    hoverBorder: "hover:border-slate-300",
+    nameHover: "group-hover:text-slate-700",
+  },
+  orange: {
+    badge: "border-orange-200/80 bg-white/90 text-orange-800",
+    surface: "from-orange-50 via-white to-orange-50/70",
+    hoverBorder: "hover:border-orange-300",
+    nameHover: "group-hover:text-orange-700",
+  },
+  stone: {
+    badge: "border-stone-200/80 bg-white/90 text-stone-800",
+    surface: "from-stone-50 via-white to-stone-50/70",
+    hoverBorder: "hover:border-stone-300",
+    nameHover: "group-hover:text-stone-700",
+  },
 };
 
-const PERMANENCE_LABEL: Record<string, string> = {
-  permanent: "Permanente",
-  temporary: "Temporal",
-  battle: "Combate",
+const PERMANENCE_STYLES: Record<
+  string,
+  { label: string; className: string; dot: string }
+> = {
+  permanent: {
+    label: "Permanente",
+    className: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+  temporary: {
+    label: "Temporal",
+    className: "border-amber-200/70 bg-amber-50 text-amber-700",
+    dot: "bg-amber-500",
+  },
+  battle: {
+    label: "En combate",
+    className: "border-sky-200/70 bg-sky-50 text-sky-700",
+    dot: "bg-sky-500",
+  },
 };
 
 /** Variantes que viven en las secciones Megaevoluciones y Dinamax. */
@@ -37,6 +114,9 @@ const DELEGATED_CATEGORIES = new Set(["mega", "gmax"]);
 
 /** A partir de este número de formas locales se ofrece búsqueda por nombre. */
 const SEARCH_THRESHOLD = 6;
+
+/** Formas que se muestran antes de ofrecer «Mostrar más». */
+const PAGE_SIZE = 10;
 
 const TONE_DOT: Record<string, string> = {
   teal: "bg-teal-500",
@@ -115,6 +195,7 @@ export default function VariantsAndForms({ family }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const hasParadox =
     family.paradoxRelatives && family.paradoxRelatives.length > 0;
@@ -129,6 +210,11 @@ export default function VariantsAndForms({ family }: Props) {
     }
     return map;
   }, [family.variants]);
+
+  // Cada filtro o búsqueda vuelve a mostrar la primera página.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, query]);
 
   // Si no hay ni variantes regulares ni paradojas, no renderizar nada.
   if (family.total === 0 && !hasParadox) return null;
@@ -169,6 +255,9 @@ export default function VariantsAndForms({ family }: Props) {
         .join(" ")
     ).includes(normalizedQuery);
   });
+
+  const visibleVariants = filteredVariants.slice(0, visibleCount);
+  const remainingVariants = filteredVariants.length - visibleVariants.length;
 
   const paradoxCount = family.paradoxRelatives?.length ?? 0;
   const totalLabel = `${family.total} ${family.total === 1 ? "variante" : "variantes"}`;
@@ -394,8 +483,8 @@ export default function VariantsAndForms({ family }: Props) {
               role="status"
               className="mb-2 text-[11px] font-semibold text-ink-500"
             >
-              Mostrando {filteredVariants.length} de {localVariants.length}{" "}
-              {localVariants.length === 1 ? "forma" : "formas"}
+              Mostrando {visibleVariants.length} de {filteredVariants.length}{" "}
+              {filteredVariants.length === 1 ? "forma" : "formas"}
               {effectiveCategory !== "all" && query
                 ? " · filtro y búsqueda activos"
                 : effectiveCategory !== "all"
@@ -426,14 +515,32 @@ export default function VariantsAndForms({ family }: Props) {
 
           {/* Grid de tarjetas de variantes — solo si hay variantes no delegadas */}
           {showVariants && filteredVariants.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {filteredVariants.map((variant) => (
-                <VariantCard
-                  key={variant.id}
-                  variant={variant}
-                  isCurrent={variant.isCurrent}
-                />
+            <div
+              key={`${effectiveCategory}-${normalizedQuery}`}
+              className="variant-grid-enter mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            >
+              {visibleVariants.map((variant) => (
+                <VariantCard key={variant.id} variant={variant} />
               ))}
+            </div>
+          )}
+
+          {showVariants && remainingVariants > 0 && (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-xs font-bold text-ink-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 motion-reduce:hover:translate-y-0"
+              >
+                Mostrar más variantes
+                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-black text-ink-500">
+                  +{remainingVariants}
+                </span>
+              </button>
+              <p className="text-[10px] font-semibold text-ink-500">
+                Quedan {remainingVariants}{" "}
+                {remainingVariants === 1 ? "forma por ver" : "formas por ver"}
+              </p>
             </div>
           )}
 
@@ -544,89 +651,143 @@ function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
   );
 }
 
-function VariantCard({
-  variant,
-  isCurrent,
-}: {
-  variant: PokemonVariant;
-  isCurrent: boolean;
-}) {
-  const toneBg = TONE_BG[variant.category.tone] ?? TONE_BG.slate;
-  const permanenceLabel =
-    PERMANENCE_LABEL[variant.permanence] ?? variant.permanence;
+function VariantCard({ variant }: { variant: PokemonVariant }) {
+  const tone = TONE_STYLES[variant.category.tone] ?? TONE_STYLES.slate;
+  const permanence =
+    PERMANENCE_STYLES[variant.permanence] ?? PERMANENCE_STYLES.permanent;
+  const extraInfo = variant.condition ?? variant.description;
 
   return (
     <Link
       to={`/pokemon/${variant.id}`}
-      className={`group relative flex flex-col items-center rounded-lg border p-3 text-center transition hover:-translate-y-0.5 hover:shadow-md ${
-        isCurrent
-          ? "border-red-300 bg-red-50 ring-1 ring-red-200"
-          : "border-line bg-white hover:border-slate-300"
+      aria-label={`Ver ficha de ${variant.displayName}`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[14px] border bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 motion-reduce:hover:translate-y-0 ${
+        variant.isCurrent
+          ? "border-red-300 ring-1 ring-red-100"
+          : `border-line ${tone.hoverBorder}`
       }`}
     >
-      {/* Indicador de variante actual */}
-      {isCurrent && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow-sm">
-          ✓
-        </span>
-      )}
-
-      {/* Badge de categoría */}
-      <span
-        className={`mb-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white ${toneBg}`}
+      {/* Ilustración */}
+      <div
+        className={`relative flex aspect-square items-center justify-center overflow-hidden border-b border-white/80 bg-gradient-to-br p-3 ${tone.surface}`}
       >
-        <span>{variant.category.emoji}</span>
-        <span>{variant.category.shortLabel}</span>
-      </span>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full border-[16px] border-white/60"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-12 -left-8 h-28 w-28 rounded-full bg-white/50 blur-2xl"
+        />
 
-      {/* Arte o sprite */}
-      <PokemonArtwork
-        id={variant.id}
-        name={variant.name}
-        src={variant.artwork}
-        className="h-20 w-20 object-contain drop-shadow-sm transition group-hover:scale-105 sm:h-24 sm:w-24"
-      />
-
-      {/* Nombre */}
-      <p className="mt-1.5 w-full truncate text-xs font-extrabold text-ink-900">
-        {variant.displayName}
-      </p>
-
-      {/* Tipos */}
-      {variant.types && variant.types.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap justify-center gap-1">
-          {variant.types.map((type) => {
-            const badge = getTypeBadge(type);
-            return (
-              <span
-                key={type}
-                className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-              >
-                {badge.es}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Región (si aplica) */}
-      {variant.region && (
-        <span className="mt-1 text-[9px] font-semibold text-ink-500">
-          {variant.region}
+        <span
+          className={`absolute left-2 top-2 z-10 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] shadow-sm backdrop-blur-sm ${tone.badge}`}
+        >
+          <span aria-hidden="true">{variant.category.emoji}</span>
+          <span className="truncate">{variant.category.shortLabel}</span>
         </span>
-      )}
 
-      {/* Permanencia */}
-      <span className="mt-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase text-ink-500">
-        {permanenceLabel}
-      </span>
+        {variant.isCurrent && (
+          <span className="absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white shadow-sm">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-2.5 w-2.5"
+              aria-hidden="true"
+            >
+              <path d="m5 12 4.5 4.5L19 7" />
+            </svg>
+            Actual
+          </span>
+        )}
 
-      {/* Condición (si aplica) */}
-      {variant.condition && (
-        <p className="mt-1.5 line-clamp-2 text-[9px] leading-tight text-ink-400">
-          {variant.condition}
-        </p>
-      )}
+        <PokemonArtwork
+          id={variant.id}
+          name={variant.name}
+          src={variant.artwork}
+          className="relative z-[1] h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(15,23,42,0.16)] transition-transform duration-300 ease-out group-hover:scale-[1.06] motion-reduce:transform-none"
+        />
+      </div>
+
+      {/* Información */}
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
+        <div className="flex items-center justify-between gap-2">
+          {variant.region ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-ink-500">
+              <span aria-hidden="true">📍</span>
+              {variant.region}
+            </span>
+          ) : (
+            <span />
+          )}
+          <span className="text-[9px] font-bold tabular-nums text-ink-500">
+            #{variant.id}
+          </span>
+        </div>
+
+        <h3
+          className={`break-words text-sm font-extrabold leading-snug text-ink-900 transition-colors ${tone.nameHover}`}
+        >
+          {variant.displayName}
+        </h3>
+
+        <div className="flex min-h-[20px] flex-wrap items-center gap-1">
+          {variant.types && variant.types.length > 0
+            ? variant.types.map((type) => {
+                const badge = getTypeBadge(type);
+                return (
+                  <span
+                    key={type}
+                    className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
+                  >
+                    {badge.es}
+                  </span>
+                );
+              })
+            : null}
+        </div>
+
+        {extraInfo && (
+          <p
+            className="line-clamp-2 min-h-[2.35rem] text-[11px] leading-snug text-ink-500"
+            title={extraInfo}
+          >
+            {extraInfo}
+          </p>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${permanence.className}`}
+          >
+            <span
+              aria-hidden="true"
+              className={`h-1 w-1 rounded-full ${permanence.dot}`}
+            />
+            {permanence.label}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-500 transition-colors group-hover:text-ink-900">
+            Ver ficha
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
