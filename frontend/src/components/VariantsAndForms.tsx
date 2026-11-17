@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import type {
   PokemonVariantFamily,
   PokemonVariant,
-  PokemonVariantCategory,
   ParadoxRelative,
 } from "../services/api";
 import { getTypeBadge } from "../utils/pokemon";
@@ -171,7 +170,6 @@ export default function VariantsAndForms({ family }: Props) {
                   <VariantCard
                     key={variant.id}
                     variant={variant}
-                    speciesName={family.speciesName}
                     isCurrent={variant.isCurrent}
                   />
                 ))}
@@ -261,11 +259,9 @@ function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
 
 function VariantCard({
   variant,
-  speciesName,
   isCurrent,
 }: {
   variant: PokemonVariant;
-  speciesName: string;
   isCurrent: boolean;
 }) {
   const toneBg = TONE_BG[variant.category.tone] ?? TONE_BG.slate;
