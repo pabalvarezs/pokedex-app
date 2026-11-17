@@ -338,4 +338,96 @@ describe("DynamaxForms", () => {
     expect(screen.getByText("Eternamax")).toBeTruthy();
     expect(screen.getByText(/No se puede obtener ni usar en combate/i)).toBeTruthy();
   });
+
+  it("mantiene las reglas completas detrás de un acordeón", () => {
+    renderSection();
+
+    const trigger = screen.getByRole("button", {
+      name: /Reglas de la transformación/i,
+    });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Todo son Max Moves")).toBeNull();
+
+    fireEvent.click(trigger);
+
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("Todo son Max Moves")).toBeTruthy();
+    expect(screen.getByText("Requiere la Banda Dinamax.")).toBeTruthy();
+  });
+
+  it("oculta el efecto de cada Max Move hasta abrir la tarjeta", () => {
+    renderSection();
+
+    const trigger = screen.getByRole("button", {
+      name: "Ver efecto de Maxignición",
+    });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Invoca sol intenso durante 5 turnos.")).toBeNull();
+
+    fireEvent.click(trigger);
+
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      screen.getByText("Invoca sol intenso durante 5 turnos.")
+    ).toBeTruthy();
+  });
+
+  it("presenta la relación evolutiva con imágenes cuando la evolución sí Gigamaxiza", () => {
+    renderSection({
+      forms: [],
+      base: {
+        ...CHARIZARD_BASE,
+        id: 5,
+        name: "charmeleon",
+        types: ["fire"],
+        stats: [{ name: "hp", base_stat: 58 }],
+      },
+      speciesId: 5,
+      gmaxRelatives: [{ id: 6, name: "charizard", direction: "later" }],
+    });
+
+    expect(screen.getByText("Su evolución · Gigamax sí")).toBeTruthy();
+    expect(screen.getAllByAltText("Charizard").length).toBeGreaterThan(0);
+    expect(screen.getAllByAltText("Charmeleon").length).toBeGreaterThan(0);
+  });
+
+  it("no reserva una relación vacía cuando no hay parientes con Gigamax", () => {
+    renderSection({
+      forms: [],
+      base: {
+        ...CHARIZARD_BASE,
+        id: 1,
+        name: "bulbasaur",
+        types: ["grass", "poison"],
+        stats: [{ name: "hp", base_stat: 45 }],
+      },
+      speciesId: 1,
+    });
+
+    expect(screen.getByText("Sin forma Gigamax")).toBeTruthy();
+    expect(screen.queryByText(/Gigamax sí/)).toBeNull();
+  });
+
+  it("permite consultar las notas del Factor Gigamax", () => {
+    renderSection();
+
+    expect(screen.queryByText(/El Factor Gigamax no se hereda/)).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Cómo obtener esta forma/i })
+    );
+
+    expect(screen.getByText(/El Factor Gigamax no se hereda/)).toBeTruthy();
+  });
+
+  it("no compara formas cuando la ficha base ya es la forma Gigamax", () => {
+    renderSection({
+      base: { ...CHARIZARD_BASE, id: 10196, name: "charizard-gmax" },
+    });
+
+    expect(
+      screen.queryByRole("heading", { name: "Comparación de formas" })
+    ).toBeNull();
+    expect(screen.queryByRole("link", { name: /Ver ficha completa/i })).toBeNull();
+  });
 });

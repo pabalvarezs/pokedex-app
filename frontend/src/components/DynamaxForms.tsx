@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { GmaxForm, GmaxRelative, PokemonStat } from "../services/api";
 import {
@@ -14,10 +14,9 @@ import {
   MAX_MOVES,
   type MaxMove,
 } from "../utils/maxMoves";
-import { getTypeBadge } from "../utils/pokemon";
+import { getTypeBadge, STAT_NAMES } from "../utils/pokemon";
 import PokemonArtwork from "./PokemonArtwork";
 import {
-  FormHero,
   FormSummary,
   TypePills,
   formArtwork,
@@ -68,7 +67,164 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-function RulesRow() {
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+        open ? "rotate-180" : ""
+      }`}
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+/** Acordeón reutilizable para la información secundaria. */
+function Disclosure({
+  title,
+  description,
+  icon,
+  children,
+  defaultOpen = false,
+  className = "",
+}: {
+  title: string;
+  description?: string;
+  icon?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
+
+  return (
+    <div
+      className={`overflow-hidden rounded-[14px] border border-line bg-white ${className}`}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-300"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          {icon && (
+            <span aria-hidden="true" className="text-sm leading-none">
+              {icon}
+            </span>
+          )}
+          <span className="min-w-0">
+            <span className="block text-[11px] font-black uppercase tracking-wider text-ink-700">
+              {title}
+            </span>
+            {description && (
+              <span className="mt-0.5 block text-[10px] font-semibold text-ink-500">
+                {description}
+              </span>
+            )}
+          </span>
+        </span>
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-500">
+          <Chevron open={open} />
+        </span>
+      </button>
+
+      {open && (
+        <div id={panelId} className="border-t border-line-soft px-4 py-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DynamaxHeader({ formsCount }: { formsCount: number }) {
+  return (
+    <header className="relative overflow-hidden border-b border-line-soft bg-gradient-to-br from-white via-white to-rose-50/70">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border-[38px] border-rose-100/70"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-24 left-1/3 h-44 w-44 rounded-full bg-amber-100/50 blur-3xl"
+      />
+
+      <div className="relative flex items-start gap-3 px-5 py-5 sm:gap-4 sm:px-7 sm:py-6">
+        <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-600 to-red-500 text-white shadow-sm sm:h-12 sm:w-12">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6"
+            aria-hidden="true"
+          >
+            <path d="M12 3c2.6 3.2 4 5.8 4 8a4 4 0 0 1-8 0c0-2.2 1.4-4.8 4-8Z" />
+            <path d="M12 21v-5" />
+            <path d="M9 21h6" />
+          </svg>
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-600">
+            Transformación Max
+          </p>
+          <h2
+            id="dynamax-heading"
+            className="mt-1 text-2xl font-black tracking-tight text-ink-900 sm:text-[1.7rem]"
+          >
+            Dinamax y Gigamax
+          </h2>
+          <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-ink-500 sm:text-sm">
+            Una transformación temporal que aumenta los PS y convierte los
+            movimientos en Max Moves. Solo algunas especies conservan una forma
+            Gigamax propia.
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/90 px-2.5 py-1 text-[10px] font-bold text-ink-700 shadow-sm">
+              <span aria-hidden="true">⏳</span>
+              <span>3 turnos</span>
+            </span>
+            <span
+              title="Los PS pasan de ×1,5 a ×2,0 según el nivel Dinamax"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/90 px-2.5 py-1 text-[10px] font-bold text-ink-700 shadow-sm"
+            >
+              <span aria-hidden="true">❤️</span>
+              <span>PS ×1,5 a ×2,0</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/90 px-2.5 py-1 text-[10px] font-bold text-ink-700 shadow-sm">
+              <span aria-hidden="true">🔒</span>
+              <span>1 vez por combate</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-700 shadow-sm">
+              <span aria-hidden="true">🌋</span>
+              <span>
+                {formsCount > 0
+                  ? `${formsCount} ${formsCount === 1 ? "forma" : "formas"} G-Max`
+                  : "Sin forma G-Max"}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function RulesList() {
   const rules = [
     {
       icon: "⏳",
@@ -93,13 +249,13 @@ function RulesRow() {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {rules.map((rule) => (
         <div
           key={rule.title}
-          className="flex items-start gap-3 rounded-[12px] border border-rose-100 bg-white/80 p-3"
+          className="flex items-start gap-2.5 rounded-[12px] border border-line-soft bg-slate-50/70 p-3"
         >
-          <span aria-hidden="true" className="text-lg leading-none">
+          <span aria-hidden="true" className="text-base leading-none">
             {rule.icon}
           </span>
           <div>
@@ -125,7 +281,8 @@ function HpPanel({
   onLevelChange: (level: number) => void;
   speciesId?: number;
 }) {
-  const boosted = typeof baseHp === "number" ? dynamaxHp(baseHp, level, speciesId) : undefined;
+  const boosted =
+    typeof baseHp === "number" ? dynamaxHp(baseHp, level, speciesId) : undefined;
   const scale = Math.max(1, (baseHp ?? 1) * 2);
   const baseWidth = Math.min(100, Math.round(((baseHp ?? 0) / scale) * 100));
   const boostedWidth = Math.min(
@@ -135,8 +292,8 @@ function HpPanel({
   const shedinja = isShedinja(speciesId);
 
   return (
-    <div className="mt-4 overflow-hidden rounded-card border border-rose-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-100 bg-gradient-to-r from-rose-50/80 to-white px-5 py-4">
+    <div className="overflow-hidden rounded-card border border-line bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft bg-gradient-to-r from-rose-50/70 to-white px-4 py-3.5 sm:px-5">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
             <span aria-hidden="true">❤️</span>
@@ -164,30 +321,38 @@ function HpPanel({
       </div>
 
       <div className="p-4 sm:p-5">
-        <input
-          id="dynamax-level"
-          type="range"
-          min={0}
-          max={10}
-          step={1}
-          value={level}
-          onChange={(event) => onLevelChange(Number(event.target.value))}
-          aria-valuetext={dynamaxLevelLabel(level)}
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-rose-100 accent-rose-600"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            id="dynamax-level"
+            type="range"
+            min={0}
+            max={10}
+            step={1}
+            value={level}
+            onChange={(event) => onLevelChange(Number(event.target.value))}
+            aria-valuetext={dynamaxLevelLabel(level)}
+            className="h-2 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-rose-100 accent-rose-600"
+          />
+          <span className="w-14 shrink-0 text-right text-sm font-black text-rose-700">
+            {formatDynamaxMultiplier(level)}
+          </span>
+        </div>
         <div className="mt-1 flex justify-between text-[9px] font-bold uppercase tracking-wide text-ink-500">
           <span>Nivel 0 · inicial</span>
           <span>Nivel 10 · máximo</span>
         </div>
 
         {typeof baseHp === "number" && typeof boosted === "number" ? (
-          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-            <div aria-label="PS base" className="rounded-[12px] border border-line bg-white p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2">
+            <div
+              aria-label="PS base"
+              className="rounded-[12px] border border-line bg-slate-50/70 p-2.5 sm:p-3"
+            >
+              <p className="text-[10px] font-bold uppercase leading-tight tracking-wide text-ink-500">
                 PS base
               </p>
               <p className="text-2xl font-black text-ink-900">{baseHp}</p>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200">
                 <div
                   className="h-full rounded-full bg-slate-400"
                   style={{ width: `${baseWidth}%` }}
@@ -195,24 +360,24 @@ function HpPanel({
               </div>
             </div>
 
-            <div className="text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
-                Multiplicador
-              </p>
-              <p className="text-xl font-black text-rose-700">
-                {formatDynamaxMultiplier(level)}
-              </p>
+            <div className="flex items-center justify-center">
+              <span
+                aria-hidden="true"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-xs font-black text-rose-700 shadow-sm sm:h-8 sm:w-8"
+              >
+                →
+              </span>
             </div>
 
             <div
               aria-label="PS con Dinamax"
-              className="rounded-[12px] border border-rose-200 bg-gradient-to-b from-rose-50 to-white p-3"
+              className="rounded-[12px] border border-rose-200 bg-gradient-to-b from-rose-50 to-white p-2.5 sm:p-3"
             >
-              <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
+              <p className="text-[10px] font-bold uppercase leading-tight tracking-wide text-rose-700">
                 PS con Dinamax
               </p>
               <p className="text-2xl font-black text-rose-700">{boosted}</p>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-rose-100">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-rose-100">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400"
                   style={{ width: `${boostedWidth}%` }}
@@ -236,6 +401,36 @@ function HpPanel({
   );
 }
 
+function MechanicsSection({
+  baseHp,
+  level,
+  onLevelChange,
+  speciesId,
+}: {
+  baseHp: number | undefined;
+  level: number;
+  onLevelChange: (level: number) => void;
+  speciesId?: number;
+}) {
+  return (
+    <div className="space-y-3">
+      <HpPanel
+        baseHp={baseHp}
+        level={level}
+        onLevelChange={onLevelChange}
+        speciesId={speciesId}
+      />
+      <Disclosure
+        title="Reglas de la transformación"
+        description="Qué cambia durante los 3 turnos y cómo se activa"
+        icon="📘"
+      >
+        <RulesList />
+      </Disclosure>
+    </div>
+  );
+}
+
 function MaxMoveCard({
   move,
   highlighted,
@@ -243,36 +438,58 @@ function MaxMoveCard({
   move: MaxMove;
   highlighted: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
   const badge = getTypeBadge(move.type);
 
   return (
     <article
-      className={`flex flex-col rounded-[12px] border p-3 transition ${
+      className={`overflow-hidden rounded-[12px] border transition ${
         highlighted
-          ? "border-rose-300 bg-rose-50/70 shadow-sm ring-1 ring-rose-200"
-          : "border-line bg-white"
+          ? "border-rose-200 bg-rose-50/60"
+          : "border-line bg-white hover:border-slate-300"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-black leading-tight text-ink-900">
-          {move.name}
-        </h4>
-        <TypeBadge type={move.type} />
-      </div>
-
-      <p className="mt-1.5 flex-1 text-[11px] font-medium leading-snug text-ink-500">
-        {move.effect}
-      </p>
-
-      <p
-        className={`mt-2 text-[9px] font-black uppercase tracking-wide ${
-          highlighted ? "text-rose-700" : "text-ink-500"
-        }`}
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-label={`Ver efecto de ${move.name}`}
+        className="flex w-full items-center justify-between gap-2 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-300"
       >
-        {move.isStatus
-          ? "Movimientos de estado"
-          : `${highlighted ? "Tus movimientos" : "Movimientos"} de tipo ${badge.es}`}
-      </p>
+        <span className="min-w-0">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="truncate text-sm font-black text-ink-900">
+              {move.name}
+            </span>
+            <TypeBadge type={move.type} />
+          </span>
+          <span
+            className={`mt-1 block text-[9px] font-black uppercase tracking-wide ${
+              highlighted ? "text-rose-700" : "text-ink-500"
+            }`}
+          >
+            {move.isStatus
+              ? "Movimiento de estado"
+              : highlighted
+                ? `Tu Max Move de ${badge.es}`
+                : `Max Move de ${badge.es}`}
+          </span>
+        </span>
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-500">
+          <Chevron open={open} />
+        </span>
+      </button>
+
+      {open && (
+        <div
+          id={panelId}
+          className="border-t border-line-soft/80 px-3 py-2.5 text-[11px] font-medium leading-snug text-ink-500"
+        >
+          {move.effect}
+        </div>
+      )}
     </article>
   );
 }
@@ -295,8 +512,8 @@ function MaxMoveGrid({ types }: { types: string[] }) {
   const visible = showAll ? ordered : [...matching, MAX_GUARD];
 
   return (
-    <div className="mt-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
             <span aria-hidden="true">🎯</span>
@@ -304,6 +521,7 @@ function MaxMoveGrid({ types }: { types: string[] }) {
           </h3>
           <p className="mt-0.5 text-[11px] font-semibold text-ink-500">
             Al Dinamaxizar, cada ataque se convierte en el Max Move de su tipo.
+            Toca una tarjeta para ver su efecto.
           </p>
         </div>
 
@@ -315,24 +533,13 @@ function MaxMoveGrid({ types }: { types: string[] }) {
           className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
         >
           {showAll ? "Ver solo mis tipos" : "Ver los 19 Max Moves"}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.6}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className={`h-3 w-3 transition-transform ${showAll ? "rotate-180" : ""}`}
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
+          <Chevron open={showAll} />
         </button>
       </div>
 
       <div
         id="max-move-grid"
-        className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
       >
         {visible.map((move) => (
           <MaxMoveCard
@@ -346,96 +553,78 @@ function MaxMoveGrid({ types }: { types: string[] }) {
   );
 }
 
-function GmaxCard({
-  form,
-  selected,
+function GmaxSelector({
+  forms,
+  selectedId,
   onSelect,
 }: {
-  form: GmaxForm;
-  selected: boolean;
-  onSelect: () => void;
+  forms: GmaxForm[];
+  selectedId: number | null;
+  onSelect: (id: number) => void;
 }) {
-  const title = gmaxTitle(form);
-
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      aria-label={`Seleccionar ${title}`}
-      className={`group relative flex flex-col overflow-hidden rounded-card border bg-surface text-left transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-200 ${
-        selected
-          ? "border-rose-400 shadow-ambient ring-2 ring-rose-200"
-          : "border-rose-100 shadow-card hover:-translate-y-1 hover:border-rose-300 hover:shadow-ambient motion-reduce:hover:translate-y-0"
-      }`}
+    <div
+      role="group"
+      aria-label="Elegir forma Gigamax"
+      className="grid gap-2 sm:grid-cols-2"
     >
-      {selected && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 z-20 h-1.5 bg-gradient-to-r from-rose-600 via-red-500 to-amber-400"
-        />
-      )}
+      {forms.map((form) => {
+        const selected = form.id === selectedId;
+        const title = gmaxTitle(form);
 
-      <div className="relative flex h-[184px] items-center justify-center overflow-hidden bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full border-[22px] border-white/50"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl"
-        />
-
-        <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-rose-700 to-red-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm ring-1 ring-white/30">
-          <span aria-hidden="true" className="text-[11px] leading-none">
-            🌋
-          </span>
-          GIGAMAX{form.variant ? ` ${form.variant}` : ""}
-        </span>
-
-        {selected && (
-          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-rose-700 shadow-sm ring-1 ring-rose-200 backdrop-blur-sm">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={3}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-2.5 w-2.5"
+        return (
+          <button
+            key={form.id}
+            type="button"
+            onClick={() => onSelect(form.id)}
+            aria-pressed={selected}
+            aria-label={`Seleccionar ${title}`}
+            className={`group flex items-center gap-3 rounded-[14px] border p-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 ${
+              selected
+                ? "border-rose-300 bg-gradient-to-r from-rose-50 to-white shadow-sm ring-1 ring-rose-200"
+                : "border-line bg-white hover:border-rose-200 hover:bg-rose-50/40"
+            }`}
+          >
+            <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
+              <PokemonArtwork
+                id={form.id}
+                name={title}
+                src={formArtwork(form)}
+                className="h-12 w-12 object-contain transition-transform duration-200 group-hover:scale-105 motion-reduce:transform-none"
+              />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-black text-ink-900">
+                {title}
+              </span>
+              <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-ink-500">
+                {formatFormId(form.id)}
+              </span>
+            </span>
+            <span
               aria-hidden="true"
+              className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                selected
+                  ? "border-rose-300 bg-rose-600 text-white"
+                  : "border-line bg-white text-transparent"
+              }`}
             >
-              <path d="m5 12 4.5 4.5L19 7" />
-            </svg>
-            Elegida
-          </span>
-        )}
-
-        <PokemonArtwork
-          id={form.id}
-          name={title}
-          src={formArtwork(form)}
-          className="relative z-10 h-[150px] w-[150px] object-contain drop-shadow-[0_10px_18px_rgba(190,18,60,0.22)] transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none sm:h-[165px] sm:w-[165px]"
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="min-w-0">
-          <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">
-            Forma Gigamax de {prettyFormName(form.baseName)}
-          </p>
-          <h4 className="truncate text-base font-black tracking-tight text-ink-900">
-            {title}
-          </h4>
-          <div className="mt-1.5">
-            <TypePills types={form.types} />
-          </div>
-        </div>
-        <span className="shrink-0 text-[10px] font-black text-rose-300">
-          {formatFormId(form.id)}
-        </span>
-      </div>
-    </button>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3 w-3"
+              >
+                <path d="m5 12 4.5 4.5L19 7" />
+              </svg>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -446,8 +635,16 @@ function GmaxComparison({
   base: DynamaxBaseForm;
   form: GmaxForm;
 }) {
+  const heightDelta =
+    typeof base.height === "number" &&
+    base.height > 0 &&
+    typeof form.height === "number" &&
+    form.height > 0
+      ? form.height / base.height
+      : undefined;
+
   return (
-    <div className="border-t border-rose-100 bg-rose-50/30 p-4 sm:p-5">
+    <div className="border-t border-rose-100 bg-gradient-to-b from-rose-50/50 to-white p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
@@ -463,9 +660,10 @@ function GmaxComparison({
         </span>
       </div>
 
-      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] lg:items-center">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
           <FormSummary
+            size="large"
             label="Original"
             name={prettyFormName(base.name)}
             id={base.id}
@@ -474,6 +672,7 @@ function GmaxComparison({
             tone="base"
           />
           <FormSummary
+            size="large"
             label={form.variant ? `GIGAMAX ${form.variant}` : "GIGAMAX"}
             name={gmaxTitle(form)}
             id={form.id}
@@ -483,29 +682,88 @@ function GmaxComparison({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-[12px] border border-line bg-white p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
-              Altura original
-            </p>
-            <p className="mt-0.5 text-sm font-black text-ink-900">
-              {formatHeight(base.height, false)}
-            </p>
+        <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-[12px] border border-line bg-white p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
+                Altura original
+              </p>
+              <p className="mt-0.5 text-sm font-black text-ink-900">
+                {formatHeight(base.height, false)}
+              </p>
+            </div>
+            <div className="rounded-[12px] border border-rose-200 bg-white p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                Altura Gigamax
+              </p>
+              <p className="mt-0.5 text-sm font-black text-rose-700">
+                {formatHeight(form.height, true)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-[12px] border border-rose-200 bg-white p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
-              Altura Gigamax
-            </p>
-            <p className="mt-0.5 text-sm font-black text-rose-700">
-              {formatHeight(form.height, true)}
-            </p>
-          </div>
-          <p className="col-span-2 rounded-[12px] border border-dashed border-rose-200 bg-white/70 p-3 text-[11px] font-semibold text-ink-500">
+
+          {typeof heightDelta === "number" && heightDelta > 1 && (
+            <div
+              className="flex items-center justify-between gap-2 rounded-[12px] border border-amber-200 bg-amber-50/70 px-3 py-2.5"
+              title="Crecimiento aproximado de la altura respecto a la forma original"
+            >
+              <span className="text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                Diferencia de altura
+              </span>
+              <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[11px] font-black text-white">
+                ×{heightDelta.toFixed(1).replace(".", ",")}
+              </span>
+            </div>
+          )}
+
+          <p className="rounded-[12px] border border-dashed border-rose-200 bg-white/80 p-3 text-[11px] font-semibold leading-relaxed text-ink-500">
             Las estadísticas base no cambian: Gigamax solo altera la apariencia y
             añade un movimiento exclusivo.
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function BaseStats({ stats }: { stats?: PokemonStat[] }) {
+  if (!stats?.length) {
+    return (
+      <p className="rounded-[10px] border border-dashed border-line bg-slate-50/70 p-3 text-[11px] font-semibold text-ink-500">
+        No hay estadísticas base disponibles para esta forma.
+      </p>
+    );
+  }
+
+  const total = stats.reduce((sum, stat) => sum + stat.base_stat, 0);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wide text-ink-500">
+        <span>Estadísticas compartidas</span>
+        <span className="rounded-full border border-line bg-white px-2 py-0.5 text-ink-700">
+          Total {total}
+        </span>
+      </div>
+      {stats.map((stat) => {
+        const width = Math.min(100, Math.round((stat.base_stat / 200) * 100));
+        return (
+          <div key={stat.name} className="flex items-center gap-2.5">
+            <span className="w-[74px] shrink-0 truncate text-[10px] font-bold text-ink-700">
+              {STAT_NAMES[stat.name] ?? stat.name}
+            </span>
+            <span className="w-7 shrink-0 text-right text-[10px] font-black text-ink-900">
+              {stat.base_stat}
+            </span>
+            <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <span
+                className="block h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400"
+                style={{ width: `${width}%` }}
+              />
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -532,40 +790,56 @@ function GmaxDetail({
 
   return (
     <div className="mt-4 overflow-hidden rounded-card border border-rose-200 bg-white shadow-sm">
-      <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="relative flex min-h-[240px] items-center justify-center overflow-hidden rounded-[12px] border border-rose-100 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-4">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        {/* Ilustración protagonista: ocupa la mitad del bloque en escritorio */}
+        <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-5 sm:min-h-[360px] sm:p-8 lg:min-h-[440px]">
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full border-[26px] border-white/50"
+            className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border-[30px] border-white/60"
           />
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-20 -left-12 h-52 w-52 rounded-full bg-amber-200/40 blur-3xl"
+            className="pointer-events-none absolute -bottom-24 -left-14 h-56 w-56 rounded-full bg-amber-200/50 blur-3xl"
           />
-          <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-rose-700 to-red-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm ring-1 ring-white/30">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 bottom-8 h-10 rounded-[100%] bg-rose-900/10 blur-xl"
+          />
+
+          <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-rose-700 to-red-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm ring-1 ring-white/30">
             <span aria-hidden="true">🌋</span>
             Gigamax
+            {form.variant ? ` ${form.variant}` : ""}
           </span>
+
+          <span className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-rose-700 shadow-sm ring-1 ring-rose-200 backdrop-blur-sm">
+            {formatFormId(form.id)}
+          </span>
+
           <PokemonArtwork
             id={form.id}
             name={gmaxTitle(form)}
             src={formArtwork(form)}
-            className="relative z-10 h-[210px] w-[210px] object-contain drop-shadow-[0_12px_22px_rgba(190,18,60,0.22)] sm:h-[240px] sm:w-[240px]"
+            priority
+            className="relative z-10 h-[250px] w-full max-w-[320px] object-contain drop-shadow-[0_18px_28px_rgba(190,18,60,0.24)] sm:h-[310px] sm:max-w-[380px] lg:h-[360px] lg:max-w-[420px]"
           />
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+        <div className="min-w-0 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-600">
                 Forma Gigamax
               </p>
-              <h3 className="text-xl font-black tracking-tight text-ink-900">
+              <h3 className="mt-0.5 text-2xl font-black tracking-tight text-ink-900">
                 {gmaxTitle(form)}
               </h3>
             </div>
-            <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-700 ring-1 ring-rose-200">
-              {formatFormId(form.id)}
+            <span
+              title="Forma disponible solo durante el combate"
+              className="shrink-0 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-700"
+            >
+              Solo en combate
             </span>
           </div>
 
@@ -573,8 +847,8 @@ function GmaxDetail({
             <TypePills types={form.types} />
           </div>
 
-          <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-[10px] border border-line bg-white p-2.5">
+          <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+            <div className="rounded-[10px] border border-line bg-slate-50/60 p-2.5">
               <dt className="text-[9px] font-bold uppercase tracking-wide text-ink-500">
                 Altura
               </dt>
@@ -582,7 +856,7 @@ function GmaxDetail({
                 {formatHeight(form.height, true)}
               </dd>
             </div>
-            <div className="rounded-[10px] border border-line bg-white p-2.5">
+            <div className="rounded-[10px] border border-line bg-slate-50/60 p-2.5">
               <dt className="text-[9px] font-bold uppercase tracking-wide text-ink-500">
                 Peso
               </dt>
@@ -590,15 +864,7 @@ function GmaxDetail({
                 Desconocido
               </dd>
             </div>
-            <div className="rounded-[10px] border border-line bg-white p-2.5">
-              <dt className="text-[9px] font-bold uppercase tracking-wide text-ink-500">
-                Disponibilidad
-              </dt>
-              <dd className="mt-0.5 text-xs font-black text-ink-900">
-                Solo en combate
-              </dd>
-            </div>
-            <div className="rounded-[10px] border border-line bg-white p-2.5">
+            <div className="rounded-[10px] border border-line bg-slate-50/60 p-2.5">
               <dt className="text-[9px] font-bold uppercase tracking-wide text-ink-500">
                 Requisito
               </dt>
@@ -609,20 +875,22 @@ function GmaxDetail({
           </dl>
 
           {move && badge ? (
-            <div className="mt-4 rounded-[12px] border border-amber-200 bg-gradient-to-r from-amber-50 to-rose-50 p-3.5">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
-                Movimiento G-Max
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <h4 className="text-base font-black tracking-tight text-ink-900">
-                  {move.name}
-                </h4>
-                <TypeBadge type={move.type} />
+            <div className="mt-4 rounded-[14px] border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-rose-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
+                  Movimiento G-Max
+                </p>
                 {move.fixedPower && (
                   <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
                     Potencia 160
                   </span>
                 )}
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <h4 className="text-lg font-black tracking-tight text-ink-900">
+                  {move.name}
+                </h4>
+                <TypeBadge type={move.type} />
               </div>
               <p className="mt-1.5 text-[11px] font-semibold leading-snug text-ink-700">
                 {move.effect}
@@ -640,19 +908,39 @@ function GmaxDetail({
             </p>
           )}
 
-          <p className="mt-3 text-[10px] font-semibold leading-snug text-ink-500">
-            Se obtiene en incursiones Max o con Sopa Max. El Factor Gigamax no se
-            hereda por crianza.
-          </p>
-
-          {factorNotes.map((note) => (
-            <p
-              key={note}
-              className="mt-1.5 rounded-[10px] border border-rose-100 bg-rose-50/50 px-2.5 py-1.5 text-[10px] font-semibold text-rose-800"
+          <div className="mt-3 space-y-2">
+            <Disclosure
+              title="Cómo obtener esta forma"
+              description="Incursiones Max, Sopa Max y notas del Factor Gigamax"
+              icon="🔑"
             >
-              {note}
-            </p>
-          ))}
+              <div className="space-y-2 text-[11px] font-semibold leading-relaxed text-ink-500">
+                <p>
+                  Se obtiene en incursiones Max o con Sopa Max. El Factor Gigamax
+                  no se hereda por crianza.
+                </p>
+                {factorNotes.map((note) => (
+                  <p
+                    key={note}
+                    className="rounded-[10px] border border-rose-100 bg-rose-50/60 px-2.5 py-2 text-rose-800"
+                  >
+                    {note}
+                  </p>
+                ))}
+                <p className="rounded-[10px] border border-line bg-slate-50 px-2.5 py-2">
+                  Mantiene la habilidad y las estadísticas de la forma original.
+                </p>
+              </div>
+            </Disclosure>
+
+            <Disclosure
+              title="Estadísticas base"
+              description="Gigamax conserva las estadísticas de la especie"
+              icon="📊"
+            >
+              <BaseStats stats={base.stats} />
+            </Disclosure>
+          </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-rose-100 pt-3">
             <span className="text-[10px] font-semibold text-ink-500">
@@ -694,7 +982,66 @@ function joinNames(relatives: GmaxRelative[]) {
   return `${pretty.slice(0, -1).join(", ")} y ${pretty[pretty.length - 1]}`;
 }
 
-function NoGmaxNotice({ relatives }: { relatives: GmaxRelative[] }) {
+function RelationCard({
+  id,
+  name,
+  artwork,
+  caption,
+  tone,
+}: {
+  id: number;
+  name: string;
+  artwork?: string;
+  caption: string;
+  tone: "base" | "gmax";
+}) {
+  const isGmax = tone === "gmax";
+
+  return (
+    <div
+      className={`flex min-w-0 items-center gap-2.5 rounded-[12px] border p-2.5 ${
+        isGmax
+          ? "border-rose-200 bg-gradient-to-r from-rose-50 to-white"
+          : "border-line bg-white"
+      }`}
+    >
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px] ${
+          isGmax
+            ? "bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50"
+            : "bg-slate-50"
+        }`}
+      >
+        <PokemonArtwork
+          id={id}
+          name={name}
+          src={artwork}
+          className="h-11 w-11 object-contain"
+        />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-black text-ink-900">
+          {name}
+        </span>
+        <span
+          className={`mt-0.5 block text-[9px] font-black uppercase tracking-wide ${
+            isGmax ? "text-rose-700" : "text-ink-500"
+          }`}
+        >
+          {caption}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function NoGmaxNotice({
+  base,
+  relatives,
+}: {
+  base: DynamaxBaseForm;
+  relatives: GmaxRelative[];
+}) {
   const later = relatives.filter((relative) => relative.direction === "later");
   const earlier = relatives.filter(
     (relative) => relative.direction === "earlier"
@@ -710,63 +1057,107 @@ function NoGmaxNotice({ relatives }: { relatives: GmaxRelative[] }) {
         : "Otra etapa sí Gigamaxiza";
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-3 rounded-card border border-dashed border-rose-200 bg-rose-50/40 p-5 text-center sm:flex-row sm:text-left">
-      <span aria-hidden="true" className="text-3xl">
-        {hasRelatives ? "🧬" : "🌱"}
-      </span>
-      <div>
-        <h3 className="text-sm font-black uppercase tracking-wider text-ink-700">
-          {title}
-        </h3>
-        {!hasRelatives ? (
-          <p className="mt-1 text-[11px] font-semibold text-ink-500">
-            Este Pokémon puede Dinamaxizar, pero ni él ni su línea evolutiva
-            tienen Factor Gigamax. Solo 32 especies pueden Gigamaxizar.
-          </p>
-        ) : (
-          <div className="mt-1 space-y-1 text-[11px] font-semibold text-ink-500">
-            {later.length > 0 && (
-              <p>
-                Este Pokémon puede Dinamaxizar, pero su etapa actual no tiene
-                Factor Gigamax. Cuando evolucione a {joinNames(later)}{" "}
-                {later.length === 1 ? "sí va" : "sí van"} a poder Gigamaxizar.
-              </p>
-            )}
-            {earlier.length > 0 && (
-              <p>
-                {later.length > 0
-                  ? "Además, "
-                  : "Este Pokémon puede Dinamaxizar, pero perdió el Factor Gigamax al evolucionar. "}
-                {earlier.length === 1 ? "Su preevolución" : "Sus preevoluciones"}{" "}
-                {joinNames(earlier)}{" "}
-                {earlier.length === 1 ? "sí puede" : "sí pueden"} Gigamaxizar:
-                si todavía {earlier.length === 1 ? "lo tienes" : "los tienes"}{" "}
-                en esa etapa,{" "}
-                {earlier.length === 1 ? "aprovéchalo" : "aprovéchalos"} antes de
-                evolucionar.
-              </p>
-            )}
-            <p>
-              Solo 32 especies tienen el Factor Gigamax, así que no te extrañe.
+    <div className="mt-6 overflow-hidden rounded-card border border-dashed border-rose-200 bg-gradient-to-br from-rose-50/60 via-white to-white p-5 shadow-sm">
+      <div className="flex flex-col items-start gap-3 sm:flex-row">
+        <span
+          aria-hidden="true"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-rose-100 bg-white text-2xl shadow-sm"
+        >
+          {hasRelatives ? "🧬" : "🌱"}
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-black uppercase tracking-wider text-ink-700">
+            {title}
+          </h3>
+          {!hasRelatives ? (
+            <p className="mt-1 max-w-2xl text-[11px] font-semibold leading-relaxed text-ink-500">
+              Este Pokémon puede Dinamaxizar, pero ni él ni su línea evolutiva
+              tienen Factor Gigamax. Solo 32 especies pueden Gigamaxizar.
             </p>
-          </div>
-        )}
+          ) : (
+            <div className="mt-1 max-w-3xl space-y-1 text-[11px] font-semibold leading-relaxed text-ink-500">
+              {later.length > 0 && (
+                <p>
+                  Este Pokémon puede Dinamaxizar, pero su etapa actual no tiene
+                  Factor Gigamax. Cuando evolucione a {joinNames(later)}{" "}
+                  {later.length === 1 ? "sí va" : "sí van"} a poder Gigamaxizar.
+                </p>
+              )}
+              {earlier.length > 0 && (
+                <p>
+                  {later.length > 0
+                    ? "Además, "
+                    : "Este Pokémon puede Dinamaxizar, pero perdió el Factor Gigamax al evolucionar. "}
+                  {earlier.length === 1 ? "Su preevolución" : "Sus preevoluciones"}{" "}
+                  {joinNames(earlier)}{" "}
+                  {earlier.length === 1 ? "sí puede" : "sí pueden"} Gigamaxizar:
+                  si todavía {earlier.length === 1 ? "lo tienes" : "los tienes"}{" "}
+                  en esa etapa,{" "}
+                  {earlier.length === 1 ? "aprovéchalo" : "aprovéchalos"} antes de
+                  evolucionar.
+                </p>
+              )}
+              <p>
+                Solo 32 especies tienen el Factor Gigamax, así que no te extrañe.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {hasRelatives && (
+        <div className="mt-5 grid items-center gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)]">
+          <RelationCard
+            id={base.id}
+            name={prettyFormName(base.name)}
+            artwork={base.artwork}
+            caption="Esta especie · Dinamax"
+            tone="base"
+          />
+
+          <span
+            aria-hidden="true"
+            className="mx-auto inline-flex h-7 w-7 items-center justify-center rounded-full border border-rose-200 bg-white text-xs font-black text-rose-600 shadow-sm"
+          >
+            <span className="sm:hidden">↓</span>
+            <span className="hidden sm:inline">→</span>
+          </span>
+
+          <div className="grid gap-2">
+            {relatives.map((relative) => (
+              <RelationCard
+                key={`${relative.direction}-${relative.id}`}
+                id={relative.id}
+                name={prettyFormName(relative.name)}
+                caption={
+                  relative.direction === "later"
+                    ? "Su evolución · Gigamax sí"
+                    : "Su preevolución · Gigamax sí"
+                }
+                tone="gmax"
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function DynamaxBlockedNotice() {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[12px] border border-amber-300 bg-amber-50 p-5 text-center sm:flex-row sm:text-left">
-      <span aria-hidden="true" className="text-3xl">
+    <div className="flex flex-col items-center gap-3 rounded-[14px] border border-amber-300 bg-amber-50 p-5 text-center sm:flex-row sm:text-left">
+      <span
+        aria-hidden="true"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-white text-2xl shadow-sm"
+      >
         🚫
       </span>
       <div>
         <h3 className="text-sm font-black uppercase tracking-wider text-amber-800">
           No puede Dinamaxizar
         </h3>
-        <p className="mt-1 text-[11px] font-semibold text-amber-900/80">
+        <p className="mt-1 text-[11px] font-semibold leading-relaxed text-amber-900/80">
           Zacian, Zamazenta y Eternatus son los únicos Pokémon que no pueden usar
           Dinamax. No tienen forma Gigamax ni movimientos Max.
         </p>
@@ -777,22 +1168,28 @@ function DynamaxBlockedNotice() {
 
 function EternamaxCard() {
   return (
-    <div className="mt-5 overflow-hidden rounded-card border border-fuchsia-200 bg-gradient-to-r from-fuchsia-50 via-white to-white shadow-sm">
-      <div className="grid gap-4 p-4 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center sm:p-5">
-        <PokemonArtwork
-          id={ETERNAMAX_ID}
-          name="Eternamax"
-          src={ETERNAMAX_ARTWORK}
-          className="mx-auto h-36 w-36 object-contain drop-shadow-[0_10px_18px_rgba(126,34,206,0.18)]"
-        />
-        <div>
+    <div className="mt-5 overflow-hidden rounded-card border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-white shadow-sm">
+      <div className="grid sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] sm:items-center">
+        <div className="relative flex min-h-[200px] items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-100/70 via-fuchsia-50 to-white p-5 sm:min-h-[240px]">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full border-[22px] border-white/70"
+          />
+          <PokemonArtwork
+            id={ETERNAMAX_ID}
+            name="Eternamax"
+            src={ETERNAMAX_ARTWORK}
+            className="relative z-10 h-[180px] w-full max-w-[220px] object-contain drop-shadow-[0_12px_22px_rgba(126,34,206,0.2)] sm:h-[210px]"
+          />
+        </div>
+        <div className="p-5 sm:p-6">
           <span className="inline-flex rounded-full bg-fuchsia-700 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white">
             Forma de jefe
           </span>
-          <h3 className="mt-1.5 text-lg font-black tracking-tight text-ink-900">
+          <h3 className="mt-2 text-xl font-black tracking-tight text-ink-900">
             Eternamax
           </h3>
-          <p className="mt-1 text-[11px] font-semibold leading-snug text-ink-500">
+          <p className="mt-1 text-[11px] font-semibold leading-relaxed text-ink-500">
             Eternatus adopta esta forma solo en la historia de Pokémon Espada y
             Escudo. No se puede obtener ni usar en combate.
           </p>
@@ -831,32 +1228,17 @@ export default function DynamaxForms({
   return (
     <section
       id="dynamax-title"
-      aria-labelledby="dynamax-title"
+      aria-labelledby="dynamax-heading"
       className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-rose-200 bg-surface shadow-card"
     >
-      <FormHero
-        tone="rose"
-        badge="Aura Dinamax"
-        emoji="🌋"
-        title="Dinamax y Gigamax"
-        titleId="dynamax-title"
-        subtitle="Transformación temporal de 3 turnos. Solo una vez por combate."
-        aside={
-          <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold ring-1 ring-white/25">
-            {forms.length > 0
-              ? `${forms.length} ${forms.length === 1 ? "forma" : "formas"} G-Max`
-              : "Sin forma G-Max"}
-          </span>
-        }
-      />
+      <DynamaxHeader formsCount={forms.length} />
 
-      <div className="bg-gradient-to-b from-white via-white to-rose-50/40 p-4 sm:p-6 lg:p-8">
+      <div className="space-y-5 bg-gradient-to-b from-white via-white to-rose-50/40 p-4 sm:p-6 lg:p-8">
         {blocked ? (
           <DynamaxBlockedNotice />
         ) : (
           <>
-            <RulesRow />
-            <HpPanel
+            <MechanicsSection
               baseHp={baseHp}
               level={level}
               onLevelChange={setLevel}
@@ -867,7 +1249,7 @@ export default function DynamaxForms({
         )}
 
         {forms.length > 0 && (
-          <div className="mt-6">
+          <div className="rounded-card border border-rose-100 bg-white/70 p-4 shadow-sm sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
@@ -884,15 +1266,12 @@ export default function DynamaxForms({
             </div>
 
             {forms.length > 1 && (
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {forms.map((form) => (
-                  <GmaxCard
-                    key={form.id}
-                    form={form}
-                    selected={form.id === selectedForm?.id}
-                    onSelect={() => setSelectedId(form.id)}
-                  />
-                ))}
+              <div className="mt-3">
+                <GmaxSelector
+                  forms={forms}
+                  selectedId={selectedForm?.id ?? null}
+                  onSelect={setSelectedId}
+                />
               </div>
             )}
 
@@ -901,7 +1280,7 @@ export default function DynamaxForms({
         )}
 
         {!blocked && forms.length === 0 && (
-          <NoGmaxNotice relatives={gmaxRelatives} />
+          <NoGmaxNotice base={base} relatives={gmaxRelatives} />
         )}
         {speciesId === 890 && <EternamaxCard />}
       </div>
