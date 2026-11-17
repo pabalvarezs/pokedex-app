@@ -1,8 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import VariantsAndForms from "../src/components/VariantsAndForms";
-import type { PokemonVariantFamily } from "../src/services/api";
+import type {
+  PokemonVariant,
+  PokemonVariantFamily,
+} from "../src/services/api";
 
 beforeEach(() => {
   cleanup();
@@ -117,6 +126,85 @@ function renderComponent(family: PokemonVariantFamily) {
       <VariantsAndForms family={family} />
     </MemoryRouter>
   );
+}
+
+const ATTIRE_CATEGORY = {
+  key: "attire",
+  label: "Atuendos y accesorios",
+  shortLabel: "Atuendo",
+  description: "Atuendo, gorra o accesorio especial.",
+  emoji: "🎩",
+  tone: "fuchsia",
+  section: "variants",
+};
+
+/** Genera una variante local de atuendo con nombre e id únicos. */
+function makeAttireVariant(
+  index: number,
+  displayName?: string
+): PokemonVariant {
+  return {
+    id: 20000 + index,
+    name: `pikachu-attire-${index}`,
+    displayName: displayName ?? `Pikachu atuendo ${index}`,
+    category: { ...ATTIRE_CATEGORY },
+    description: `Atuendo número ${index}.`,
+    permanence: "permanent",
+    affects: "appearance",
+    availability: "event",
+    kind: "record",
+    navigable: true,
+    order: index,
+    isDefault: false,
+    isCurrent: false,
+    sprite: "",
+    artwork: "",
+    types: ["electric"],
+  };
+}
+
+/** Variante cuya ficha detallada vive en Megaevoluciones o Dinamax. */
+function makeSpecialVariant(kind: "mega" | "gmax"): PokemonVariant {
+  const isMega = kind === "mega";
+
+  return {
+    id: isMega ? 10034 : 10196,
+    name: isMega ? "charizard-mega-x" : "charizard-gmax",
+    displayName: isMega ? "Mega Charizard X" : "Charizard Gigamax",
+    category: isMega
+      ? {
+          key: "mega",
+          label: "Megaevoluciones",
+          shortLabel: "Mega",
+          description: "Transformación temporal durante el combate.",
+          emoji: "✨",
+          tone: "violet",
+          section: "mega",
+        }
+      : {
+          key: "gmax",
+          label: "Formas Gigamax",
+          shortLabel: "Gigamax",
+          description: "Forma Gigamax exclusiva de Galar.",
+          emoji: "🌋",
+          tone: "rose",
+          section: "dynamax",
+        },
+    description: isMega
+      ? "Megaevolución disponible con Mega Piedra."
+      : "Forma Gigamax obtenida con Factor Gigamax.",
+    permanence: "battle",
+    affects: "both",
+    availability: "playable",
+    kind: "record",
+    navigable: true,
+    order: 10,
+    isDefault: false,
+    isCurrent: false,
+    sprite: "",
+    artwork: "",
+    types: ["fire", "dragon"],
+  };
 }
 
 describe("VariantsAndForms", () => {
@@ -356,5 +444,296 @@ describe("VariantsAndForms — paradojas", () => {
     renderComponent(family);
     expect(screen.getByText("Hada")).toBeDefined();
     expect(screen.getByText("Psíquico")).toBeDefined();
+  });
+});
+
+describe("VariantsAndForms — filtros por categoría", () => {
+  function getFilterGroup() {
+    return screen.getByRole("group", {
+      name: "Filtrar variantes por categoría",
+    });
+  }
+
+  it("filtra el grid al elegir una categoría y restaura con Todas", () => {
+    renderComponent(makeFamily());
+    const group = getFilterGroup();
+
+    const regional = within(group).getByRole("button", { name: /Regional/ });
+    expect(regional.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(regional);
+
+    expect(regional.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Zapdos de Galar")).toBeDefined();
+    expect(screen.queryByText("Pikachu Rock Star")).toBeNull();
+    expect(screen.queryByText("Pikachu con gorra original")).toBeNull();
+    expect(screen.getByText(/Mostrando 1 de 1 forma/)).toBeDefined();
+    expect(screen.getByText(/filtro activo/)).toBeDefined();
+
+    fireEvent.click(within(group).getByRole("button", { name: /^Todas/ }));
+
+    expect(regional.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByText("Pikachu Rock Star")).toBeDefined();
+    expect(screen.getByText("Zapdos de Galar")).toBeDefined();
+    expect(screen.getByText(/Mostrando 3 de 3 formas/)).toBeDefined();
+  });
+
+  it("muestra el contador real en cada chip de categoría", () => {
+    renderComponent(makeFamily());
+    const group = getFilterGroup();
+
+    expect(
+      within(group).getByRole("button", { name: /^Todas/ }).textContent
+    ).toContain("(3)");
+    expect(
+      within(group).getByRole("button", { name: /Atuendo/ }).textContent
+    ).toContain("(2)");
+    expect(
+      within(group).getByRole("button", { name: /Regional/ }).textContent
+    ).toContain("(1)");
+  });
+
+  it("no incluye categorías delegadas entre los filtros locales", () => {
+    const family = makeFamily({
+      total: 3,
+      variants: [
+        makeAttireVariant(1),
+        makeSpecialVariant("mega"),
+        makeSpecialVariant("gmax"),
+      ],
+    });
+    renderComponent(family);
+    const group = getFilterGroup();
+
+    expect(within(group).queryByRole("button", { name: /Mega/ })).toBeNull();
+    expect(
+      within(group).queryByRole("button", { name: /Gigamax/ })
+    ).toBeNull();
+    expect(
+      within(group).getByRole("button", { name: /^Todas/ }).textContent
+    ).toContain("(1)");
+  });
+});
+
+describe("VariantsAndForms — búsqueda de variantes", () => {
+  function makeSearchFamily(): PokemonVariantFamily {
+    const names = [
+      "Pikachu Rock Star",
+      "Pikachu Pop Star",
+      "Pikachu Belle",
+      "Pikachu Cosplay",
+      "Pikachu Ph. D.",
+      "Pikachu Libre",
+      "Pikachu Original",
+      "Pikachu de Alola",
+    ];
+
+    return makeFamily({
+      total: names.length,
+      variants: names.map((name, index) => makeAttireVariant(index + 1, name)),
+    });
+  }
+
+  it("no ofrece búsqueda cuando hay pocas variantes", () => {
+    renderComponent(makeFamily());
+    expect(screen.queryByRole("searchbox")).toBeNull();
+  });
+
+  it("filtra por nombre y describe el estado de la búsqueda", () => {
+    renderComponent(makeSearchFamily());
+
+    const input = screen.getByRole("searchbox", {
+      name: "Buscar variante por nombre",
+    });
+    fireEvent.change(input, { target: { value: "rock" } });
+
+    expect(screen.getByText("Pikachu Rock Star")).toBeDefined();
+    expect(screen.queryByText("Pikachu Pop Star")).toBeNull();
+    expect(screen.getByText(/Mostrando 1 de 1 forma/)).toBeDefined();
+    expect(screen.getByText(/búsqueda activa/)).toBeDefined();
+  });
+
+  it("ignora mayúsculas y acentos al buscar", () => {
+    renderComponent(makeSearchFamily());
+
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "ÁLOLA" },
+    });
+
+    expect(screen.getByText("Pikachu de Alola")).toBeDefined();
+    expect(screen.queryByText("Pikachu Rock Star")).toBeNull();
+  });
+
+  it("muestra un estado sin resultados y permite limpiar filtros", () => {
+    renderComponent(makeSearchFamily());
+
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "no-existe" },
+    });
+
+    expect(
+      screen.getByText("No encontramos variantes con ese nombre")
+    ).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+
+    expect(screen.queryByText("No encontramos variantes con ese nombre")).toBeNull();
+    expect(screen.getByText("Pikachu Rock Star")).toBeDefined();
+    expect(
+      (screen.getByRole("searchbox") as HTMLInputElement).value
+    ).toBe("");
+    expect(screen.getByText(/Mostrando 8 de 8 formas/)).toBeDefined();
+  });
+});
+
+describe("VariantsAndForms — paginación", () => {
+  function makeRegionalVariant(index: number, name: string): PokemonVariant {
+    return {
+      ...makeAttireVariant(index, name),
+      region: "Galar",
+      category: {
+        key: "regional",
+        label: "Formas regionales",
+        shortLabel: "Regional",
+        description: "Variante adaptada al ecosistema de una región.",
+        emoji: "🗺️",
+        tone: "teal",
+        section: "variants",
+      },
+    };
+  }
+
+  function makeLongFamily(): PokemonVariantFamily {
+    return makeFamily({
+      total: 14,
+      variants: [
+        ...Array.from({ length: 12 }, (_, index) =>
+          makeAttireVariant(index + 1)
+        ),
+        makeRegionalVariant(13, "Zapdos de Galar"),
+        makeRegionalVariant(14, "Articuno de Galar"),
+      ],
+    });
+  }
+
+  it("muestra la primera página y amplía con Mostrar más", () => {
+    renderComponent(makeLongFamily());
+
+    expect(screen.getByText(/Mostrando 10 de 14 formas/)).toBeDefined();
+    expect(screen.getByText("Pikachu atuendo 10")).toBeDefined();
+    expect(screen.queryByText("Pikachu atuendo 11")).toBeNull();
+
+    const more = screen.getByRole("button", {
+      name: /Mostrar más variantes/,
+    });
+    expect(more.textContent).toContain("+4");
+
+    fireEvent.click(more);
+
+    expect(screen.getByText(/Mostrando 14 de 14 formas/)).toBeDefined();
+    expect(screen.getByText("Pikachu atuendo 12")).toBeDefined();
+    expect(
+      screen.queryByRole("button", { name: /Mostrar más variantes/ })
+    ).toBeNull();
+  });
+
+  it("vuelve a la primera página al cambiar de categoría", () => {
+    renderComponent(makeLongFamily());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mostrar más variantes/ })
+    );
+    expect(screen.getByText("Pikachu atuendo 12")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /Regional/ }));
+
+    expect(screen.getByText(/Mostrando 2 de 2 formas/)).toBeDefined();
+    expect(screen.getByText("Zapdos de Galar")).toBeDefined();
+    expect(screen.queryByText("Pikachu atuendo 1")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Todas/ }));
+    expect(screen.getByText(/Mostrando 10 de 14 formas/)).toBeDefined();
+  });
+});
+
+describe("VariantsAndForms — transformaciones especiales", () => {
+  it("enlaza Mega y Gigamax a sus secciones sin duplicar tarjetas", () => {
+    const family = makeFamily({
+      total: 3,
+      variants: [
+        makeAttireVariant(1),
+        makeSpecialVariant("mega"),
+        makeSpecialVariant("gmax"),
+      ],
+    });
+    renderComponent(family);
+
+    const mega = screen.getByRole("link", {
+      name: /Ir a la sección de Megaevoluciones/,
+    });
+    const gmax = screen.getByRole("link", {
+      name: /Ir a la sección de Formas Gigamax/,
+    });
+
+    expect(mega.getAttribute("href")).toBe("#mega-title");
+    expect(gmax.getAttribute("href")).toBe("#dynamax-title");
+    expect(screen.getByText("Transformaciones especiales")).toBeDefined();
+    expect(screen.getByText("Formas Gigamax")).toBeDefined();
+
+    // Las fichas detalladas viven en MegaForms / DynamaxForms.
+    expect(screen.queryByText("Mega Charizard X")).toBeNull();
+    expect(screen.queryByText("Charizard Gigamax")).toBeNull();
+    // La variante local sí se muestra como tarjeta.
+    expect(screen.getByText("Pikachu atuendo 1")).toBeDefined();
+  });
+
+  it("muestra accesos especiales aunque no haya formas locales", () => {
+    const family = makeFamily({
+      total: 1,
+      variants: [makeSpecialVariant("mega")],
+    });
+    renderComponent(family);
+
+    expect(
+      screen.getByRole("link", {
+        name: /Ir a la sección de Megaevoluciones/,
+      })
+    ).toBeDefined();
+    expect(screen.queryByText("Sin variantes registradas")).toBeNull();
+    expect(
+      screen.getByText(/se detallan en sus secciones dedicadas/)
+    ).toBeDefined();
+  });
+});
+
+describe("VariantsAndForms — paradojas separadas de las formas", () => {
+  it("no cuenta las paradojas como variantes locales", () => {
+    const family = makeFamily({
+      total: 1,
+      variants: [makeAttireVariant(1, "Pikachu con gorra original")],
+      paradoxRelatives: [
+        {
+          id: 985,
+          name: "scream-tail",
+          displayName: "Colagrito",
+          era: "past",
+          description: "Pokémon paradoja del pasado.",
+          sprite: "",
+          artwork: "",
+          types: ["fairy", "psychic"],
+        },
+      ],
+    });
+    renderComponent(family);
+
+    expect(screen.getByText(/Mostrando 1 de 1 forma/)).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /^Todas/ }).textContent
+    ).toContain("(1)");
+
+    expect(screen.getByText("Pokémon paradoja relacionados")).toBeDefined();
+
+    const paradoxLink = screen.getByRole("link", { name: "Ver ficha de Colagrito" });
+    expect(paradoxLink.getAttribute("href")).toBe("/pokemon/985");
   });
 });
