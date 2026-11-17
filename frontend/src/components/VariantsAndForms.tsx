@@ -216,9 +216,6 @@ export default function VariantsAndForms({ family }: Props) {
     setVisibleCount(PAGE_SIZE);
   }, [activeCategory, query]);
 
-  // Si no hay ni variantes regulares ni paradojas, no renderizar nada.
-  if (family.total === 0 && !hasParadox) return null;
-
   // Mega y Gigamax mantienen sus secciones dedicadas.
   const groupedEntries = Array.from(grouped.entries());
   const localGroups = groupedEntries.filter(
@@ -229,8 +226,7 @@ export default function VariantsAndForms({ family }: Props) {
   );
 
   const showVariants = localGroups.length > 0;
-  const showSomething = showVariants || hasParadox;
-  if (!showSomething) return null;
+  const showSomething = showVariants || hasParadox || family.total > 0;
 
   const localCategoryKeys = new Set(localGroups.map(([key]) => key));
   const effectiveCategory =
@@ -263,10 +259,12 @@ export default function VariantsAndForms({ family }: Props) {
   const totalLabel = `${family.total} ${family.total === 1 ? "variante" : "variantes"}`;
   const headerDescription =
     family.total > 0
-      ? `Todas las formas alternativas de ${family.baseDisplayName} en un solo lugar. Filtra por categoría y abre la ficha de cada variante.`
+      ? showVariants
+        ? `Todas las formas alternativas de ${family.baseDisplayName} en un solo lugar. Filtra por categoría y abre la ficha de cada variante.`
+        : `Las transformaciones especiales de ${family.baseDisplayName} se detallan en sus secciones dedicadas.`
       : hasParadox
         ? "Sin formas alternativas registradas. Revisa los Pokémon paradoja relacionados con esta especie."
-        : "";
+        : "Esta especie no tiene formas alternativas ni Pokémon paradoja relacionados registrados.";
 
   return (
     <section
@@ -393,11 +391,20 @@ export default function VariantsAndForms({ family }: Props) {
           id="variants-forms-panel"
           className="px-5 pb-6 pt-5 sm:px-7 sm:pb-7"
         >
+          {!showSomething ? (
+            <EmptyVariantsState baseName={family.baseDisplayName} />
+          ) : (
+            <>
           {/* Barra de navegación: mostrar si es una variante (no la especie base) */}
           {!family.isDefault && (
-            <div className="mb-5 rounded-[12px] border border-amber-200/80 bg-amber-50/70 p-3">
-              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-semibold text-amber-800">
-                <span aria-hidden="true">↩️</span>
+            <div className="mb-5 flex flex-wrap items-center gap-2 rounded-[12px] border border-amber-200/80 bg-amber-50/70 px-3.5 py-2.5">
+              <span
+                aria-hidden="true"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-white text-xs"
+              >
+                ↩️
+              </span>
+              <p className="flex flex-1 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-semibold text-amber-800">
                 <span>Estás viendo una variante de</span>
                 <Link
                   to={`/pokemon/${family.baseId}`}
@@ -407,6 +414,14 @@ export default function VariantsAndForms({ family }: Props) {
                 </Link>
                 <span>.</span>
               </p>
+              {family.currentCategory && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                  <span aria-hidden="true">
+                    {family.currentCategory.emoji}
+                  </span>
+                  {family.currentCategory.shortLabel}
+                </span>
+              )}
             </div>
           )}
 
@@ -495,22 +510,32 @@ export default function VariantsAndForms({ family }: Props) {
             </p>
           )}
 
-          {/* Enlaces delegados */}
-          {grouped.has("mega") && (
-            <a
-              href="#mega-title"
-              className="mb-2 inline-flex items-center gap-1.5 rounded-control border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-100"
-            >
-              💥 Ver Megaevoluciones
-            </a>
-          )}
-          {grouped.has("gmax") && (
-            <a
-              href="#dynamax-title"
-              className="mb-2 ml-2 inline-flex items-center gap-1.5 rounded-control border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800 transition hover:bg-rose-100"
-            >
-              🌋 Ver formas Gigamax
-            </a>
+          {/* Accesos a transformaciones con sección propia */}
+          {(grouped.has("mega") || grouped.has("gmax")) && (
+            <div className="mb-4 rounded-[12px] border border-line-soft bg-slate-50/60 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-500">
+                  Transformaciones especiales
+                </p>
+                <p className="text-[10px] font-semibold text-ink-500">
+                  Tienen su propia sección detallada
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {grouped.has("mega") && (
+                  <SpecialAccessCard
+                    kind="mega"
+                    variants={grouped.get("mega")!}
+                  />
+                )}
+                {grouped.has("gmax") && (
+                  <SpecialAccessCard
+                    kind="gmax"
+                    variants={grouped.get("gmax")!}
+                  />
+                )}
+              </div>
+            </div>
           )}
 
           {/* Grid de tarjetas de variantes — solo si hay variantes no delegadas */}
@@ -573,20 +598,33 @@ export default function VariantsAndForms({ family }: Props) {
             <div
               className={`${showVariants ? "mt-6 border-t border-line-soft pt-5" : "mt-4"}`}
             >
-              <h3 className="mb-3 flex items-center gap-2 text-section font-bold uppercase tracking-wider text-ink-500">
-                <span>🔄</span>
-                <span>Pokémon paradoja relacionados</span>
-              </h3>
-              <p className="mb-4 text-xs text-ink-500">
-                Según el lore de Pokémon Escarlata y Púrpura, estos Pokémon
-                paradoja guardan relación con esta especie.
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-purple-600">
+                    Pokémon relacionados
+                  </p>
+                  <h3 className="mt-0.5 flex items-center gap-2 text-base font-black tracking-tight text-ink-900">
+                    <span aria-hidden="true">🔄</span>
+                    <span>Pokémon paradoja relacionados</span>
+                  </h3>
+                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-500">
+                    Según el lore de Pokémon Escarlata y Púrpura, estos Pokémon
+                    paradoja guardan relación con esta especie.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[10px] font-bold text-purple-700">
+                  {paradoxCount}{" "}
+                  {paradoxCount === 1 ? "relacionado" : "relacionados"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {family.paradoxRelatives!.map((relative) => (
                   <ParadoxCard key={relative.id} relative={relative} />
                 ))}
               </div>
             </div>
+          )}
+            </>
           )}
         </div>
       )}
@@ -594,59 +632,242 @@ export default function VariantsAndForms({ family }: Props) {
   );
 }
 
+const SPECIAL_ACCESS_STYLES = {
+  mega: {
+    href: "#mega-title",
+    surface:
+      "border-violet-200/80 bg-gradient-to-r from-violet-50/90 via-white to-violet-50/40 hover:border-violet-300",
+    eyebrow: "text-violet-600",
+    title: "group-hover:text-violet-800",
+    count: "bg-violet-600 text-white",
+    arrow: "text-violet-500",
+  },
+  gmax: {
+    href: "#dynamax-title",
+    surface:
+      "border-rose-200/80 bg-gradient-to-r from-rose-50/90 via-white to-rose-50/40 hover:border-rose-300",
+    eyebrow: "text-rose-600",
+    title: "group-hover:text-rose-800",
+    count: "bg-rose-600 text-white",
+    arrow: "text-rose-500",
+  },
+} as const;
+
+function SpecialAccessCard({
+  kind,
+  variants,
+}: {
+  kind: "mega" | "gmax";
+  variants: PokemonVariant[];
+}) {
+  const theme = SPECIAL_ACCESS_STYLES[kind];
+  const category = variants[0].category;
+  const title = kind === "gmax" ? "Formas Gigamax" : category.label;
+
+  return (
+    <a
+      href={theme.href}
+      aria-label={`Ir a la sección de ${title}`}
+      className={`group relative flex items-center gap-3 overflow-hidden rounded-[12px] border p-2.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 motion-reduce:hover:translate-y-0 ${theme.surface}`}
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full border-[14px] border-white/60"
+      />
+
+      <div className="relative z-[1] flex shrink-0 -space-x-2">
+        {variants.slice(0, 3).map((variant) => (
+          <span
+            key={variant.id}
+            className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-black/5"
+          >
+            <PokemonArtwork
+              id={variant.id}
+              name={variant.displayName}
+              src={variant.artwork}
+              className="h-9 w-9 object-contain"
+            />
+          </span>
+        ))}
+      </div>
+
+      <div className="relative z-[1] min-w-0 flex-1">
+        <p
+          className={`text-[9px] font-black uppercase tracking-[0.14em] ${theme.eyebrow}`}
+        >
+          Transformación especial
+        </p>
+        <p
+          className={`truncate text-sm font-black text-ink-900 transition-colors ${theme.title}`}
+        >
+          {title}
+        </p>
+        <p className="line-clamp-1 text-[10px] font-semibold text-ink-500">
+          {category.description}
+        </p>
+      </div>
+
+      <span
+        className={`relative z-[1] inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-black shadow-sm ${theme.count}`}
+      >
+        {variants.length}
+      </span>
+
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={`relative z-[1] h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${theme.arrow}`}
+        aria-hidden="true"
+      >
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </svg>
+    </a>
+  );
+}
+
+function EmptyVariantsState({ baseName }: { baseName: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-[14px] border border-dashed border-line bg-gradient-to-b from-slate-50/80 to-white px-6 py-10 text-center">
+      <span
+        aria-hidden="true"
+        className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-white text-2xl shadow-sm"
+      >
+        🔍
+      </span>
+      <p className="mt-3 text-base font-black tracking-tight text-ink-900">
+        Sin variantes registradas
+      </p>
+      <p className="mt-1 max-w-md text-xs leading-relaxed text-ink-500">
+        PokéAPI no registra formas alternativas para {baseName}. Cuando se
+        publique una nueva variedad aparecerá aquí automáticamente.
+      </p>
+    </div>
+  );
+}
+
+const PARADOX_STYLES = {
+  past: {
+    surface: "from-amber-50 via-white to-orange-50/70",
+    badge: "border-amber-200/80 bg-white/90 text-amber-800",
+    dot: "bg-amber-500",
+    footer: "border-amber-200/70 bg-amber-50 text-amber-700",
+    hoverBorder: "hover:border-amber-300",
+  },
+  future: {
+    surface: "from-cyan-50 via-white to-sky-50/70",
+    badge: "border-cyan-200/80 bg-white/90 text-cyan-800",
+    dot: "bg-cyan-500",
+    footer: "border-cyan-200/70 bg-cyan-50 text-cyan-700",
+    hoverBorder: "hover:border-cyan-300",
+  },
+} as const;
+
 function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
-  const eraLabel = relative.era === "past" ? "Pasado" : "Futuro";
-  const eraBadge =
-    relative.era === "past"
-      ? "bg-amber-600 text-white"
-      : "bg-cyan-600 text-white";
-  const eraEmoji = relative.era === "past" ? "🦴" : "🤖";
+  const isPast = relative.era === "past";
+  const theme = PARADOX_STYLES[relative.era];
+  const eraLabel = isPast ? "Pasado" : "Futuro";
+  const eraEmoji = isPast ? "🦴" : "🤖";
 
   return (
     <Link
       to={`/pokemon/${relative.id}`}
-      className="group relative flex flex-col items-center rounded-lg border border-purple-200 bg-gradient-to-b from-purple-50 to-white p-3 text-center transition hover:-translate-y-0.5 hover:shadow-md"
+      aria-label={`Ver ficha de ${relative.displayName}`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-purple-100 bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200 motion-reduce:hover:translate-y-0 ${theme.hoverBorder}`}
     >
-      {/* Badge de era */}
-      <span
-        className={`mb-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${eraBadge}`}
+      <div
+        className={`relative flex aspect-square items-center justify-center overflow-hidden border-b border-white/80 bg-gradient-to-br p-3 ${theme.surface}`}
       >
-        <span>{eraEmoji}</span>
-        <span>{eraLabel}</span>
-      </span>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full border-[16px] border-white/60"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-12 -left-8 h-28 w-28 rounded-full bg-white/50 blur-2xl"
+        />
 
-      {/* Arte */}
-      <PokemonArtwork
-        id={relative.id}
-        name={relative.name}
-        src={relative.artwork}
-        className="h-20 w-20 object-contain drop-shadow-sm transition group-hover:scale-105 sm:h-24 sm:w-24"
-      />
+        <span
+          className={`absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] shadow-sm backdrop-blur-sm ${theme.badge}`}
+        >
+          <span aria-hidden="true">{eraEmoji}</span>
+          <span>{eraLabel}</span>
+        </span>
 
-      {/* Nombre */}
-      <p className="mt-1.5 w-full truncate text-xs font-extrabold text-ink-900">
-        {relative.displayName}
-      </p>
-
-      {/* Tipos */}
-      <div className="mt-1.5 flex flex-wrap justify-center gap-1">
-        {relative.types.map((type) => {
-          const badge = getTypeBadge(type);
-          return (
-            <span
-              key={type}
-              className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-            >
-              {badge.es}
-            </span>
-          );
-        })}
+        <PokemonArtwork
+          id={relative.id}
+          name={relative.name}
+          src={relative.artwork}
+          className="relative z-[1] h-full w-full object-contain drop-shadow-[0_10px_16px_rgba(15,23,42,0.16)] transition-transform duration-300 ease-out group-hover:scale-[1.06] motion-reduce:transform-none"
+        />
       </div>
 
-      {/* Descripción */}
-      <p className="mt-1.5 line-clamp-2 text-[9px] leading-tight text-ink-400">
-        {relative.description}
-      </p>
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[9px] font-bold uppercase tracking-wide text-ink-500">
+            Paradoja
+          </span>
+          <span className="text-[9px] font-bold tabular-nums text-ink-500">
+            #{relative.id}
+          </span>
+        </div>
+
+        <h4 className="break-words text-sm font-extrabold leading-snug text-ink-900 transition-colors group-hover:text-purple-800">
+          {relative.displayName}
+        </h4>
+
+        <div className="flex min-h-[20px] flex-wrap items-center gap-1">
+          {relative.types.map((type) => {
+            const badge = getTypeBadge(type);
+            return (
+              <span
+                key={type}
+                className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
+              >
+                {badge.es}
+              </span>
+            );
+          })}
+        </div>
+
+        {relative.description && (
+          <p className="line-clamp-2 min-h-[2.35rem] text-[11px] leading-snug text-ink-500">
+            {relative.description}
+          </p>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${theme.footer}`}
+          >
+            <span
+              aria-hidden="true"
+              className={`h-1 w-1 rounded-full ${theme.dot}`}
+            />
+            {isPast ? "Del pasado" : "Del futuro"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-500 transition-colors group-hover:text-ink-900">
+            Ver ficha
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }

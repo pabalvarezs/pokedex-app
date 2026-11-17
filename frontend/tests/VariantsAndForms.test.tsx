@@ -120,10 +120,13 @@ function renderComponent(family: PokemonVariantFamily) {
 }
 
 describe("VariantsAndForms", () => {
-  it("no renderiza nada si total es 0", () => {
+  it("muestra un estado vacío si total es 0", () => {
     const family = makeFamily({ total: 0, variants: [] });
-    const { container } = renderComponent(family);
-    expect(container.innerHTML).toBe("");
+    renderComponent(family);
+    expect(screen.getByText("Sin variantes registradas")).toBeDefined();
+    expect(
+      screen.getByText(/PokéAPI no registra formas alternativas para Pikachu/)
+    ).toBeDefined();
   });
 
   it("muestra el título y el contador de variantes", () => {
@@ -283,10 +286,10 @@ describe("VariantsAndForms — paradojas", () => {
     expect(screen.getByText("Pasado")).toBeDefined();
   });
 
-  it("no renderiza nada si no hay variantes ni paradojas", () => {
+  it("muestra un estado vacío si no hay variantes ni paradojas", () => {
     const family = makeFamily({ total: 0, variants: [] });
-    const { container } = renderComponent(family);
-    expect(container.innerHTML).toBe("");
+    renderComponent(family);
+    expect(screen.getByText("Sin variantes registradas")).toBeDefined();
   });
 
   it("muestra el badge de Futuro para paradojas futuristas", () => {
