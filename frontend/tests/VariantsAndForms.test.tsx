@@ -258,3 +258,100 @@ describe("VariantsAndForms — categorías delegadas", () => {
     expect(screen.getAllByText("Pikachu con gorra original").length).toBe(1);
   });
 });
+
+describe("VariantsAndForms — paradojas", () => {
+  it("muestra paradojas incluso cuando total es 0", () => {
+    const family = makeFamily({
+      total: 0,
+      variants: [],
+      paradoxRelatives: [
+        {
+          id: 985,
+          name: "scream-tail",
+          displayName: "Colagrito",
+          era: "past",
+          description: "Pokémon paradoja del pasado relacionado con Jigglypuff.",
+          sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/985.png",
+          artwork: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/985.png",
+          types: ["fairy", "psychic"],
+        },
+      ],
+    });
+    renderComponent(family);
+    expect(screen.getByText("Pokémon paradoja relacionados")).toBeDefined();
+    expect(screen.getByText("Colagrito")).toBeDefined();
+    expect(screen.getByText("Pasado")).toBeDefined();
+  });
+
+  it("no renderiza nada si no hay variantes ni paradojas", () => {
+    const family = makeFamily({ total: 0, variants: [] });
+    const { container } = renderComponent(family);
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("muestra el badge de Futuro para paradojas futuristas", () => {
+    const family = makeFamily({
+      total: 0,
+      variants: [],
+      paradoxRelatives: [
+        {
+          id: 990,
+          name: "iron-treads",
+          displayName: "Ferrodada",
+          era: "future",
+          description: "Pokémon paradoja del futuro relacionado con Donphan.",
+          sprite: "",
+          artwork: "",
+          types: ["ground", "steel"],
+        },
+      ],
+    });
+    renderComponent(family);
+    expect(screen.getByText("Futuro")).toBeDefined();
+    expect(screen.getByText("Ferrodada")).toBeDefined();
+  });
+
+  it("enlaza la paradoja a su ficha", () => {
+    const family = makeFamily({
+      total: 0,
+      variants: [],
+      paradoxRelatives: [
+        {
+          id: 985,
+          name: "scream-tail",
+          displayName: "Colagrito",
+          era: "past",
+          description: "Pokémon paradoja del pasado relacionado con Jigglypuff.",
+          sprite: "",
+          artwork: "",
+          types: ["fairy", "psychic"],
+        },
+      ],
+    });
+    renderComponent(family);
+    const link = screen.getByRole("link", { name: /Colagrito/ });
+    expect(link.getAttribute("href")).toBe("/pokemon/985");
+  });
+
+  it("muestra los tipos de la paradoja", () => {
+    const family = makeFamily({
+      total: 0,
+      variants: [],
+      paradoxRelatives: [
+        {
+          id: 985,
+          name: "scream-tail",
+          displayName: "Colagrito",
+          era: "past",
+          description: "",
+          sprite: "",
+          artwork: "",
+          types: ["fairy", "psychic"],
+        },
+      ],
+    });
+    renderComponent(family);
+    expect(screen.getByText("Hada")).toBeDefined();
+    expect(screen.getByText("Psíquico")).toBeDefined();
+  });
+});

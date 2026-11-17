@@ -1009,7 +1009,13 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     megaForms,
     gmaxForms,
     gmaxRelatives,
-    ...(variantFamily.total > 0 ? { variantFamily } : {}),
+    ...(
+      variantFamily.total > 0 ||
+      (variantFamily.paradoxRelatives &&
+        variantFamily.paradoxRelatives.length > 0)
+        ? { variantFamily }
+        : {}
+    ),
   };
 
   cacheSet(detailCache, cacheKey, pokemon);

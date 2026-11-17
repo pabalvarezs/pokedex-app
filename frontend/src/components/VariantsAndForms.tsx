@@ -49,7 +49,12 @@ const PERMANENCE_LABEL: Record<string, string> = {
 
 export default function VariantsAndForms({ family }: Props) {
   const [collapsed, setCollapsed] = useState(false);
-  if (family.total === 0) return null;
+
+  const hasParadox =
+    family.paradoxRelatives && family.paradoxRelatives.length > 0;
+
+  // Si no hay ni variantes regulares ni paradojas, no renderizar nada
+  if (family.total === 0 && !hasParadox) return null;
 
   // Agrupar variantes por categoría
   const grouped = new Map<string, PokemonVariant[]>();
@@ -65,7 +70,9 @@ export default function VariantsAndForms({ family }: Props) {
     ([key]) => !delegated.has(key)
   );
 
-  if (localGroups.length === 0) return null;
+  const showVariants = localGroups.length > 0;
+  const showSomething = showVariants || hasParadox;
+  if (!showSomething) return null;
 
   return (
     <div className="mt-6 w-full rounded-card border border-line bg-surface shadow-card">
@@ -81,10 +88,11 @@ export default function VariantsAndForms({ family }: Props) {
             Variantes y formas
           </h2>
           <p className="mt-0.5 text-sm text-ink-500">
-            {family.total}{" "}
-            {family.total === 1
-              ? "variante registrada"
-              : "variantes registradas en PokéAPI"}
+            {family.total > 0
+              ? `${family.total} ${family.total === 1 ? "variante registrada" : "variantes registradas en PokéAPI"}${hasParadox ? ` · ${family.paradoxRelatives!.length} paradoja${family.paradoxRelatives!.length !== 1 ? "s" : ""}` : ""}`
+              : hasParadox
+                ? `${family.paradoxRelatives!.length} Pokémon paradoja relacionado${family.paradoxRelatives!.length !== 1 ? "s" : ""}`
+                : ""}
           </p>
         </div>
         <span
@@ -114,25 +122,27 @@ export default function VariantsAndForms({ family }: Props) {
             </div>
           )}
 
-          {/* Chips de categorías */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            {localGroups.map(([key, variants]) => {
-              const cat = variants[0].category;
-              const chipBg = TONE_BADGE_BG[cat.tone] ?? TONE_BADGE_BG.slate;
-              return (
-                <span
-                  key={key}
-                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${chipBg}`}
-                >
-                  <span>{cat.emoji}</span>
-                  <span>{cat.shortLabel}</span>
-                  <span className="ml-0.5 opacity-70">
-                    ({variants.length})
+          {/* Chips de categorías — solo si hay variantes */}
+          {showVariants && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {localGroups.map(([key, variants]) => {
+                const cat = variants[0].category;
+                const chipBg = TONE_BADGE_BG[cat.tone] ?? TONE_BADGE_BG.slate;
+                return (
+                  <span
+                    key={key}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${chipBg}`}
+                  >
+                    <span>{cat.emoji}</span>
+                    <span>{cat.shortLabel}</span>
+                    <span className="ml-0.5 opacity-70">
+                      ({variants.length})
+                    </span>
                   </span>
-                </span>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Enlaces delegados */}
           {grouped.has("mega") && (
@@ -152,23 +162,25 @@ export default function VariantsAndForms({ family }: Props) {
             </a>
           )}
 
-          {/* Grid de tarjetas */}
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {family.variants
-              .filter((v) => !delegated.has(v.category.key))
-              .map((variant) => (
-                <VariantCard
-                  key={variant.id}
-                  variant={variant}
-                  speciesName={family.speciesName}
-                  isCurrent={variant.isCurrent}
-                />
-              ))}
-          </div>
+          {/* Grid de tarjetas de variantes — solo si hay variantes no delegadas */}
+          {showVariants && (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {family.variants
+                .filter((v) => !delegated.has(v.category.key))
+                .map((variant) => (
+                  <VariantCard
+                    key={variant.id}
+                    variant={variant}
+                    speciesName={family.speciesName}
+                    isCurrent={variant.isCurrent}
+                  />
+                ))}
+            </div>
+          )}
 
           {/* Pokémon paradoja relacionados */}
-          {family.paradoxRelatives && family.paradoxRelatives.length > 0 && (
-            <div className="mt-6 border-t border-line-soft pt-5">
+          {hasParadox && (
+            <div className={`${showVariants ? "mt-6 border-t border-line-soft pt-5" : "mt-4"}`}>
               <h3 className="mb-3 flex items-center gap-2 text-section font-bold uppercase tracking-wider text-ink-500">
                 <span>🔄</span>
                 <span>Pokémon paradoja relacionados</span>
@@ -178,7 +190,7 @@ export default function VariantsAndForms({ family }: Props) {
                 paradoja guardan relación con esta especie.
               </p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {family.paradoxRelatives.map((relative) => (
+                {family.paradoxRelatives!.map((relative) => (
                   <ParadoxCard key={relative.id} relative={relative} />
                 ))}
               </div>
