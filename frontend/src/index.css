@@ -99,4 +99,26 @@
       animation: none;
     }
   }
+
+  /* Entrada breve de las tarjetas al cambiar de filtro o búsqueda. */
+  .variant-grid-enter > * {
+    animation: pc-variant-in 200ms ease-out both;
+  }
+
+  @keyframes pc-variant-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .variant-grid-enter > * {
+      animation: none;
+    }
+  }
 }
