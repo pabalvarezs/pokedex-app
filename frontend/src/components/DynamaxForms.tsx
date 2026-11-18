@@ -988,23 +988,19 @@ function RelationCard({
   artwork,
   caption,
   tone,
+  to,
 }: {
   id: number;
   name: string;
   artwork?: string;
   caption: string;
   tone: "base" | "gmax";
+  to?: string;
 }) {
   const isGmax = tone === "gmax";
 
-  return (
-    <div
-      className={`flex min-w-0 items-center gap-2.5 rounded-[12px] border p-2.5 ${
-        isGmax
-          ? "border-rose-200 bg-gradient-to-r from-rose-50 to-white"
-          : "border-line bg-white"
-      }`}
-    >
+  const content = (
+    <>
       <span
         className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px] ${
           isGmax
@@ -1016,7 +1012,11 @@ function RelationCard({
           id={id}
           name={name}
           src={artwork}
-          className="h-11 w-11 object-contain"
+          className={`h-11 w-11 object-contain ${
+            to
+              ? "transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              : ""
+          }`}
         />
       </span>
       <span className="min-w-0">
@@ -1031,8 +1031,36 @@ function RelationCard({
           {caption}
         </span>
       </span>
-    </div>
+      {to && (
+        <span
+          aria-hidden="true"
+          className="ml-auto shrink-0 pr-0.5 text-sm font-black text-rose-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-rose-700 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+        >
+          →
+        </span>
+      )}
+    </>
   );
+
+  const cardClasses = `flex min-w-0 items-center gap-2.5 rounded-[12px] border p-2.5 ${
+    isGmax
+      ? "border-rose-200 bg-gradient-to-r from-rose-50 to-white"
+      : "border-line bg-white"
+  }`;
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        aria-label={`Ver la ficha de ${name}`}
+        className={`group ${cardClasses} transition duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0`}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={`${cardClasses} group`}>{content}</div>;
 }
 
 function NoGmaxNotice({
@@ -1135,6 +1163,7 @@ function NoGmaxNotice({
                     : "Su preevolución · Gigamax sí"
                 }
                 tone="gmax"
+                to={`/pokemon/${relative.id}`}
               />
             ))}
           </div>

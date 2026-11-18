@@ -389,6 +389,11 @@ describe("DynamaxForms", () => {
     expect(screen.getByText("Su evolución · Gigamax sí")).toBeTruthy();
     expect(screen.getAllByAltText("Charizard").length).toBeGreaterThan(0);
     expect(screen.getAllByAltText("Charmeleon").length).toBeGreaterThan(0);
+
+    const relativeLink = screen.getByRole("link", {
+      name: "Ver la ficha de Charizard",
+    });
+    expect(relativeLink.getAttribute("href")).toBe("/pokemon/6");
   });
 
   it("no reserva una relación vacía cuando no hay parientes con Gigamax", () => {
