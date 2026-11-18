@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import type { Favorite } from "../../services/api";
 import type { PokemonPreview } from "../../hooks/usePokemonPreviews";
@@ -39,6 +39,13 @@ export default function FavoritePokemonCard({
 
   const watermarkColor = `${theme?.accent ?? "#0f172a"}1f`;
 
+  const handleRemove = (event: MouseEvent<HTMLButtonElement>) => {
+    // La estrella vive fuera del enlace, pero cortamos la propagación para que
+    // el clic nunca se interprete como "abrir ficha".
+    event.stopPropagation();
+    onRemove(favorite);
+  };
+
   return (
     <article
       style={style}
@@ -47,8 +54,10 @@ export default function FavoritePokemonCard({
         isRemoving ? "favorite-card-exit" : ""
       }`}
     >
+      {/* Toda la tarjeta es el enlace real a la ficha: sin botones anidados. */}
       <Link
         to={`/pokemon/${favorite.pokemonId}`}
+        aria-label={`Ver ficha de ${name}`}
         className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500"
       >
         <div
@@ -78,14 +87,9 @@ export default function FavoritePokemonCard({
         </div>
 
         <div className="flex flex-1 flex-col gap-2.5 p-4">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="truncate text-lg font-extrabold capitalize text-ink-900 transition-colors group-hover/card:text-red-600">
-              {name}
-            </h2>
-            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-extrabold tracking-wide text-slate-700">
-              #{formattedId}
-            </span>
-          </div>
+          <h2 className="truncate text-lg font-extrabold capitalize text-ink-900 transition-colors group-hover/card:text-red-600">
+            {name}
+          </h2>
 
           <div className="flex min-h-[26px] flex-wrap items-center gap-1.5">
             {types.length > 0 ? (
@@ -98,32 +102,24 @@ export default function FavoritePokemonCard({
             )}
           </div>
         </div>
+
+        <div className="px-4 pb-4">
+          <span
+            aria-hidden="true"
+            className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-control border border-red-200 bg-red-50 px-3.5 py-1.5 text-sm font-bold text-red-700 transition-colors group-hover/card:border-red-300 group-hover/card:bg-red-100"
+          >
+            Ver ficha
+            <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover/card:translate-x-0.5 motion-reduce:transform-none" />
+          </span>
+        </div>
       </Link>
-
-      <div className="px-4 pb-4">
-        <Link
-          to={`/pokemon/${favorite.pokemonId}`}
-          className="flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-control bg-red-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2"
-        >
-          Ver ficha
-          <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover/card:translate-x-0.5 motion-reduce:transform-none" />
-        </Link>
-      </div>
-
-      <span
-        aria-hidden="true"
-        className="absolute left-3 top-3 z-20 inline-flex items-center gap-1 rounded-full bg-amber-300/95 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-950 shadow-sm"
-      >
-        <StarIcon className="h-3 w-3" />
-        Regalón
-      </span>
 
       <button
         type="button"
-        onClick={() => onRemove(favorite)}
+        onClick={handleRemove}
         disabled={isRemoving}
         aria-label={`Quitar a ${name} de mis regalones`}
-        title="Quitar de mis regalones"
+        title="Quitar de regalones"
         className="group/remove absolute right-3 top-3 z-20 flex min-h-[44px] items-center justify-center rounded-full border border-white/80 bg-white/90 px-2.5 py-1.5 text-amber-500 shadow-sm backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
       >
         <StarIcon className="h-4 w-4 shrink-0" />
