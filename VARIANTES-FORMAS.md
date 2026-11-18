@@ -137,5 +137,5 @@ No se crea una tabla de variantes porque:
 - Zapdos: forma de Galar como variante regional.
 - Pokémon con variantes regionales de las cuatro regiones.
 - Pokémon con varias categorías (por ejemplo, Charizard: Mega y Gigamax).
-- Pokémon sin variantes: la sección no se renderiza.
+- Pokémon sin variantes: `PokemonDetail` no monta la sección; el componente muestra además un estado vacío defensivo.
 - Formas temporales: se marcan como `temporary` o `battle` y muestran su condición.

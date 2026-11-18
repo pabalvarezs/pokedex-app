@@ -78,6 +78,7 @@ export function FormSummary({
   types,
   artwork,
   tone,
+  size = "default",
 }: {
   label: string;
   name: string;
@@ -85,6 +86,8 @@ export function FormSummary({
   types: string[];
   artwork?: string;
   tone: FormTone;
+  /** "large" da más protagonismo a la ilustración en las comparaciones. */
+  size?: "default" | "large";
 }) {
   const accent = tone === "base" ? null : SUMMARY_TONES[tone];
 
@@ -111,10 +114,14 @@ export function FormSummary({
         id={id}
         name={name}
         src={artwork}
-        className="mt-1 h-24 w-24 object-contain drop-shadow-sm sm:h-28 sm:w-28"
+        className={`mt-1 object-contain drop-shadow-sm ${
+          size === "large"
+            ? "h-28 w-28 sm:h-40 sm:w-40"
+            : "h-24 w-24 sm:h-28 sm:w-28"
+        }`}
       />
 
-      <p className="w-full truncate text-xs font-extrabold capitalize text-ink-900">
+      <p className="mt-1 line-clamp-2 min-h-[2rem] w-full text-xs font-extrabold capitalize leading-tight text-ink-900">
         {name}
       </p>
       <div className="mt-1.5">

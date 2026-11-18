@@ -163,7 +163,7 @@ La ficha individual de cada Pokémon incluye una sección **Variantes y formas**
 | `special` | Variantes especiales | Pikachu/Eevee de compañero, Ursaluna luna carmesí |
 | `non-playable` | Formas no jugables | Eternamax Eternatus, Floette eterna |
 
-Las categorías `mega` y `gmax` se delegan visualmente a las secciones «Megaevoluciones» y «Dinamax/Gigamax» existentes mediante enlaces de ancla, evitando duplicar datos y componentes.
+Las categorías `mega` y `gmax` se delegan visualmente a las secciones «Megaevoluciones» y «Dinamax/Gigamax» existentes mediante accesos destacados que enlazan a sus anclas, evitando duplicar datos y componentes.
 
 ### Arquitectura
 
@@ -186,11 +186,15 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 
 **Frontend:** `frontend/src/components/VariantsAndForms.tsx`:
 
-- Sección colapsable con chips de categoría y grid responsive de tarjetas.
-- Cada tarjeta muestra: badge de categoría con su emoji, artwork/sprite, nombre, tipos, región (si aplica), etiqueta de permanencia y condición.
+- Cabecera colapsable con título, contador total (`N variantes`), descripción contextual y pills compactas con el número real de cada categoría.
+- Chips de filtro por categoría (incluida «Todas») con contador y estado activo. La búsqueda por nombre aparece a partir de 6 formas locales y normaliza mayúsculas y acentos.
+- Grid responsive de 2/3/4–5 columnas con tarjetas uniformes: artwork protagonista con `object-fit: contain`, nombre sin truncar (hasta dos líneas), badge de categoría, tipos, región, condición o descripción y permanencia. La tarjeta completa abre `/pokemon/:id`.
+- Paginación progresiva con «Mostrar más variantes» (`PAGE_SIZE = 10`). Cambiar de filtro o de búsqueda reinicia la página y la barra de estado indica «Mostrando X de Y formas».
+- Las variantes `mega` y `gmax` no se duplican: se ofrecen como accesos destacados a `#mega-title` y `#dynamax-title`, mientras sus fichas detalladas siguen en `MegaForms` y `DynamaxForms`.
+- Los Pokémon paradoja se presentan en un bloque independiente, separados de las formas locales, con su era (Pasado/Futuro) y enlace a su ficha.
+- Estado vacío elegante cuando no hay variantes, cuando la búsqueda no encuentra coincidencias o cuando la familia solo contiene transformaciones delegadas.
 - Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.
-- No se renderiza si `total === 0`.
-- Las variantes `mega` y `gmax` se filtran del grid y se muestran como enlaces a sus secciones dedicadas.
+- `PokemonDetail` solo monta la sección cuando `variantFamily` está presente; el componente además cubre el estado vacío de forma defensiva.
 
 **Sin tabla Prisma:** Los Pokémon no viven en PostgreSQL. El catálogo backend versionado (`variants.ts`) es la fuente de metadatos, siguiendo el patrón de `gmaxMoves.ts`.
 
@@ -240,7 +244,7 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 }
 ```
 
-El campo `variantFamily` solo se incluye cuando hay variantes (`total > 0`).
+El campo `variantFamily` solo se incluye cuando hay variantes (`total > 0`) o Pokémon paradoja relacionados.
 
 ### Cómo añadir categorías o variantes
 

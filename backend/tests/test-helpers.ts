@@ -1,79 +1,39 @@
 import http from "http";
-import path from "path";
-import { spawn } from "child_process";
-import { fileURLToPath } from "url";
 
-const BACKEND_DIR = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const TEST_PORT = Number(process.env.TEST_PORT) || 5000;
 export const BASE_URL = process.env.TEST_BASE_URL ?? `http://localhost:${TEST_PORT}`;
 
-let serverPid: number | null = null;
-let ownsServer = false;
+const HEALTH_TIMEOUT_MS = 30000;
 
-function isServerUp(): Promise<boolean> {
+export function isServerUp(timeoutMs = 1000): Promise<boolean> {
   return new Promise((resolve) => {
     const req = http.get(`${BASE_URL}/health`, (res) => {
       res.resume();
       resolve(res.statusCode === 200);
     });
     req.on("error", () => resolve(false));
-    req.setTimeout(1000, () => {
+    req.setTimeout(timeoutMs, () => {
       req.destroy();
       resolve(false);
     });
   });
 }
 
+/**
+ * El servidor de pruebas lo levanta una sola vez el `globalSetup` de Vitest
+ * (tests/global-setup.ts). Aquí solo esperamos a que esté sano para que un
+ * fallo de arranque se reporte en el archivo de test que lo necesite.
+ */
 export async function startServer() {
-  if (await isServerUp()) {
-    ownsServer = false;
-    return;
+  const deadline = Date.now() + HEALTH_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    if (await isServerUp()) return;
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn("npx", ["tsx", "src/index.ts"], {
-      cwd: BACKEND_DIR,
-      shell: process.platform === "win32",
-      env: { ...process.env, PORT: String(TEST_PORT) },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    serverPid = proc.pid ?? null;
-    ownsServer = true;
-    let resolved = false;
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        proc.kill("SIGTERM");
-        reject(new Error("server did not start in time (¿PostgreSQL está corriendo?)"));
-      }
-    }, 30000);
-    const poll = () => {
-      http
-        .get(`${BASE_URL}/health`, (res) => {
-          if (res.statusCode === 200) {
-            resolved = true;
-            clearTimeout(timeout);
-            resolve();
-            res.resume();
-          } else {
-            res.resume();
-            setTimeout(poll, 500);
-          }
-        })
-        .on("error", () => setTimeout(poll, 500));
-    };
-    poll();
-    proc.on("error", (err) => {
-      clearTimeout(timeout);
-      reject(err);
-    });
-  });
+  throw new Error(
+    `El servidor de pruebas no respondió en ${BASE_URL}/health (¿PostgreSQL está corriendo?)`
+  );
 }
 
-export function stopServer() {
-  if (ownsServer && serverPid) {
-    try {
-      process.kill(serverPid, "SIGTERM");
-    } catch {}
-    serverPid = null;
-    ownsServer = false;
-  }
-}
+/** No-op: el ciclo de vida del servidor vive en el `globalSetup`. */
+export function stopServer() {}
