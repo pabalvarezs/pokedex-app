@@ -121,4 +121,77 @@
       animation: none;
     }
   }
+
+  /* Vitrina de regalones: elevación suave y borde del color del tipo. */
+  .favorite-card {
+    transition:
+      transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      border-color 220ms ease-out,
+      box-shadow 220ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .favorite-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--type-accent, #fca5a5);
+      box-shadow: var(--pc-shadow-ambient);
+    }
+  }
+
+  .favorite-card:focus-within {
+    border-color: var(--type-accent, #fca5a5);
+  }
+
+  .favorites-grid-enter > * {
+    animation: pc-favorite-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+    animation-delay: calc(var(--fav-index, 0) * 45ms);
+  }
+
+  @keyframes pc-favorite-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .favorites-grid-enter > .favorite-card-exit {
+    animation: pc-favorite-out 200ms ease-in forwards;
+  }
+
+  @keyframes pc-favorite-out {
+    to {
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+    }
+  }
+
+  .favorites-toast {
+    animation: pc-toast-in 220ms ease-out backwards;
+  }
+
+  @keyframes pc-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .favorite-card,
+    .favorites-grid-enter > *,
+    .favorites-grid-enter > .favorite-card-exit,
+    .favorites-toast {
+      animation: none;
+      transform: none;
+      transition: none;
+    }
+  }
 }
