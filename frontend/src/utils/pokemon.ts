@@ -15,9 +15,9 @@ export interface TypeInfo {
 }
 
 // Tokens de color por tipo: única fuente de verdad para chips, degradés,
-// halos y acentos de toda la app.
+// halos y acentos de toda la app. Los 18 tipos tienen emoji propio.
 export const POKEMON_TYPES: Record<string, TypeInfo> = {
-  normal: { es: "Normal", bg: "bg-neutral-400", text: "text-white", border: "border-neutral-500", badge: "#A8A878", emoji: "⚪", gradient: ["#F8FAFC", "#D8DEE7"], accent: "#78716C" },
+  normal: { es: "Normal", bg: "bg-neutral-400", text: "text-white", border: "border-neutral-500", badge: "#A8A878", emoji: "🔘", gradient: ["#F8FAFC", "#D8DEE7"], accent: "#78716C" },
   fire: { es: "Fuego", bg: "bg-red-500", text: "text-white", border: "border-red-600", badge: "#F08030", emoji: "🔥", gradient: ["#FFF1E6", "#FDBA74"], accent: "#EA580C", onAccent: "#1c1917" },
   water: { es: "Agua", bg: "bg-blue-500", text: "text-white", border: "border-blue-600", badge: "#6890F0", emoji: "💧", gradient: ["#EAF3FF", "#93C5FD"], accent: "#2563EB" },
   electric: { es: "Eléctrico", bg: "bg-yellow-400", text: "text-neutral-900", border: "border-yellow-500", badge: "#F8D030", emoji: "⚡", gradient: ["#FFFBEB", "#FDE68A"], accent: "#D97706", onAccent: "#1c1917" },
