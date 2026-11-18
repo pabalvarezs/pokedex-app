@@ -36,6 +36,16 @@ function displayName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+function addedLabel(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "Último en llegar";
+  const formatted = date.toLocaleDateString("es-CL", {
+    day: "numeric",
+    month: "short",
+  });
+  return `Agregado el ${formatted}`;
+}
+
 export default function Favorites() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -136,13 +146,22 @@ export default function Favorites() {
   const heroStats = useMemo<HeroStat[]>(() => {
     if (visibleFavorites.length === 0) return [];
 
-    const stats: HeroStat[] = [
-      {
-        label: "En tu equipo",
-        value: String(visibleFavorites.length),
-        hint: visibleFavorites.length === 1 ? "regalón" : "regalones",
-      },
-    ];
+    const stats: HeroStat[] = [];
+
+    const latest = visibleFavorites.reduce((best, favorite) =>
+      new Date(favorite.createdAt).getTime() >
+      new Date(best.createdAt).getTime()
+        ? favorite
+        : best
+    );
+    const latestPreview = previews[latest.pokemonId];
+
+    stats.push({
+      label: "Último agregado",
+      value: displayName(latestPreview?.name ?? latest.name),
+      hint: addedLabel(latest.createdAt),
+      sprite: latestPreview?.artwork,
+    });
 
     const typeCounts = new Map<string, number>();
     visibleFavorites.forEach((favorite) => {

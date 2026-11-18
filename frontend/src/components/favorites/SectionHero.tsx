@@ -5,6 +5,8 @@ export interface HeroStat {
   label: string;
   value: string;
   hint?: string;
+  /** Miniatura opcional (se reutiliza el artwork ya cargado en las tarjetas). */
+  sprite?: string;
 }
 
 interface Props {
@@ -66,7 +68,8 @@ export default function SectionHero({ count, stats }: Props) {
           </h1>
 
           <p className="mt-2 max-w-xl text-sm font-medium text-red-50 sm:text-base">
-            Tu equipo de cracks, guardado en la base de datos. Puro corazón chileno 🇨🇱.
+            Tu equipo de cracks, guardado en la base de datos.{" "}
+            <span className="whitespace-nowrap">Puro corazón chileno 🇨🇱.</span>
           </p>
         </div>
 
@@ -90,15 +93,27 @@ export default function SectionHero({ count, stats }: Props) {
                   : ""
               }`}
             >
-              <dt className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-100">
+              <dt className="text-xs font-bold uppercase tracking-[0.12em] text-amber-50">
                 {stat.label}
               </dt>
-              <dd className="mt-0.5">
-                <span className="block truncate text-base font-extrabold text-white sm:text-lg">
-                  {stat.value}
+              <dd className="mt-1">
+                <span className="flex items-center gap-2">
+                  {stat.sprite && (
+                    <img
+                      src={stat.sprite}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-7 w-7 shrink-0 object-contain drop-shadow"
+                    />
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-base font-extrabold text-white sm:text-lg">
+                    {stat.value}
+                  </span>
                 </span>
                 {stat.hint && (
-                  <span className="block truncate text-[11px] font-semibold text-red-100">
+                  <span className="mt-0.5 block truncate text-xs font-semibold text-red-50">
                     {stat.hint}
                   </span>
                 )}
