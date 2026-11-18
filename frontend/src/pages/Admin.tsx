@@ -49,10 +49,10 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="flex gap-1.5 p-1 bg-white border border-gray-200 rounded-2xl mb-5 shadow-sm w-full sm:w-auto sm:inline-flex">
+      <div className="flex flex-col sm:flex-row gap-1.5 p-1 bg-white border border-gray-200 rounded-2xl mb-5 shadow-sm w-full sm:w-auto sm:inline-flex">
         <button
           onClick={() => setTab("users")}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
+          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
             tab === "users"
               ? "bg-red-600 text-white shadow-sm"
               : "text-gray-600 hover:bg-gray-100"
@@ -63,7 +63,7 @@ export default function Admin() {
         </button>
         <button
           onClick={() => setTab("favorites")}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
+          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
             tab === "favorites"
               ? "bg-amber-500 text-amber-950 shadow-sm"
               : "text-gray-600 hover:bg-gray-100"
@@ -74,7 +74,7 @@ export default function Admin() {
         </button>
         <button
           onClick={() => setTab("resets")}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
+          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
             tab === "resets"
               ? "bg-slate-800 text-white shadow-sm"
               : "text-gray-600 hover:bg-gray-100"
