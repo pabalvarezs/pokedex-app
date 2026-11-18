@@ -46,6 +46,18 @@ function addedLabel(createdAt: string) {
   return `Agregado el ${formatted}`;
 }
 
+/**
+ * Con pocas tarjetas se prefieren menos columnas y más anchas, y con una o dos
+ * se acota el ancho para que no queden desproporcionadas. Desde siete vuelve
+ * la grilla densa de cuatro columnas en pantallas grandes.
+ */
+function gridClass(count: number) {
+  if (count <= 1) return "grid-cols-1 max-w-[380px]";
+  if (count === 2) return "grid-cols-1 sm:grid-cols-2 max-w-[720px]";
+  if (count <= 6) return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3";
+  return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+}
+
 export default function Favorites() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -353,7 +365,11 @@ export default function Favorites() {
                 onClear={() => setQuery("")}
               />
             ) : (
-              <div className="favorites-grid-enter mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div
+                className={`favorites-grid-enter mt-5 grid gap-4 ${gridClass(
+                  shownFavorites.length
+                )}`}
+              >
                 {shownFavorites.map((favorite, index) => (
                   <FavoritePokemonCard
                     key={favorite.id}
