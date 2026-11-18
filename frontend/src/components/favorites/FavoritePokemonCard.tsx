@@ -124,10 +124,10 @@ export default function FavoritePokemonCard({
         disabled={isRemoving}
         aria-label={`Quitar a ${name} de mis regalones`}
         title="Quitar de mis regalones"
-        className="group/remove absolute right-3 top-3 z-20 flex min-h-[44px] items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2.5 py-1.5 text-amber-500 shadow-sm backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+        className="group/remove absolute right-3 top-3 z-20 flex min-h-[44px] items-center justify-center rounded-full border border-white/80 bg-white/90 px-2.5 py-1.5 text-amber-500 shadow-sm backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
       >
-        <StarIcon className="h-4 w-4" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-extrabold uppercase tracking-wide opacity-0 transition-all duration-200 group-hover/remove:max-w-[64px] group-hover/remove:opacity-100 group-focus-visible/remove:max-w-[64px] group-focus-visible/remove:opacity-100 motion-reduce:transition-none">
+        <StarIcon className="h-4 w-4 shrink-0" />
+        <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-extrabold uppercase tracking-wide opacity-0 transition-all duration-200 group-hover/remove:ml-1 group-hover/remove:max-w-[64px] group-hover/remove:opacity-100 group-focus-visible/remove:ml-1 group-focus-visible/remove:max-w-[64px] group-focus-visible/remove:opacity-100 motion-reduce:transition-none">
           Quitar
         </span>
       </button>
