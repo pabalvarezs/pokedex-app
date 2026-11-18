@@ -52,12 +52,12 @@ export default function FavoritePokemonCard({
         className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500"
       >
         <div
-          className="relative flex aspect-[5/4] items-center justify-center overflow-hidden px-4 pb-2 pt-7"
+          className="relative flex aspect-[5/4] items-center justify-center overflow-hidden px-4 pb-3 pt-7"
           style={{ backgroundImage: mediaBackground }}
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-3 right-1 select-none text-[68px] font-black leading-none tracking-tighter"
+            className="pointer-events-none absolute bottom-2 right-3 select-none text-[46px] font-black leading-none tracking-tighter"
             style={{ color: watermarkColor }}
           >
             #{formattedId}
@@ -65,7 +65,7 @@ export default function FavoritePokemonCard({
 
           <span
             aria-hidden="true"
-            className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/45 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35)]"
+            className="absolute left-1/2 top-1/2 aspect-square w-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-white/45 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35)]"
           />
 
           <PokemonArtwork
@@ -73,7 +73,7 @@ export default function FavoritePokemonCard({
             name={name}
             src={preview?.artwork}
             priority={index < 4}
-            className="relative z-10 h-36 w-36 object-contain drop-shadow-md transition-transform duration-300 ease-out group-hover/card:-rotate-2 group-hover/card:scale-110 motion-reduce:transform-none"
+            className="relative z-10 aspect-square w-[64%] max-h-[88%] object-contain drop-shadow-md transition-transform duration-300 ease-out group-hover/card:-rotate-2 group-hover/card:scale-110 motion-reduce:transform-none"
           />
         </div>
 
