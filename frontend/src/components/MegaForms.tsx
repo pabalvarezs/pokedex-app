@@ -43,7 +43,7 @@ function MegaCard({ form, selected, onSelect }: MegaCardProps) {
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-card border bg-surface transition duration-200 ${
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-card border bg-surface transition duration-200 ${
         selected
           ? "border-violet-400 shadow-ambient ring-2 ring-violet-200"
           : "border-violet-100 shadow-card hover:-translate-y-1 hover:border-violet-300 hover:shadow-ambient motion-reduce:hover:translate-y-0"
@@ -335,14 +335,18 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
       />
 
       <div className="bg-gradient-to-b from-white via-white to-violet-50/40 p-5 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-wrap justify-center gap-4">
           {forms.map((form) => (
-            <MegaCard
+            <div
               key={form.id}
-              form={form}
-              selected={form.id === selectedForm?.id}
-              onSelect={() => setSelectedId(form.id)}
-            />
+              className="flex w-full sm:w-[calc((100%_-_1rem)/2)]"
+            >
+              <MegaCard
+                form={form}
+                selected={form.id === selectedForm?.id}
+                onSelect={() => setSelectedId(form.id)}
+              />
+            </div>
           ))}
         </div>
 

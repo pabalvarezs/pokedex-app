@@ -118,6 +118,14 @@ const SEARCH_THRESHOLD = 6;
 /** Formas que se muestran antes de ofrecer «Mostrar más». */
 const PAGE_SIZE = 10;
 
+/**
+ * Ancho responsive de cada tarjeta. Reproduce las columnas del grid anterior
+ * (2 / 3 / 4 / 5 según el breakpoint) dentro de un contenedor flex, de modo
+ * que las filas incompletas queden centradas sea cual sea el número de formas.
+ */
+const CARD_WIDTH =
+  "w-[calc((100%_-_0.75rem)/2)] sm:w-[calc((100%_-_1.5rem)/3)] lg:w-[calc((100%_-_2.25rem)/4)] xl:w-[calc((100%_-_3rem)/5)]";
+
 const TONE_DOT: Record<string, string> = {
   teal: "bg-teal-500",
   violet: "bg-violet-500",
@@ -542,10 +550,12 @@ export default function VariantsAndForms({ family }: Props) {
           {showVariants && filteredVariants.length > 0 && (
             <div
               key={`${effectiveCategory}-${normalizedQuery}`}
-              className="variant-grid-enter mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+              className="variant-grid-enter mt-4 flex flex-wrap justify-center gap-3"
             >
               {visibleVariants.map((variant) => (
-                <VariantCard key={variant.id} variant={variant} />
+                <div key={variant.id} className={`flex ${CARD_WIDTH}`}>
+                  <VariantCard variant={variant} />
+                </div>
               ))}
             </div>
           )}
@@ -617,9 +627,11 @@ export default function VariantsAndForms({ family }: Props) {
                   {paradoxCount === 1 ? "relacionado" : "relacionados"}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="flex flex-wrap justify-center gap-3">
                 {family.paradoxRelatives!.map((relative) => (
-                  <ParadoxCard key={relative.id} relative={relative} />
+                  <div key={relative.id} className={`flex ${CARD_WIDTH}`}>
+                    <ParadoxCard relative={relative} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -777,7 +789,7 @@ function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
     <Link
       to={`/pokemon/${relative.id}`}
       aria-label={`Ver ficha de ${relative.displayName}`}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-purple-100 bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200 motion-reduce:hover:translate-y-0 ${theme.hoverBorder}`}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border border-purple-100 bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200 motion-reduce:hover:translate-y-0 ${theme.hoverBorder}`}
     >
       <div
         className={`relative flex aspect-square items-center justify-center overflow-hidden border-b border-white/80 bg-gradient-to-br p-3 ${theme.surface}`}
@@ -882,7 +894,7 @@ function VariantCard({ variant }: { variant: PokemonVariant }) {
     <Link
       to={`/pokemon/${variant.id}`}
       aria-label={`Ver ficha de ${variant.displayName}`}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[14px] border bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 motion-reduce:hover:translate-y-0 ${
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 motion-reduce:hover:translate-y-0 ${
         variant.isCurrent
           ? "border-red-300 ring-1 ring-red-100"
           : `border-line ${tone.hoverBorder}`
