@@ -186,6 +186,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .favorite-card,
+    .favorite-card:hover,
     .favorites-grid-enter > *,
     .favorites-grid-enter > .favorite-card-exit,
     .favorites-toast {

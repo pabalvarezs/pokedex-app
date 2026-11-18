@@ -27,6 +27,9 @@ export default function FavoritePokemonCard({
   const primaryType = types[0];
   const theme = primaryType ? getTypeBadge(primaryType) : null;
   const formattedId = String(favorite.pokemonId).padStart(3, "0");
+  const hp = preview?.stats?.find((stat) => stat.name === "hp")?.base_stat;
+  const hpPercent =
+    hp === undefined ? 0 : Math.min(100, Math.round((hp / 200) * 100));
 
   const style = {
     "--fav-index": Math.min(index, 8),
@@ -101,6 +104,28 @@ export default function FavoritePokemonCard({
               />
             )}
           </div>
+
+          {hp !== undefined && (
+            <div className="mt-auto pt-0.5">
+              <div className="flex items-center justify-between text-[11px] font-bold text-ink-500">
+                <span>PS</span>
+                <span className="tabular-nums">{hp}</span>
+              </div>
+              <div
+                role="img"
+                aria-label={`PS base ${hp}`}
+                className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200"
+              >
+                <span
+                  className="block h-full rounded-full"
+                  style={{
+                    width: `${hpPercent}%`,
+                    backgroundColor: theme?.accent ?? "#dc2626",
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="px-4 pb-4">
