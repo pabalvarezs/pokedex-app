@@ -142,7 +142,7 @@ export default function PokemonDetail() {
     data.megaForms?.some((form) => form.baseName === data.name) ?? false;
 
   return (
-    <div className="glass-panel mx-auto w-full max-w-ficha pb-12">
+    <div className="mx-auto w-full max-w-ficha pb-12">
       {/* Botón Volver y Header superior */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button

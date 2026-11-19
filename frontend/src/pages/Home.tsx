@@ -366,7 +366,7 @@ export default function Home() {
         : [];
 
   return (
-    <div className="glass-panel mx-auto w-full max-w-home py-6 sm:py-8">
+    <div className="mx-auto w-full max-w-home py-6 sm:py-8">
       <a
         href="#catalogo"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-red-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-bold focus:text-white focus:shadow-ambient focus:outline-none focus:ring-2 focus:ring-white"

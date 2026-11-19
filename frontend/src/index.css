@@ -9,20 +9,12 @@
       "Segoe UI", Roboto, sans-serif;
 
     --pc-canvas: #f8fafc;
-    /* Fondo degradado global compartido por todas las páginas (identidad visual PokeChile) */
-    --app-gradient: linear-gradient(110deg, #FCE4E8 0%, #FCE9DC 50%, #FFF3CC 100%);
-    --pc-page-background: var(--app-gradient);
+    /* Fondo degradado compartido por todas las páginas */
+    --pc-page-background:
+      radial-gradient(circle at 12% 0%, #fee2e2 0%, transparent 42%),
+      radial-gradient(circle at 92% 0%, #fef3c7 0%, transparent 38%),
+      linear-gradient(180deg, #f8fafc 0%, #ffffff 48%, #f8fafc 100%);
     --pc-surface: #ffffff;
-    /* Sistema Soft Glassmorphism: superficies translúcidas sobre el fondo degradado */
-    --surface-glass: rgba(255, 255, 255, 0.78);
-    --surface-glass-hover: rgba(255, 255, 255, 0.88);
-    --surface-glass-border: rgba(255, 255, 255, 0.55);
-    --surface-glass-shadow: 0 1px 2px rgb(15 23 42 / 0.04),
-      0 16px 40px -24px rgb(15 23 42 / 0.12);
-    --surface-glass-shadow-strong: 0 1px 2px rgb(15 23 42 / 0.04),
-      0 24px 48px -24px rgb(15 23 42 / 0.16);
-    --surface-blur: blur(12px);
-    --surface-blur-strong: blur(18px);
     --pc-border: #e2e8f0;
     --pc-border-soft: #eef2f7;
     --pc-ink-900: #0f172a;
@@ -51,19 +43,10 @@
     text-rendering: optimizeLegibility;
   }
 
-  html {
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    min-height: 100%;
-  }
-
   body {
     background-color: var(--pc-canvas);
     background-image: var(--pc-page-background);
     background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-    min-height: 100vh;
     color: var(--pc-ink-900);
     font-family: var(--pc-font-sans);
   }
@@ -217,72 +200,6 @@
       animation: none;
       transform: none;
       transition: none;
-    }
-  }
-
-  /* ================================================================
-     Sistema Soft Glassmorphism · superficies translúcidas globales
-     Se aplican a contenedores principales de página para que el fondo
-     degradado permanezca visible a través de ellos.
-     ================================================================ */
-
-  .glass-panel {
-    background: var(--surface-glass);
-    border: 1px solid var(--surface-glass-border);
-    box-shadow: var(--surface-glass-shadow);
-    backdrop-filter: var(--surface-blur);
-    -webkit-backdrop-filter: var(--surface-blur);
-    border-radius: var(--pc-radius-card);
-  }
-
-  .glass-panel-strong {
-    background: var(--surface-glass-hover);
-    border: 1px solid var(--surface-glass-border);
-    box-shadow: var(--surface-glass-shadow-strong);
-    backdrop-filter: var(--surface-blur-strong);
-    -webkit-backdrop-filter: var(--surface-blur-strong);
-    border-radius: var(--pc-radius-card);
-  }
-
-  .glass-card {
-    background: var(--surface-glass);
-    border: 1px solid var(--surface-glass-border);
-    box-shadow: var(--surface-glass-shadow);
-    backdrop-filter: var(--surface-blur);
-    -webkit-backdrop-filter: var(--surface-blur);
-    border-radius: var(--pc-radius-control);
-  }
-
-  /* Fallback para navegadores sin backdrop-filter: opacidad sólida suave */
-  @supports not ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
-    .glass-panel,
-    .glass-panel-strong,
-    .glass-card {
-      background: rgba(255, 255, 255, 0.92);
-    }
-  }
-
-  /* Contenedor principal de página: ancho máximo centrado sobre el fondo degradado */
-  .page-wrap {
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    max-width: var(--pc-container-home);
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    .page-wrap {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .page-wrap {
-      padding-left: 2rem;
-      padding-right: 2rem;
     }
   }
 }
