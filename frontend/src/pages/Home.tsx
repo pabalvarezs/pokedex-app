@@ -9,6 +9,7 @@ import {
 import PokemonCard from "../components/PokemonCard";
 import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
 import PokemonSearch from "../components/PokemonSearch";
+import useScrollRestoration from "../hooks/useScrollRestoration";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
 // --- Tipos de ordenamiento ---
@@ -22,6 +23,8 @@ type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
 const PAGE_SIZE = 48;
 const SKELETON_COUNT = 12;
+// Guarda cuántos Pokémon hay cargados para recuperarlos al volver de una ficha.
+const PAGE_SIZE_STORAGE_KEY = "pokedex:catalog-page-size";
 
 function dedupeById(pokemon: Pokemon[]): Pokemon[] {
   const seen = new Set<number>();
@@ -33,12 +36,25 @@ function dedupeById(pokemon: Pokemon[]): Pokemon[] {
 }
 
 export default function Home() {
+  // Restaura el scroll al volver de la ficha (botón Volver o atrás del navegador).
+  useScrollRestoration();
+
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeGens, setActiveGens] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("id");
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [showGenFilter, setShowGenFilter] = useState(false);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [pageSize, setPageSize] = useState(() => {
+    // Recupera los Pokémon ya cargados al volver de una ficha.
+    try {
+      const stored = Number(sessionStorage.getItem(PAGE_SIZE_STORAGE_KEY));
+      return Number.isFinite(stored) && stored >= PAGE_SIZE && stored % PAGE_SIZE === 0
+        ? stored
+        : PAGE_SIZE;
+    } catch {
+      return PAGE_SIZE;
+    }
+  });
   const [typeMode, setTypeMode] = useState<"include" | "exclude">("include");
   const [genMode, setGenMode] = useState<"include" | "exclude">("include");
   const loadMoreGuard = useRef(false);
@@ -54,10 +70,25 @@ export default function Home() {
     setGenMode("include");
   }, []);
 
-  // Al cambiar filtros volvemos a la primera página
+  // Al cambiar filtros volvemos a la primera página. Comparamos la firma de
+  // los filtros para no reiniciar la página al montar: así se conservan los
+  // Pokémon cargados (y el scroll) al volver desde una ficha.
+  const filterKey = `${typeMode}|${activeTypes.join(",")}|${genMode}|${activeGens.join(",")}`;
+  const filterKeyRef = useRef(filterKey);
   useEffect(() => {
+    if (filterKeyRef.current === filterKey) return;
+    filterKeyRef.current = filterKey;
     setPageSize(PAGE_SIZE);
-  }, [activeTypes, activeGens, typeMode, genMode]);
+  }, [filterKey]);
+
+  // Conserva cuántos Pokémon hay cargados mientras la pestaña siga abierta.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(pageSize));
+    } catch {
+      // Sin almacenamiento disponible: seguimos con el estado en memoria.
+    }
+  }, [pageSize]);
 
   const allTypeKeys = Object.keys(POKEMON_TYPES);
   const allGenIds = GENERATIONS.map((g) => g.id);
