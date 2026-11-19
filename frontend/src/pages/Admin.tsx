@@ -32,7 +32,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-2 sm:py-4">
+    <div className="glass-panel max-w-6xl mx-auto py-2 sm:py-4">
       <div className="mb-5">
         <div className="flex items-center gap-2.5">
           <span className="w-10 h-10 rounded-2xl bg-gray-900 text-white flex items-center justify-center text-xl shrink-0">

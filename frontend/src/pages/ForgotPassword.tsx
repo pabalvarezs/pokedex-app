@@ -29,8 +29,8 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8">
-      <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+    <div className="glass-panel max-w-md mx-auto my-8">
+      <div className="bg-surface rounded-3xl border border-line p-8 shadow-card">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
             🔑

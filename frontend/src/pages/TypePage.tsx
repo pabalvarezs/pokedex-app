@@ -48,7 +48,7 @@ export default function TypePage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-6">
+    <div className="glass-panel max-w-6xl mx-auto py-6">
       <div className="mb-5">
         <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
           Pokémon de tipo {typeInfo.es}
