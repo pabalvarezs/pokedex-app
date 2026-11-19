@@ -128,7 +128,7 @@ function EvolutionCard({ member, isCurrent, types }: EvolutionCardProps) {
           ? `${name} (estás viendo esta ficha)`
           : `Ver la ficha de ${name}`
       }
-      className={`group relative flex h-[264px] flex-col overflow-hidden rounded-card border bg-surface text-center transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200 sm:h-[280px] ${
+      className={`group relative flex h-[264px] w-[188px] shrink-0 flex-col overflow-hidden rounded-card border bg-surface text-center transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200 sm:h-[280px] ${
         isCurrent
           ? "border-red-400 bg-gradient-to-b from-red-50/80 to-white shadow-ambient ring-2 ring-red-200"
           : "border-line shadow-card hover:-translate-y-1 hover:border-red-300 hover:shadow-ambient motion-reduce:hover:translate-y-0"
@@ -352,7 +352,6 @@ export default function EvolutionChain({ stages, currentId }: EvolutionChainProp
             <div className="mx-auto flex w-full flex-col items-stretch justify-center gap-0 px-1 sm:px-2 md:w-max md:min-w-full md:flex-row md:items-center">
               {stages.map((stage, index) => {
                 const isBranch = stage.members.length > 1;
-                const branchCardCount = stage.members.length;
 
                 return (
                   <Fragment key={`evolution-stage-${index}`}>
@@ -361,23 +360,13 @@ export default function EvolutionChain({ stages, currentId }: EvolutionChainProp
                     <div
                       className={`shrink-0 ${
                         isBranch
-                          ? branchCardCount === 2
-                            ? "mx-auto w-full max-w-[420px] md:mx-0 md:w-[392px] md:max-w-none"
-                            : "mx-auto w-full max-w-[420px] md:mx-0 md:w-[392px] md:max-w-none lg:w-[596px] xl:w-[748px]"
+                          ? "mx-auto w-full max-w-[420px] md:mx-0 md:w-[392px] md:max-w-none lg:w-[596px] xl:w-[800px]"
                           : "mx-auto w-[188px] md:mx-0"
                       }`}
                     >
                       <StageLabel index={index} stage={stage} />
 
-                      <div
-                        className={`grid gap-3 sm:gap-4 ${
-                          isBranch
-                            ? branchCardCount === 2
-                              ? "grid-cols-2"
-                              : "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                            : "grid-cols-1"
-                        }`}
-                      >
+                      <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
                         {stage.members.map((member) => (
                           <EvolutionCard
                             key={member.id}
