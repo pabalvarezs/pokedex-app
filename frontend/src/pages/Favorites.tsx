@@ -29,9 +29,6 @@ interface ToastState {
 
 const SKELETON_COUNT = 8;
 
-const PAGE_BACKGROUND =
-  "radial-gradient(circle at 12% 0%, #fee2e2 0%, transparent 42%), radial-gradient(circle at 92% 0%, #fef3c7 0%, transparent 38%), linear-gradient(180deg, #f8fafc 0%, #ffffff 48%, #f8fafc 100%)";
-
 function displayName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
@@ -263,10 +260,7 @@ export default function Favorites() {
 
   if (!userId) {
     return (
-      <div
-        className="-mx-4 -my-5 min-h-[calc(100vh-4.5rem)] px-4 py-10 sm:-mx-6 sm:-my-6 sm:px-6 sm:py-14"
-        style={{ backgroundImage: PAGE_BACKGROUND }}
-      >
+      <div className="-mx-4 -my-5 min-h-[calc(100vh-4.5rem)] px-4 py-10 sm:-mx-6 sm:-my-6 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
           <span
             className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl"
@@ -294,10 +288,7 @@ export default function Favorites() {
   }
 
   return (
-    <div
-      className="-mx-4 -my-5 min-h-[calc(100vh-4.5rem)] px-4 py-6 sm:-mx-6 sm:-my-6 sm:px-6 sm:py-8"
-      style={{ backgroundImage: PAGE_BACKGROUND }}
-    >
+    <div className="-mx-4 -my-5 min-h-[calc(100vh-4.5rem)] px-4 py-6 sm:-mx-6 sm:-my-6 sm:px-6 sm:py-8">
       <div className="mx-auto w-full max-w-home">
         <SectionHero
           count={isLoading || isError ? null : visibleFavorites.length}

@@ -152,7 +152,7 @@ function NavigationHeader() {
 export default function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-slate-50 text-gray-900 flex flex-col font-sans">
+      <div className="min-h-screen text-gray-900 flex flex-col font-sans">
         <NavigationHeader />
 
         <main className="flex-1 px-4 sm:px-6 py-5 sm:py-6">
