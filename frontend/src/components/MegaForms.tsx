@@ -43,7 +43,7 @@ function MegaCard({ form, selected, onSelect }: MegaCardProps) {
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-card border bg-surface transition duration-200 ${
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-card border bg-surface transition duration-200 ${
         selected
           ? "border-violet-400 shadow-ambient ring-2 ring-violet-200"
           : "border-violet-100 shadow-card hover:-translate-y-1 hover:border-violet-300 hover:shadow-ambient motion-reduce:hover:translate-y-0"
@@ -318,7 +318,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
     <section
       id="mega-title"
       aria-labelledby="mega-title"
-      className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
+      className="glass-surface glass-blur mt-6 scroll-mt-20 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
     >
       <FormHero
         tone="violet"
@@ -334,20 +334,24 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
         }
       />
 
-      <div className="bg-gradient-to-b from-white via-white to-violet-50/40 p-5 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="bg-gradient-to-b from-white/60 via-white/40 to-violet-50/30 p-5 sm:p-6 lg:p-8">
+        <div className="flex flex-wrap justify-center gap-4">
           {forms.map((form) => (
-            <MegaCard
+            <div
               key={form.id}
-              form={form}
-              selected={form.id === selectedForm?.id}
-              onSelect={() => setSelectedId(form.id)}
-            />
+              className="flex w-full sm:w-[calc((100%_-_1rem)/2)]"
+            >
+              <MegaCard
+                form={form}
+                selected={form.id === selectedForm?.id}
+                onSelect={() => setSelectedId(form.id)}
+              />
+            </div>
           ))}
         </div>
 
         {canCompare && selectedForm && base && (
-          <div className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-white shadow-sm">
+          <div className="glass-surface mt-6 overflow-hidden rounded-card border border-violet-200 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-50/80 to-white px-5 py-4">
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">

@@ -158,7 +158,7 @@ export default function SpriteLightbox({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sprite-lightbox-title"
-        className={`relative flex h-[94dvh] w-full max-w-[min(1180px,94vw)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-surface shadow-[0_32px_90px_-20px_rgba(15,23,42,0.65)] transition-all duration-200 ease-out sm:h-[88dvh] sm:max-h-[880px] ${
+        className={`glass-surface glass-blur relative flex h-[94dvh] w-full max-w-[min(1180px,94vw)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-surface shadow-[0_32px_90px_-20px_rgba(15,23,42,0.65)] transition-all duration-200 ease-out sm:h-[88dvh] sm:max-h-[880px] ${
           entered
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-3 scale-[0.97] opacity-0"
@@ -249,7 +249,7 @@ export default function SpriteLightbox({
         </div>
 
         {/* Selector de vistas alternativas */}
-        <div className="shrink-0 border-t border-line-soft bg-white px-3 py-2.5 sm:px-6 sm:py-3">
+        <div className="glass-surface shrink-0 border-t border-line-soft px-3 py-2.5 sm:px-6 sm:py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-500">
               Cambiar vista

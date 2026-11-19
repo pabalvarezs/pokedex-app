@@ -53,7 +53,7 @@ export default function PokemonDetail() {
 
   if (isError || !data)
     return (
-      <div className="mx-auto mt-8 max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
+      <div className="glass-surface glass-blur mx-auto mt-8 max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
         <span className="mb-4 block text-5xl">🔍</span>
         <h2 className="mb-2 text-xl font-bold text-ink-900">
           ¡Chuta! No pillamos ese Pokémon
@@ -147,7 +147,7 @@ export default function PokemonDetail() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
+          className="inline-flex items-center gap-1.5 rounded-control border border-line bg-white px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
         >
           <span>←</span>
           <span>Volver 👈</span>
@@ -158,7 +158,7 @@ export default function PokemonDetail() {
       </div>
 
       {/* Tarjeta Principal Hero */}
-      <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+      <div className="glass-surface glass-blur overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* Banner con gradiente de color */}
         <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 px-6 py-8 text-white sm:px-8 sm:py-10 lg:px-10">
           <div
@@ -307,7 +307,7 @@ export default function PokemonDetail() {
             )}
 
             {/* Ficha Biológica rápida */}
-            <div className="grid grid-cols-3 gap-3 rounded-card border border-line-soft bg-slate-50/80 p-6 text-center shadow-sm">
+            <div className="glass-surface grid grid-cols-3 gap-3 rounded-card border border-line-soft bg-slate-50/80 p-6 text-center shadow-sm">
               <div>
                 <span className="block text-xs font-bold uppercase tracking-wider text-ink-500">
                   Alto

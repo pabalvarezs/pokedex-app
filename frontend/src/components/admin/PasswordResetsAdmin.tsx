@@ -136,7 +136,7 @@ export default function PasswordResetsAdmin() {
           No se pudieron cargar las solicitudes. Revisa tu sesión e inténtalo de nuevo.
         </div>
       ) : requests.length === 0 ? (
-        <div className="text-center py-12 px-4 bg-white border border-gray-200 rounded-2xl">
+        <div className="glass-surface text-center py-12 px-4 border border-gray-200 rounded-2xl">
           <p className="text-3xl mb-2">🔑</p>
           <p className="text-sm font-bold text-gray-700">No hay solicitudes pendientes</p>
           <p className="text-xs text-gray-500 mt-1">
@@ -148,7 +148,7 @@ export default function PasswordResetsAdmin() {
           {requests.map((request) => (
             <div
               key={request.id}
-              className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3"
+              className="glass-surface border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">

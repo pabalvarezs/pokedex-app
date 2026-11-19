@@ -270,7 +270,7 @@ export default function UsersAdmin() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mb-5 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-sm"
+          className="glass-surface glass-blur mb-5 border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-sm"
         >
           <h3 className="text-sm font-black text-gray-800 mb-4">
             {editing ? `Editar a ${editing.name}` : "Crear nuevo entrenador"}
@@ -393,13 +393,13 @@ export default function UsersAdmin() {
           No se pudieron cargar los entrenadores. Revisa tu sesión e inténtalo de nuevo.
         </div>
       ) : users.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-gray-200 rounded-2xl text-sm text-gray-500">
+        <div className="glass-surface text-center py-12 border border-gray-200 rounded-2xl text-sm text-gray-500">
           Todavía no hay entrenadores registrados.
         </div>
       ) : (
         <>
           {/* Tabla escritorio */}
-          <div className="hidden md:block bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="glass-surface hidden md:block border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
                 <tr>
@@ -480,7 +480,7 @@ export default function UsersAdmin() {
               const badge = roleBadge(user.role);
               const isSelf = currentUser?.username === user.username;
               return (
-                <div key={user.id} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                <div key={user.id} className="glass-surface border border-gray-200 rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <img
                       src={user.avatar}

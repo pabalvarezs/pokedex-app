@@ -2,7 +2,7 @@ export default function PokemonCardSkeleton() {
   return (
     <article
       aria-hidden="true"
-      className="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card"
+      className="glass-surface flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card"
     >
       <div className="flex flex-1 flex-col gap-3 p-3 sm:p-3.5">
         <div className="skeleton aspect-square w-full rounded-[12px]" />

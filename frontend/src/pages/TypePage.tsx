@@ -25,7 +25,7 @@ export default function TypePage() {
 
   if (isError || !data?.pokemon?.length) {
     return (
-      <div className="max-w-md mx-auto py-16 text-center bg-white rounded-2xl border p-8 shadow-sm mt-6">
+      <div className="glass-surface glass-blur max-w-md mx-auto py-16 text-center rounded-2xl border p-8 shadow-sm mt-6">
         <span className="text-5xl mb-4 block">🔍</span>
         <h2 className="text-xl font-bold text-gray-800 mb-2">
           Tipo no encontrado

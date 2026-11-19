@@ -8,8 +8,51 @@
     --pc-font-sans: "Inter", "Nunito Sans", ui-sans-serif, system-ui, -apple-system,
       "Segoe UI", Roboto, sans-serif;
 
-    --pc-canvas: #f8fafc;
-    --pc-surface: #ffffff;
+    --pc-canvas: #fcefe3;
+    /* Identidad visual global PokeChile: degradado pastel continuo */
+    --app-gradient: linear-gradient(
+      110deg,
+      #fce4e8 0%,
+      #fce9dc 50%,
+      #fff3cc 100%
+    );
+    /* Brillos ambientales que dan color y profundidad detrás del vidrio */
+    --app-aurora: radial-gradient(
+        32rem 28rem at 2% -4%,
+        rgba(236, 72, 153, 0.55),
+        transparent 62%
+      ),
+      radial-gradient(
+        30rem 26rem at 100% 2%,
+        rgba(245, 158, 11, 0.55),
+        transparent 64%
+      ),
+      radial-gradient(
+        30rem 28rem at 94% 92%,
+        rgba(139, 92, 246, 0.5),
+        transparent 62%
+      ),
+      radial-gradient(
+        26rem 24rem at 0% 86%,
+        rgba(56, 189, 248, 0.4),
+        transparent 64%
+      ),
+      radial-gradient(
+        26rem 24rem at 50% 52%,
+        rgba(249, 115, 22, 0.4),
+        transparent 64%
+      );
+    /* Alias histórico: el fondo del sitio es el degradado global */
+    --pc-page-background: var(--app-gradient);
+    /* Sistema Soft Glassmorphism compartido */
+    --surface-glass: rgba(255, 255, 255, 0.52);
+    --surface-glass-border: rgba(255, 255, 255, 0.7);
+    --surface-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(120, 72, 32, 0.06),
+      0 26px 54px -28px rgba(146, 84, 38, 0.42);
+    --surface-blur: blur(18px) saturate(190%);
+    --pc-surface: var(--surface-glass);
     --pc-border: #e2e8f0;
     --pc-border-soft: #eef2f7;
     --pc-ink-900: #0f172a;
@@ -27,21 +70,64 @@
     --pc-text-body: 0.9375rem;
     --pc-text-value: 1.0625rem;
 
-    --pc-shadow-card: 0 1px 2px rgb(15 23 42 / 0.04),
-      0 16px 40px -24px rgb(15 23 42 / 0.22);
-    --pc-shadow-ambient: 0 24px 48px -24px rgb(15 23 42 / 0.28),
-      0 6px 16px -8px rgb(15 23 42 / 0.12);
+    --pc-shadow-card: 0 1px 2px rgba(120, 72, 32, 0.05),
+      0 16px 40px -24px rgba(146, 84, 38, 0.28);
+    --pc-shadow-ambient: 0 24px 48px -24px rgba(146, 84, 38, 0.42),
+      0 10px 22px -12px rgba(244, 114, 182, 0.28);
   }
 
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* El color base evita destellos blancos en el rebote del scroll */
+    background-color: var(--pc-canvas);
   }
 
   body {
+    /* Cubre toda la altura aunque la página tenga mucho contenido */
+    min-height: 100vh;
     background-color: var(--pc-canvas);
+    background-image: var(--app-gradient);
+    background-repeat: no-repeat;
+    background-size: cover;
+    /* Fija el degradado al viewport: no se corta ni blanquea al hacer scroll */
+    background-attachment: fixed;
     color: var(--pc-ink-900);
     font-family: var(--pc-font-sans);
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  /* Aurora ambiental: capa fija y difusa que da color y movimiento
+     detrás del vidrio. Sin ella el desenfoque apenas se percibe. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20%;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--app-aurora);
+    background-repeat: no-repeat;
+    filter: blur(10px);
+    will-change: transform;
+    animation: pc-aurora-drift 26s ease-in-out infinite alternate;
+  }
+
+  @keyframes pc-aurora-drift {
+    from {
+      transform: translate3d(-2%, -1.5%, 0) scale(1.04);
+    }
+    to {
+      transform: translate3d(2%, 2%, 0) scale(1.16);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before {
+      animation: none;
+    }
   }
 }
 
@@ -120,5 +206,120 @@
     .variant-grid-enter > * {
       animation: none;
     }
+  }
+
+  /* Vitrina de regalones: elevación suave y borde del color del tipo. */
+  .favorite-card {
+    transition:
+      transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      border-color 220ms ease-out,
+      box-shadow 220ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .favorite-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--type-accent, #fca5a5);
+      box-shadow: var(--pc-shadow-ambient);
+    }
+  }
+
+  .favorite-card:focus-within {
+    border-color: var(--type-accent, #fca5a5);
+  }
+
+  .favorites-grid-enter > * {
+    animation: pc-favorite-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+    animation-delay: calc(var(--fav-index, 0) * 45ms);
+  }
+
+  @keyframes pc-favorite-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .favorites-grid-enter > .favorite-card-exit {
+    animation: pc-favorite-out 200ms ease-in forwards;
+  }
+
+  @keyframes pc-favorite-out {
+    to {
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+    }
+  }
+
+  .favorites-toast {
+    animation: pc-toast-in 220ms ease-out backwards;
+  }
+
+  @keyframes pc-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .favorite-card,
+    .favorite-card:hover,
+    .favorites-grid-enter > *,
+    .favorites-grid-enter > .favorite-card-exit,
+    .favorites-toast {
+      animation: none;
+      transform: none;
+      transition: none;
+    }
+  }
+}
+
+/* ============================================================
+   Sistema Soft Glassmorphism global
+   ------------------------------------------------------------
+   Se declara fuera de @layer para que el fondo translúcido, el
+   borde blanco y la sombra cálida ganen a las utilidades de
+   Tailwind (bg-surface, border-line, shadow-card…) sin repetir
+   estilos en cada componente. Los botones, inputs, insignias e
+   ilustraciones no llevan esta clase y conservan su contraste.
+   ------------------------------------------------------------------ */
+
+/* Superficie translúcida base. Segura para grillas densas. */
+.glass-surface {
+  background-color: var(--surface-glass);
+  /* Brillo especular: luz en el borde superior-izquierdo del vidrio */
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.12) 40%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  border-color: var(--surface-glass-border);
+  box-shadow: var(--surface-glass-shadow);
+}
+
+/* Añade el desenfoque. Se reserva a paneles y modales principales
+   para no encadenar muchos backdrop-filter en pantalla. */
+.glass-blur {
+  -webkit-backdrop-filter: var(--surface-blur);
+  backdrop-filter: var(--surface-blur);
+}
+
+/* Navegadores sin backdrop-filter: superficie casi opaca que sigue
+   integrándose con el degradado en lugar de un blanco sólido. */
+@supports not (
+  (-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
+) {
+  .glass-surface {
+    background-color: rgba(255, 255, 255, 0.94);
   }
 }

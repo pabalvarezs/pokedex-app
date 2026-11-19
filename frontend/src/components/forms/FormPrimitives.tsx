@@ -94,7 +94,7 @@ export function FormSummary({
   return (
     <div
       className={`flex flex-col items-center rounded-[12px] border p-3 text-center ${
-        accent ? accent.card : "border-line bg-white"
+        accent ? accent.card : "border-line bg-surface"
       }`}
     >
       <div className="flex w-full items-center justify-between gap-1">

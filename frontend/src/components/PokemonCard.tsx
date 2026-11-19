@@ -105,7 +105,7 @@ export default function PokemonCard({ pokemon }: Props) {
 
   return (
     <article
-      className="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-ambient focus-within:border-red-200 focus-within:shadow-ambient motion-reduce:hover:translate-y-0"
+      className="glass-surface group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-ambient focus-within:border-red-200 focus-within:shadow-ambient motion-reduce:hover:translate-y-0"
       aria-busy={pending || undefined}
     >
       <Link

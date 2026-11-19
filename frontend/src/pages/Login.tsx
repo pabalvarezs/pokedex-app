@@ -32,7 +32,7 @@ export default function Login() {
 
   if (user) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white rounded-3xl border border-gray-200 p-8 shadow-sm text-center">
+      <div className="glass-surface glass-blur max-w-md mx-auto my-12 rounded-3xl border border-gray-200 p-8 shadow-sm text-center">
         <span className="text-5xl mb-3 block">👋</span>
         <h2 className="text-2xl font-black text-gray-800">
           ¡Ya estás conectado, {user.name}!
@@ -64,7 +64,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto my-8">
       {/* Formulario de Login */}
-      <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+      <div className="glass-surface glass-blur rounded-3xl border border-gray-200 p-8 shadow-sm">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black shadow-inner">
             ⚡

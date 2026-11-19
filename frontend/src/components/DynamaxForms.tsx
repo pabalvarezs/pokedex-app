@@ -107,7 +107,7 @@ function Disclosure({
 
   return (
     <div
-      className={`overflow-hidden rounded-[14px] border border-line bg-white ${className}`}
+      className={`glass-surface overflow-hidden rounded-[14px] border border-line ${className}`}
     >
       <button
         type="button"
@@ -292,7 +292,7 @@ function HpPanel({
   const shedinja = isShedinja(speciesId);
 
   return (
-    <div className="overflow-hidden rounded-card border border-line bg-white shadow-sm">
+    <div className="glass-surface overflow-hidden rounded-card border border-line shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft bg-gradient-to-r from-rose-50/70 to-white px-4 py-3.5 sm:px-5">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
@@ -684,7 +684,7 @@ function GmaxComparison({
 
         <div className="flex flex-col gap-2.5">
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-[12px] border border-line bg-white p-3">
+            <div className="rounded-[12px] border border-line bg-white/60 p-3">
               <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
                 Altura original
               </p>
@@ -692,7 +692,7 @@ function GmaxComparison({
                 {formatHeight(base.height, false)}
               </p>
             </div>
-            <div className="rounded-[12px] border border-rose-200 bg-white p-3">
+            <div className="rounded-[12px] border border-rose-200 bg-white/60 p-3">
               <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
                 Altura Gigamax
               </p>
@@ -789,7 +789,7 @@ function GmaxDetail({
   ].filter((note): note is string => Boolean(note));
 
   return (
-    <div className="mt-4 overflow-hidden rounded-card border border-rose-200 bg-white shadow-sm">
+    <div className="glass-surface mt-4 overflow-hidden rounded-card border border-rose-200 shadow-sm">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Ilustración protagonista: ocupa la mitad del bloque en escritorio */}
         <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-5 sm:min-h-[360px] sm:p-8 lg:min-h-[440px]">
@@ -988,23 +988,19 @@ function RelationCard({
   artwork,
   caption,
   tone,
+  to,
 }: {
   id: number;
   name: string;
   artwork?: string;
   caption: string;
   tone: "base" | "gmax";
+  to?: string;
 }) {
   const isGmax = tone === "gmax";
 
-  return (
-    <div
-      className={`flex min-w-0 items-center gap-2.5 rounded-[12px] border p-2.5 ${
-        isGmax
-          ? "border-rose-200 bg-gradient-to-r from-rose-50 to-white"
-          : "border-line bg-white"
-      }`}
-    >
+  const content = (
+    <>
       <span
         className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px] ${
           isGmax
@@ -1016,7 +1012,11 @@ function RelationCard({
           id={id}
           name={name}
           src={artwork}
-          className="h-11 w-11 object-contain"
+          className={`h-11 w-11 object-contain ${
+            to
+              ? "transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              : ""
+          }`}
         />
       </span>
       <span className="min-w-0">
@@ -1031,8 +1031,36 @@ function RelationCard({
           {caption}
         </span>
       </span>
-    </div>
+      {to && (
+        <span
+          aria-hidden="true"
+          className="ml-auto shrink-0 pr-0.5 text-sm font-black text-rose-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-rose-700 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+        >
+          →
+        </span>
+      )}
+    </>
   );
+
+  const cardClasses = `flex min-w-0 items-center gap-2.5 rounded-[12px] border p-2.5 ${
+    isGmax
+      ? "border-rose-200 bg-gradient-to-r from-rose-50 to-white"
+      : "border-line bg-white"
+  }`;
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        aria-label={`Ver la ficha de ${name}`}
+        className={`group ${cardClasses} transition duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0`}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={`${cardClasses} group`}>{content}</div>;
 }
 
 function NoGmaxNotice({
@@ -1057,7 +1085,7 @@ function NoGmaxNotice({
         : "Otra etapa sí Gigamaxiza";
 
   return (
-    <div className="mt-6 overflow-hidden rounded-card border border-dashed border-rose-200 bg-gradient-to-br from-rose-50/60 via-white to-white p-5 shadow-sm">
+    <div className="mt-6 overflow-hidden rounded-card border border-dashed border-rose-200 bg-gradient-to-br from-rose-50/40 via-white/40 to-white/20 p-5 shadow-sm">
       <div className="flex flex-col items-start gap-3 sm:flex-row">
         <span
           aria-hidden="true"
@@ -1135,6 +1163,7 @@ function NoGmaxNotice({
                     : "Su preevolución · Gigamax sí"
                 }
                 tone="gmax"
+                to={`/pokemon/${relative.id}`}
               />
             ))}
           </div>
@@ -1168,7 +1197,7 @@ function DynamaxBlockedNotice() {
 
 function EternamaxCard() {
   return (
-    <div className="mt-5 overflow-hidden rounded-card border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-white shadow-sm">
+    <div className="mt-5 overflow-hidden rounded-card border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50/50 via-white/40 to-white/20 shadow-sm">
       <div className="grid sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] sm:items-center">
         <div className="relative flex min-h-[200px] items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-100/70 via-fuchsia-50 to-white p-5 sm:min-h-[240px]">
           <span
@@ -1229,7 +1258,7 @@ export default function DynamaxForms({
     <section
       id="dynamax-title"
       aria-labelledby="dynamax-heading"
-      className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-rose-200 bg-surface shadow-card"
+      className="glass-surface glass-blur mt-6 scroll-mt-20 overflow-hidden rounded-card border border-rose-200 bg-surface shadow-card"
     >
       <DynamaxHeader formsCount={forms.length} />
 
@@ -1249,7 +1278,7 @@ export default function DynamaxForms({
         )}
 
         {forms.length > 0 && (
-          <div className="rounded-card border border-rose-100 bg-white/70 p-4 shadow-sm sm:p-5">
+          <div className="glass-surface rounded-card border border-rose-100 p-4 shadow-sm sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">
