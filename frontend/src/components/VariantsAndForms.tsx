@@ -277,10 +277,10 @@ export default function VariantsAndForms({ family }: Props) {
   return (
     <section
       aria-labelledby="variants-title"
-      className="mt-6 w-full overflow-hidden rounded-card border border-line bg-surface shadow-card"
+      className="glass-surface glass-blur mt-6 w-full overflow-hidden rounded-card border border-line bg-surface shadow-card"
     >
       {/* Cabecera */}
-      <div className="relative overflow-hidden border-b border-line-soft bg-gradient-to-br from-white via-white to-slate-50">
+      <div className="relative overflow-hidden border-b border-line-soft bg-gradient-to-br from-white/70 via-white/50 to-white/20">
         <span
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full border-[34px] border-slate-100/80"
@@ -789,7 +789,7 @@ function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
     <Link
       to={`/pokemon/${relative.id}`}
       aria-label={`Ver ficha de ${relative.displayName}`}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border border-purple-100 bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200 motion-reduce:hover:translate-y-0 ${theme.hoverBorder}`}
+      className={`glass-surface group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border border-purple-100 bg-surface text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200 motion-reduce:hover:translate-y-0 ${theme.hoverBorder}`}
     >
       <div
         className={`relative flex aspect-square items-center justify-center overflow-hidden border-b border-white/80 bg-gradient-to-br p-3 ${theme.surface}`}
@@ -894,7 +894,7 @@ function VariantCard({ variant }: { variant: PokemonVariant }) {
     <Link
       to={`/pokemon/${variant.id}`}
       aria-label={`Ver ficha de ${variant.displayName}`}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 motion-reduce:hover:translate-y-0 ${
+      className={`glass-surface group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border bg-surface text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-ambient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 motion-reduce:hover:translate-y-0 ${
         variant.isCurrent
           ? "border-red-300 ring-1 ring-red-100"
           : `border-line ${tone.hoverBorder}`

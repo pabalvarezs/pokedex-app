@@ -318,7 +318,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
     <section
       id="mega-title"
       aria-labelledby="mega-title"
-      className="mt-6 scroll-mt-20 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
+      className="glass-surface glass-blur mt-6 scroll-mt-20 overflow-hidden rounded-card border border-violet-200 bg-surface shadow-card"
     >
       <FormHero
         tone="violet"
@@ -334,7 +334,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
         }
       />
 
-      <div className="bg-gradient-to-b from-white via-white to-violet-50/40 p-5 sm:p-6 lg:p-8">
+      <div className="bg-gradient-to-b from-white/60 via-white/40 to-violet-50/30 p-5 sm:p-6 lg:p-8">
         <div className="flex flex-wrap justify-center gap-4">
           {forms.map((form) => (
             <div
@@ -351,7 +351,7 @@ export default function MegaForms({ forms, base }: MegaFormsProps) {
         </div>
 
         {canCompare && selectedForm && base && (
-          <div className="mt-6 overflow-hidden rounded-card border border-violet-200 bg-white shadow-sm">
+          <div className="glass-surface mt-6 overflow-hidden rounded-card border border-violet-200 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-50/80 to-white px-5 py-4">
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink-700">

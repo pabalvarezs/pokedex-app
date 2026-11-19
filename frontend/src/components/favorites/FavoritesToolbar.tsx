@@ -34,7 +34,7 @@ export default function FavoritesToolbar({
   return (
     <section
       aria-label="Buscar y ordenar regalones"
-      className={`mt-5 rounded-card border border-line bg-surface/95 shadow-card backdrop-blur-sm ${
+      className={`glass-surface glass-blur mt-5 rounded-card border border-line bg-surface/95 shadow-card ${
         compact ? "px-2.5 py-2" : "px-3 py-2.5 sm:px-4"
       }`}
     >

@@ -426,7 +426,7 @@ export default function Home() {
       {/* Buscador predictivo */}
       <section
         aria-label="Buscador de Pokémon"
-        className="rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         <PokemonSearch />
       </section>
@@ -434,7 +434,7 @@ export default function Home() {
       {/* Panel de filtros */}
       <section
         aria-label="Filtros y ordenamiento"
-        className="mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         {/* Fila 1: Botones de sección + Sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -771,7 +771,7 @@ export default function Home() {
         ) : blockingError ? (
           <div
             role="alert"
-            className="my-6 rounded-card border border-line bg-surface px-6 py-16 text-center shadow-card"
+            className="glass-surface glass-blur my-6 rounded-card border border-line bg-surface px-6 py-16 text-center shadow-card"
           >
             <span className="mb-4 block text-4xl" aria-hidden="true">🔌</span>
             <p className="mb-2 text-lg font-bold text-red-600">¡Pucha la cuestión! No pudimos cargar los Pokémon.</p>
@@ -881,7 +881,7 @@ export default function Home() {
         ) : (
           <div
             role="status"
-            className="my-6 rounded-card border border-line bg-surface px-6 py-16 text-center shadow-card"
+            className="glass-surface glass-blur my-6 rounded-card border border-line bg-surface px-6 py-16 text-center shadow-card"
           >
             <span className="mb-4 block text-4xl" aria-hidden="true">🔍</span>
             <p className="mb-2 text-lg font-bold text-ink-900">¡Chuta! No pillamos ningún Pokémon con esos filtros.</p>

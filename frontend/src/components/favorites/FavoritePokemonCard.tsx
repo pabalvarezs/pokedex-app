@@ -53,7 +53,7 @@ export default function FavoritePokemonCard({
     <article
       style={style}
       aria-busy={isRemoving || undefined}
-      className={`favorite-card group/card relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card ${
+      className={`glass-surface favorite-card group/card relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card ${
         isRemoving ? "favorite-card-exit" : ""
       }`}
     >

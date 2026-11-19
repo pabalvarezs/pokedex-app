@@ -8,13 +8,23 @@
     --pc-font-sans: "Inter", "Nunito Sans", ui-sans-serif, system-ui, -apple-system,
       "Segoe UI", Roboto, sans-serif;
 
-    --pc-canvas: #f8fafc;
-    /* Fondo degradado compartido por todas las páginas */
-    --pc-page-background:
-      radial-gradient(circle at 12% 0%, #fee2e2 0%, transparent 42%),
-      radial-gradient(circle at 92% 0%, #fef3c7 0%, transparent 38%),
-      linear-gradient(180deg, #f8fafc 0%, #ffffff 48%, #f8fafc 100%);
-    --pc-surface: #ffffff;
+    --pc-canvas: #fcefe3;
+    /* Identidad visual global PokeChile: degradado pastel continuo */
+    --app-gradient: linear-gradient(
+      110deg,
+      #fce4e8 0%,
+      #fce9dc 50%,
+      #fff3cc 100%
+    );
+    /* Alias histórico: el fondo del sitio es el degradado global */
+    --pc-page-background: var(--app-gradient);
+    /* Sistema Soft Glassmorphism compartido */
+    --surface-glass: rgba(255, 255, 255, 0.78);
+    --surface-glass-border: rgba(255, 255, 255, 0.6);
+    --surface-glass-shadow: 0 1px 2px rgba(120, 72, 32, 0.06),
+      0 20px 44px -28px rgba(146, 84, 38, 0.32);
+    --surface-blur: blur(12px);
+    --pc-surface: var(--surface-glass);
     --pc-border: #e2e8f0;
     --pc-border-soft: #eef2f7;
     --pc-ink-900: #0f172a;
@@ -41,14 +51,25 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* El color base evita destellos blancos en el rebote del scroll */
+    background-color: var(--pc-canvas);
   }
 
   body {
+    /* Cubre toda la altura aunque la página tenga mucho contenido */
+    min-height: 100vh;
     background-color: var(--pc-canvas);
-    background-image: var(--pc-page-background);
+    background-image: var(--app-gradient);
     background-repeat: no-repeat;
+    background-size: cover;
+    /* Fija el degradado al viewport: no se corta ni blanquea al hacer scroll */
+    background-attachment: fixed;
     color: var(--pc-ink-900);
     font-family: var(--pc-font-sans);
+  }
+
+  #root {
+    min-height: 100vh;
   }
 }
 
@@ -201,5 +222,39 @@
       transform: none;
       transition: none;
     }
+  }
+}
+
+/* ============================================================
+   Sistema Soft Glassmorphism global
+   ------------------------------------------------------------
+   Se declara fuera de @layer para que el fondo translúcido, el
+   borde blanco y la sombra cálida ganen a las utilidades de
+   Tailwind (bg-surface, border-line, shadow-card…) sin repetir
+   estilos en cada componente. Los botones, inputs, insignias e
+   ilustraciones no llevan esta clase y conservan su contraste.
+   ------------------------------------------------------------------ */
+
+/* Superficie translúcida base. Segura para grillas densas. */
+.glass-surface {
+  background-color: var(--surface-glass);
+  border-color: var(--surface-glass-border);
+  box-shadow: var(--surface-glass-shadow);
+}
+
+/* Añade el desenfoque. Se reserva a paneles y modales principales
+   para no encadenar muchos backdrop-filter en pantalla. */
+.glass-blur {
+  -webkit-backdrop-filter: var(--surface-blur);
+  backdrop-filter: var(--surface-blur);
+}
+
+/* Navegadores sin backdrop-filter: superficie casi opaca que sigue
+   integrándose con el degradado en lugar de un blanco sólido. */
+@supports not (
+  (-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
+) {
+  .glass-surface {
+    background-color: rgba(255, 255, 255, 0.94);
   }
 }

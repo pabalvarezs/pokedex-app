@@ -10,7 +10,7 @@ interface Props {
 
 export default function FavoritesEmptyState({ filtered, query, onClear }: Props) {
   return (
-    <div className="relative mt-5 overflow-hidden rounded-card border border-line bg-surface px-6 py-14 text-center shadow-card sm:py-16">
+    <div className="glass-surface glass-blur relative mt-5 overflow-hidden rounded-card border border-line bg-surface px-6 py-14 text-center shadow-card sm:py-16">
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"

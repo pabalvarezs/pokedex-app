@@ -261,7 +261,7 @@ export default function Favorites() {
   if (!userId) {
     return (
       <div className="-mx-4 -my-5 min-h-[calc(100vh-4.5rem)] px-4 py-10 sm:-mx-6 sm:-my-6 sm:px-6 sm:py-14">
-        <div className="mx-auto max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
+        <div className="glass-surface glass-blur mx-auto max-w-md rounded-card border border-line bg-surface p-8 text-center shadow-card">
           <span
             className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl"
             aria-hidden="true"
@@ -316,7 +316,7 @@ export default function Favorites() {
         ) : isError ? (
           <div
             role="alert"
-            className="mt-5 rounded-card border border-line bg-surface px-6 py-14 text-center shadow-card"
+            className="glass-surface glass-blur mt-5 rounded-card border border-line bg-surface px-6 py-14 text-center shadow-card"
           >
             <span className="mb-4 block text-4xl" aria-hidden="true">
               🔌

@@ -2,7 +2,7 @@ export default function FavoriteCardSkeleton() {
   return (
     <article
       aria-hidden="true"
-      className="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card"
+      className="glass-surface flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card"
     >
       <div className="flex flex-1 flex-col">
         <div className="skeleton aspect-[5/4] w-full" />
