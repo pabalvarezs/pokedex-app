@@ -315,7 +315,7 @@ export default function EvolutionChain({ stages, currentId }: EvolutionChainProp
       </div>
 
       {totalMembers <= 1 ? (
-        <div className="glass-surface relative overflow-hidden rounded-card border border-line bg-gradient-to-br from-white/70 via-white/40 to-red-50/30 p-6 shadow-card sm:p-8">
+        <div className="glass-surface relative overflow-hidden rounded-card border border-line p-6 shadow-card sm:p-8">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-red-100/50 blur-3xl"
