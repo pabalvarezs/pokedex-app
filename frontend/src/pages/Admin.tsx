@@ -154,7 +154,7 @@ function AdminDashboard() {
                 id={stats.recentFavorite.pokemonId}
                 name={stats.recentFavorite.name}
                 src={spriteUrl(stats.recentFavorite.pokemonId)}
-                className="h-9 w-9 shrink-0 object-contain"
+                className="h-12 w-12 shrink-0 object-contain"
               />
               <p className="min-w-0 truncate text-lg font-extrabold capitalize leading-tight text-ink-900">
                 {stats.recentFavorite.name}
@@ -186,8 +186,7 @@ function AdminDashboard() {
           key={tab}
           role="tabpanel"
           aria-label={meta.label}
-          className="rounded-card border-t-[3px] pt-4"
-          style={{ borderTopColor: "var(--accent)" }}
+          className="relative z-10 pt-4"
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
