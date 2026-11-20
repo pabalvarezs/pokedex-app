@@ -318,6 +318,32 @@
       animation: none;
     }
   }
+
+  /* Anillo de foco que sigue el acento de la pestaña activa del admin. */
+  .focus-accent:focus-visible {
+    outline: 2px solid var(--accent, #dc2626);
+    outline-offset: 2px;
+  }
+
+  /* CTA principal que hereda el acento de la pestaña activa. */
+  .btn-accent {
+    background-color: var(--accent, #dc2626);
+    color: var(--accent-ink, #ffffff);
+  }
+
+  .btn-accent:not(:disabled):hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-accent:focus-visible {
+    outline: 2px solid var(--accent, #dc2626);
+    outline-offset: 2px;
+  }
+
+  /* Los campos del panel heredan el acento en su anillo de foco. */
+  [data-admin-accent] :is(input, select, textarea):focus {
+    --tw-ring-color: var(--accent, #dc2626);
+  }
 }
 
 /* ============================================================

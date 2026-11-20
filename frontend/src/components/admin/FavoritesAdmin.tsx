@@ -148,7 +148,7 @@ export default function FavoritesAdmin() {
         <button
           onClick={showForm ? closeForm : openCreate}
           disabled={users.length === 0}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-amber-950 rounded-xl text-sm font-bold transition shadow-sm"
+          className="btn-accent inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-sm disabled:opacity-50"
         >
           <span>{showForm ? "✕" : "+"}</span>
           <span>{showForm ? "Cerrar formulario" : "Nuevo regalón"}</span>
@@ -232,7 +232,7 @@ export default function FavoritesAdmin() {
             <button
               type="submit"
               disabled={save.isPending}
-              className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-amber-950 rounded-xl text-sm font-bold transition shadow-sm"
+              className="btn-accent px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-sm disabled:opacity-50"
             >
               {save.isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear regalón"}
             </button>

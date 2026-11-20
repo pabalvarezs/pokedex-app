@@ -176,7 +176,7 @@ export default function PasswordResetsAdmin() {
                 type="button"
                 onClick={() => handleGenerate(request)}
                 disabled={generate.isPending}
-                className="shrink-0 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
+                className="btn-accent shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
               >
                 {generate.isPending ? "Generando..." : "Generar enlace"}
               </button>

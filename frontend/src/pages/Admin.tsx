@@ -1,12 +1,17 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import type { CSSProperties } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Clock, KeyRound, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
 import PokemonArtwork from "../components/PokemonArtwork";
-import AdminTabs, { type AdminTab } from "../features/admin/components/AdminTabs";
+import AdminTabs, {
+  getAdminTabMeta,
+  isAdminTab,
+  type AdminTab,
+} from "../features/admin/components/AdminTabs";
 import EmptyState from "../features/admin/components/EmptyState";
 import StatCard from "../features/admin/components/StatCard";
 import { useAdminStats } from "../features/admin/hooks/useAdminStats";
@@ -48,11 +53,44 @@ export default function Admin() {
 /** Se monta solo con sesión de admin: así no dispara queries admin a otros usuarios. */
 function AdminDashboard() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<AdminTab>("users");
   const { stats, isLoading: statsLoading } = useAdminStats();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const reduceMotion = useReducedMotion();
+
+  const rawTab = searchParams.get("tab");
+  const tab: AdminTab = isAdminTab(rawTab) ? rawTab : "users";
+  const meta = getAdminTabMeta(tab);
+
+  const changeTab = (next: AdminTab) => {
+    setSearchParams(
+      (previous) => {
+        const params = new URLSearchParams(previous);
+        // La pestaña por defecto queda en /admin, sin query string.
+        if (next === "users") params.delete("tab");
+        else params.set("tab", next);
+        return params;
+      },
+      { replace: true }
+    );
+  };
+
+  const counts: Record<AdminTab, number> = {
+    users: stats.total,
+    favorites: stats.favorites,
+    resets: stats.pendingResets,
+  };
 
   return (
-    <div className="mx-auto max-w-6xl py-2 sm:py-4">
+    <div
+      data-admin-accent
+      className="mx-auto max-w-6xl py-2 sm:py-4"
+      style={
+        {
+          "--accent": meta.accent,
+          "--accent-ink": meta.ink,
+        } as CSSProperties
+      }
+    >
       <header className="mb-5 flex items-center gap-2.5">
         <span className="grid h-11 w-11 shrink-0 animate-pop place-items-center rounded-control bg-gray-900 text-xl text-white">
           🛡️
@@ -120,17 +158,34 @@ function AdminDashboard() {
         />
       </section>
 
-      <AdminTabs value={tab} onChange={setTab} />
+      <AdminTabs
+        value={tab}
+        onChange={changeTab}
+        counts={counts}
+        loading={statsLoading}
+      />
 
-      <div key={tab} role="tabpanel" className="animate-fade-up">
-        {tab === "users" ? (
-          <UsersAdmin />
-        ) : tab === "favorites" ? (
-          <FavoritesAdmin />
-        ) : (
-          <PasswordResetsAdmin />
-        )}
-      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={tab}
+          role="tabpanel"
+          aria-label={meta.label}
+          className="rounded-card border-t-[3px] pt-4"
+          style={{ borderTopColor: "var(--accent)" }}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+        >
+          {tab === "users" ? (
+            <UsersAdmin />
+          ) : tab === "favorites" ? (
+            <FavoritesAdmin />
+          ) : (
+            <PasswordResetsAdmin />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
