@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
+import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Clock, KeyRound, Star, Users } from "lucide-react";
+import { Clock, KeyRound, ShieldAlert, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
@@ -13,6 +14,7 @@ import AdminTabs, {
   type AdminTab,
 } from "../features/admin/components/AdminTabs";
 import EmptyState from "../features/admin/components/EmptyState";
+import PokeballWatermark from "../features/admin/components/PokeballWatermark";
 import StatCard from "../features/admin/components/StatCard";
 import { useAdminStats } from "../features/admin/hooks/useAdminStats";
 
@@ -27,7 +29,7 @@ export default function Admin() {
     return (
       <div className="mx-auto mt-6 max-w-md px-4 py-2">
         <EmptyState
-          emoji="🛡️"
+          icon={ShieldAlert}
           title="Acceso restringido"
           description={
             user
@@ -80,10 +82,22 @@ function AdminDashboard() {
     resets: stats.pendingResets,
   };
 
+  // Los portales (Drawer/Modal/Toaster) viven fuera del contenedor del panel,
+  // así que el acento también se publica en :root mientras el admin está montado.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--accent", meta.accent);
+    root.style.setProperty("--accent-ink", meta.ink);
+    return () => {
+      root.style.removeProperty("--accent");
+      root.style.removeProperty("--accent-ink");
+    };
+  }, [meta.accent, meta.ink]);
+
   return (
     <div
       data-admin-accent
-      className="mx-auto max-w-6xl py-2 sm:py-4"
+      className="relative isolate mx-auto max-w-6xl py-2 sm:py-4"
       style={
         {
           "--accent": meta.accent,
@@ -91,9 +105,11 @@ function AdminDashboard() {
         } as CSSProperties
       }
     >
+      <PokeballWatermark />
+
       <header className="mb-5 flex items-center gap-2.5">
-        <span className="grid h-11 w-11 shrink-0 animate-pop place-items-center rounded-control bg-gray-900 text-xl text-white">
-          🛡️
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-gray-900 text-white motion-safe:animate-pop">
+          <ShieldCheck className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-black text-gray-800 sm:text-2xl">

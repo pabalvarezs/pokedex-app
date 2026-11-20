@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import PokemonDetail from "./pages/PokemonDetail";
 import Favorites from "./pages/Favorites";
@@ -47,6 +48,14 @@ export default function App() {
 
         {/* Botón flotante Volver arriba (PokéBall) */}
         <ScrollToTop />
+
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          offset={16}
+          toastOptions={{ duration: 3200, className: "font-sans" }}
+        />
       </div>
     </AuthProvider>
   );

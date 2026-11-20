@@ -37,32 +37,31 @@ export default function StatCard({
 
   return (
     <article
-      className="glass-surface animate-fade-up flex flex-col justify-between rounded-card border border-line p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift"
+      className="glass-surface flex animate-fade-up flex-col rounded-card border border-line p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift motion-safe:hover:-translate-y-0.5"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink-500">
-            {label}
-          </p>
-
-          {loading ? (
-            <Skeleton className="mt-2 h-9 w-20" />
-          ) : children ? (
-            children
-          ) : (
-            <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight text-ink-900">
-              {display.toLocaleString("es-CL")}
-            </p>
-          )}
-        </div>
-
+        <p className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wider text-ink-500">
+          {label}
+        </p>
         <span
           aria-hidden="true"
           className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ring-1 ${TONES[tone]}`}
         >
           <Icon className="h-5 w-5" strokeWidth={2.25} />
         </span>
+      </div>
+
+      <div className="mt-1 min-w-0">
+        {loading ? (
+          <Skeleton className="h-9 w-20" />
+        ) : children ? (
+          children
+        ) : (
+          <p className="text-3xl font-extrabold tabular-nums tracking-tight text-ink-900">
+            {display.toLocaleString("es-CL")}
+          </p>
+        )}
       </div>
     </article>
   );
