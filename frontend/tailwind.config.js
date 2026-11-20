@@ -18,18 +18,25 @@ export default {
           700: "var(--pc-ink-700)",
           500: "var(--pc-ink-500)",
         },
+        accent: {
+          trainers: "#DC2626",
+          gifts: "#F59E0B",
+          recovery: "#7C3AED",
+        },
       },
       maxWidth: {
         ficha: "var(--pc-container)",
         home: "var(--pc-container-home)",
       },
       borderRadius: {
-        card: "var(--pc-radius-card)",
-        control: "var(--pc-radius-control)",
+        card: "22px",
+        control: "13px",
       },
       boxShadow: {
         card: "var(--pc-shadow-card)",
         ambient: "var(--pc-shadow-ambient)",
+        soft: "0 4px 20px -6px rgb(0 0 0 / 0.08)",
+        lift: "0 14px 34px -10px rgb(0 0 0 / 0.18)",
       },
       fontSize: {
         display: [
@@ -40,6 +47,19 @@ export default {
         meta: ["var(--pc-text-meta)", { lineHeight: "1.5" }],
         body: ["var(--pc-text-body)", { lineHeight: "1.65" }],
         value: ["var(--pc-text-value)", { lineHeight: "1.35" }],
+      },
+      keyframes: {
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        pop: {
+          "50%": { transform: "scale(1.12)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up .2s ease-out",
+        pop: "pop .35s ease-out",
       },
     },
   },
