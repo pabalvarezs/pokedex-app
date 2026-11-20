@@ -1,3 +1,5 @@
+import type { KeyboardEvent } from "react";
+import { KeyRound, Star, Users, type LucideIcon } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 
 export type AdminTab = "users" | "favorites" | "resets";
@@ -5,7 +7,9 @@ export type AdminTab = "users" | "favorites" | "resets";
 export interface AdminTabMeta {
   id: AdminTab;
   label: string;
-  icon: string;
+  /** Etiqueta compacta para que las tres pestañas quepan en móvil. */
+  shortLabel: string;
+  icon: LucideIcon;
   /** Acento de la pestaña; se expone como `--accent` en el contenedor. */
   accent: string;
   /** Texto legible sobre el acento. */
@@ -16,21 +20,24 @@ export const ADMIN_TABS: AdminTabMeta[] = [
   {
     id: "users",
     label: "Entrenadores",
-    icon: "👥",
+    shortLabel: "Cuentas",
+    icon: Users,
     accent: "#DC2626",
     ink: "#ffffff",
   },
   {
     id: "favorites",
     label: "Regalones",
-    icon: "⭐",
+    shortLabel: "Regalones",
+    icon: Star,
     accent: "#F59E0B",
     ink: "#451a03",
   },
   {
     id: "resets",
     label: "Recuperaciones",
-    icon: "🔑",
+    shortLabel: "Claves",
+    icon: KeyRound,
     accent: "#7C3AED",
     ink: "#ffffff",
   },
@@ -59,15 +66,37 @@ export default function AdminTabs({
 }: Props) {
   const reduceMotion = useReducedMotion();
 
+  const moveFocus = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+
+    const tabs = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+        '[role="tab"]'
+      ) ?? []
+    );
+    const index = tabs.indexOf(event.currentTarget);
+    if (index < 0) return;
+
+    const nextIndex =
+      event.key === "ArrowRight"
+        ? (index + 1) % tabs.length
+        : (index - 1 + tabs.length) % tabs.length;
+
+    tabs[nextIndex]?.focus();
+    onChange(ADMIN_TABS[nextIndex].id);
+  };
+
   return (
     <div
       role="tablist"
       aria-label="Secciones del panel de administración"
-      className="glass-surface glass-blur mb-5 flex w-full flex-col gap-1.5 rounded-card border border-line p-1 shadow-soft sm:inline-flex sm:w-auto sm:flex-row"
+      className="glass-surface glass-blur mb-5 flex w-full snap-x gap-1.5 overflow-x-auto rounded-card border border-line p-1 shadow-soft sm:inline-flex sm:w-auto sm:overflow-visible"
     >
       {ADMIN_TABS.map((tab) => {
         const active = value === tab.id;
         const count = counts?.[tab.id] ?? 0;
+        const Icon = tab.icon;
 
         return (
           <button
@@ -76,7 +105,8 @@ export default function AdminTabs({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(tab.id)}
-            className={`focus-accent relative flex w-full items-center justify-center rounded-control px-4 py-2.5 text-sm font-bold transition sm:w-auto ${
+            onKeyDown={moveFocus}
+            className={`focus-accent relative flex shrink-0 snap-start items-center justify-center rounded-control px-3 py-2.5 text-sm font-bold transition duration-150 sm:px-4 ${
               active
                 ? "text-[color:var(--accent-ink)]"
                 : "text-ink-500 hover:bg-slate-100 hover:text-ink-700"
@@ -96,11 +126,12 @@ export default function AdminTabs({
               />
             )}
 
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <span aria-hidden="true">{tab.icon}</span>
-              <span>{tab.label}</span>
+            <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              <span className="sm:hidden">{tab.shortLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
               <span
-                className={`inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                className={`hidden min-w-[1.5rem] sm:inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
                   active
                     ? "bg-white/30 text-[color:var(--accent-ink)]"
                     : "bg-slate-100 text-ink-500"
@@ -109,7 +140,7 @@ export default function AdminTabs({
                 {loading ? (
                   <span
                     aria-hidden="true"
-                    className="h-2 w-3 rounded-full bg-current opacity-40"
+                    className="h-2 w-3 rounded-full bg-current opacity-40 motion-safe:animate-pulse"
                   />
                 ) : (
                   count
