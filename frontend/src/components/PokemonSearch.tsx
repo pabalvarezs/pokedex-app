@@ -317,7 +317,7 @@ export default function PokemonSearch() {
           role="listbox"
           aria-label="Sugerencias de Pokémon"
           aria-busy={isLoading}
-          className="glass-surface glass-blur absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-line shadow-ambient"
+          className="absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-line bg-white shadow-ambient"
         >
           <div className="flex items-center justify-between gap-3 border-b border-line-soft bg-slate-50/80 px-3.5 py-2">
             <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink-500">
