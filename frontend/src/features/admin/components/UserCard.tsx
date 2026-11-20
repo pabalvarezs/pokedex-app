@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { AdminUser } from "../../../services/api";
+import { formatRelativeDate, getLastLoginAt } from "../lib/dates";
 import IconButton from "./IconButton";
 import RoleBadge from "./RoleBadge";
 import UserAvatar from "./UserAvatar";
@@ -19,6 +20,7 @@ interface Props {
   copied: boolean;
   copying: boolean;
   deleting: boolean;
+  showLastLogin: boolean;
   onCopyLink: (user: AdminUser) => void;
   onEdit: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
@@ -32,10 +34,13 @@ export default function UserCard({
   copied,
   copying,
   deleting,
+  showLastLogin,
   onCopyLink,
   onEdit,
   onDelete,
 }: Props) {
+  const lastLogin = getLastLoginAt(user);
+
   return (
     <article className="glass-surface rounded-card border border-line p-4 shadow-soft">
       <div className="flex items-start gap-3">
@@ -68,6 +73,11 @@ export default function UserCard({
           </p>
         )}
         <p>Creado el {new Date(user.createdAt).toLocaleDateString("es-CL")}</p>
+        {showLastLogin && (
+          <p>
+            Último acceso: {lastLogin ? formatRelativeDate(lastLogin) : "—"}
+          </p>
+        )}
       </div>
 
       <div className="mt-3 flex justify-end gap-2 border-t border-line-soft pt-3">

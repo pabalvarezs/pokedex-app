@@ -28,6 +28,7 @@ import UserFormDrawer, {
 import UserRow from "../../features/admin/components/UserRow";
 import { useCopyFeedback } from "../../features/admin/hooks/useCopyFeedback";
 import { copyToClipboard } from "../../features/admin/lib/clipboard";
+import { getLastLoginAt } from "../../features/admin/lib/dates";
 
 export default function UsersAdmin() {
   const queryClient = useQueryClient();
@@ -148,6 +149,11 @@ export default function UsersAdmin() {
 
   const loading = usersQuery.isLoading || favoritesQuery.isLoading;
   const hasError = usersQuery.isError || favoritesQuery.isError;
+  // El backend aún no expone este campo: la columna solo aparece si llega.
+  const hasLastLogin = useMemo(
+    () => users.some((user) => Boolean(getLastLoginAt(user))),
+    [users]
+  );
   const onlyAdmin =
     !loading && users.length === 1 && users[0]?.role === "admin";
 
@@ -247,12 +253,15 @@ export default function UsersAdmin() {
                   <th scope="col" className="px-4 py-3 text-left font-bold">Rol</th>
                   <th scope="col" className="px-4 py-3 text-left font-bold">Regalones</th>
                   <th scope="col" className="px-4 py-3 text-left font-bold">Creado</th>
+                  {hasLastLogin && (
+                    <th scope="col" className="px-4 py-3 text-left font-bold">Último acceso</th>
+                  )}
                   <th scope="col" className="px-4 py-3 text-right font-bold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr aria-hidden="true">
-                  <td colSpan={5} className="p-0">
+                  <td colSpan={hasLastLogin ? 6 : 5} className="p-0">
                     <PokeballDivider />
                   </td>
                 </tr>
@@ -265,6 +274,7 @@ export default function UsersAdmin() {
                     copied={copied === String(user.id)}
                     copying={copyingId === user.id}
                     deleting={remove.isPending}
+                    showLastLogin={hasLastLogin}
                     onCopyLink={handleCopyLink}
                     onEdit={openEdit}
                     onDelete={setDeleteTarget}
@@ -284,6 +294,7 @@ export default function UsersAdmin() {
                 copied={copied === String(user.id)}
                 copying={copyingId === user.id}
                 deleting={remove.isPending}
+                showLastLogin={hasLastLogin}
                 onCopyLink={handleCopyLink}
                 onEdit={openEdit}
                 onDelete={setDeleteTarget}

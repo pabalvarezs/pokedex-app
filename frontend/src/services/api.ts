@@ -343,6 +343,10 @@ export interface AdminUser {
   email: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Opcional: el backend aún no lo expone, se muestra solo si llega. */
+  last_login_at?: string | null;
+  lastLoginAt?: string | null;
+  last_login?: string | null;
 }
 
 export interface AdminUserInput {

@@ -7,6 +7,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { AdminUser } from "../../../services/api";
+import { formatDayLabel, formatRelativeDate, getLastLoginAt } from "../lib/dates";
 import IconButton from "./IconButton";
 import RoleBadge from "./RoleBadge";
 import UserAvatar from "./UserAvatar";
@@ -18,6 +19,7 @@ interface Props {
   copied: boolean;
   copying: boolean;
   deleting: boolean;
+  showLastLogin: boolean;
   onCopyLink: (user: AdminUser) => void;
   onEdit: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
@@ -30,10 +32,13 @@ export default function UserRow({
   copied,
   copying,
   deleting,
+  showLastLogin,
   onCopyLink,
   onEdit,
   onDelete,
 }: Props) {
+  const lastLogin = getLastLoginAt(user);
+
   return (
     <tr className="group border-b border-line-soft transition-colors duration-150 hover:bg-white/50">
       <td className="px-4 py-3">
@@ -67,6 +72,17 @@ export default function UserRow({
       <td className="px-4 py-3 text-xs text-ink-500">
         {new Date(user.createdAt).toLocaleDateString("es-CL")}
       </td>
+      {showLastLogin && (
+        <td className="px-4 py-3 text-xs text-ink-500">
+          {lastLogin ? (
+            <time dateTime={lastLogin} title={formatDayLabel(lastLogin)}>
+              {formatRelativeDate(lastLogin)}
+            </time>
+          ) : (
+            "—"
+          )}
+        </td>
+      )}
       <td className="px-4 py-3">
         <div className="flex justify-end gap-2">
           <IconButton

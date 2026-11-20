@@ -6,6 +6,8 @@ export interface TypeColor {
   bg: string;
   text: string;
   ring: string;
+  /** Color sólido del tipo, útil para gráficos. */
+  badge: string;
   /** Degradado CSS listo para `backgroundImage`. */
   gradient: string;
   /** Tinte suave para el hover de filas. */
@@ -42,6 +44,7 @@ const FALLBACK: TypeColor = {
   bg: "bg-slate-400",
   text: "text-white",
   ring: "ring-slate-400",
+  badge: "#94a3b8",
   gradient: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
   tint: "hover:bg-slate-50",
 };
@@ -55,6 +58,7 @@ export const TYPE_COLORS: Record<string, TypeColor> = Object.keys(
     bg: info.bg,
     text: info.text,
     ring: info.bg.replace(/^bg-/, "ring-"),
+    badge: info.badge,
     gradient: `linear-gradient(135deg, ${info.gradient[0]} 0%, ${info.gradient[1]} 100%)`,
     tint: TYPE_TINTS[key] ?? FALLBACK.tint,
   };

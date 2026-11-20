@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { lazy, Suspense, type CSSProperties } from "react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -8,6 +8,7 @@ import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
 import PokemonArtwork from "../components/PokemonArtwork";
+import { Skeleton } from "../features/admin/components/Skeleton";
 import AdminTabs, {
   getAdminTabMeta,
   isAdminTab,
@@ -17,6 +18,10 @@ import EmptyState from "../features/admin/components/EmptyState";
 import PokeballWatermark from "../features/admin/components/PokeballWatermark";
 import StatCard from "../features/admin/components/StatCard";
 import { useAdminStats } from "../features/admin/hooks/useAdminStats";
+
+const AnalyticsSection = lazy(
+  () => import("../features/admin/components/analytics/AnalyticsSection")
+);
 
 function spriteUrl(id: number) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
@@ -176,6 +181,10 @@ function AdminDashboard() {
           index={3}
         />
       </section>
+
+      <Suspense fallback={<Skeleton className="mb-5 h-28 w-full" />}>
+        <AnalyticsSection />
+      </Suspense>
 
       <AdminTabs
         value={tab}
