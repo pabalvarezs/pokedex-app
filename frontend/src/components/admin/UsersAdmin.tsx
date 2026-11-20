@@ -1,536 +1,318 @@
-import { FormEvent, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, UserPlus, UsersRound } from "lucide-react";
+import { toast } from "sonner";
 import {
-  AdminUser,
-  GeneratedPasswordReset,
   adminCreatePasswordReset,
   adminCreateUser,
   adminDeleteUser,
+  adminListFavorites,
   adminListUsers,
   adminUpdateUser,
   getApiErrorMessage,
+  type AdminUser,
+  type GeneratedPasswordReset,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-
-type Role = "admin" | "trainer";
-
-interface FormState {
-  username: string;
-  name: string;
-  password: string;
-  role: Role;
-  avatar: string;
-  email: string;
-}
-
-const EMPTY_FORM: FormState = {
-  username: "",
-  name: "",
-  password: "",
-  role: "trainer",
-  avatar: "",
-  email: "",
-};
-
-function roleBadge(role: string) {
-  return role === "admin"
-    ? { label: "Administrador", className: "bg-purple-100 text-purple-800 border-purple-200" }
-    : { label: "Entrenador", className: "bg-blue-50 text-blue-700 border-blue-200" };
-}
+import { PokeballIcon } from "../../components/layout/icons";
+import AdminSectionHeader from "../../features/admin/components/AdminSectionHeader";
+import DeleteUserDialog from "../../features/admin/components/DeleteUserDialog";
+import EmptyState from "../../features/admin/components/EmptyState";
+import PokeballDivider from "../../features/admin/components/PokeballDivider";
+import ResetLinkModal from "../../features/admin/components/ResetLinkModal";
+import { SkeletonRows } from "../../features/admin/components/Skeleton";
+import UserCard from "../../features/admin/components/UserCard";
+import UserFormDrawer, {
+  type UserFormValues,
+} from "../../features/admin/components/UserFormDrawer";
+import UserRow from "../../features/admin/components/UserRow";
+import { useCopyFeedback } from "../../features/admin/hooks/useCopyFeedback";
+import { copyToClipboard } from "../../features/admin/lib/clipboard";
 
 export default function UsersAdmin() {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
 
-  const { data: users = [], isLoading, isError } = useQuery({
+  const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: adminListUsers,
   });
+  const favoritesQuery = useQuery({
+    queryKey: ["admin", "favorites"],
+    queryFn: adminListFavorites,
+  });
 
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const users = usersQuery.data ?? [];
+  const favorites = favoritesQuery.data ?? [];
+
+  const favoriteCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const favorite of favorites) {
+      counts.set(favorite.userId, (counts.get(favorite.userId) ?? 0) + 1);
+    }
+    return counts;
+  }, [favorites]);
+
+  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [resetLink, setResetLink] = useState<GeneratedPasswordReset | null>(null);
+  const [copyingId, setCopyingId] = useState<number | null>(null);
+  const { copied, markCopied } = useCopyFeedback();
 
   const closeForm = () => {
-    setShowForm(false);
+    setFormOpen(false);
     setEditing(null);
-    setForm(EMPTY_FORM);
     setFormError(null);
   };
 
   const openCreate = () => {
     setEditing(null);
-    setForm(EMPTY_FORM);
     setFormError(null);
-    setShowForm(true);
+    setFormOpen(true);
   };
 
   const openEdit = (user: AdminUser) => {
     setEditing(user);
-    setForm({
-      username: user.username,
-      name: user.name,
-      password: "",
-      role: user.role,
-      avatar: user.avatar,
-      email: user.email ?? "",
-    });
     setFormError(null);
-    setShowForm(true);
+    setFormOpen(true);
   };
 
   const save = useMutation({
-    mutationFn: async () => {
+    mutationFn: (values: UserFormValues) => {
       if (editing) {
         return adminUpdateUser(editing.id, {
-          name: form.name.trim(),
-          role: form.role,
-          avatar: form.avatar.trim(),
-          password: form.password || undefined,
-          email: form.email.trim() || null,
+          name: values.name,
+          role: values.role,
+          avatar: values.avatar,
+          password: values.password || undefined,
+          email: values.email || null,
         });
       }
       return adminCreateUser({
-        username: form.username.trim(),
-        name: form.name.trim(),
-        password: form.password,
-        role: form.role,
-        avatar: form.avatar.trim() || undefined,
-        email: form.email.trim() || undefined,
+        username: values.username,
+        name: values.name,
+        password: values.password,
+        role: values.role,
+        avatar: values.avatar || undefined,
+        email: values.email || undefined,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "favorites"] });
-      setNotice(editing ? "Entrenador actualizado correctamente." : "Entrenador creado correctamente.");
-      setActionError(null);
+      toast.success(editing ? "Entrenador actualizado" : "Entrenador creado");
       closeForm();
     },
     onError: (error) => setFormError(getApiErrorMessage(error)),
   });
 
   const remove = useMutation({
-    mutationFn: (id: number) => adminDeleteUser(id),
+    mutationFn: (user: AdminUser) => adminDeleteUser(user.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "favorites"] });
-      setNotice("Entrenador eliminado correctamente.");
-      setActionError(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "password-resets"] });
+      toast.success("Entrenador eliminado");
+      setDeleteTarget(null);
     },
-    onError: (error) => setActionError(getApiErrorMessage(error)),
+    onError: (error) => toast.error(getApiErrorMessage(error)),
   });
 
   const generateReset = useMutation({
-    mutationFn: (id: number) => adminCreatePasswordReset(id),
-    onSuccess: (data) => {
-      setResetLink(data);
-      setNotice(
-        data.emailSent
-          ? `Enlace generado y enviado por correo a @${data.username}.`
-          : `Enlace generado para @${data.username}. Cópialo y entrégaselo.`
-      );
-      setActionError(null);
+    mutationFn: (user: AdminUser) => adminCreatePasswordReset(user.id),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "password-resets"] });
     },
-    onError: (error) => setActionError(getApiErrorMessage(error)),
   });
 
-  const copyResetLink = async () => {
-    if (!resetLink) return;
+  const handleCopyLink = async (user: AdminUser) => {
+    setCopyingId(user.id);
     try {
-      await navigator.clipboard.writeText(resetLink.url);
-      setNotice("Enlace copiado al portapapeles.");
-      setActionError(null);
-    } catch {
-      setActionError("No se pudo copiar automáticamente; selecciona el enlace y cópialo a mano.");
+      const data = await generateReset.mutateAsync(user);
+      const ok = await copyToClipboard(data.url);
+      if (ok) {
+        markCopied(String(user.id));
+        toast.success("¡Enlace copiado!");
+      } else {
+        setResetLink(data);
+        toast.error("No pudimos copiar solos; copia el enlace a mano.");
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
+    } finally {
+      setCopyingId(null);
     }
   };
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    setFormError(null);
-    setNotice(null);
-
-    if (!form.name.trim()) {
-      setFormError("El nombre del entrenador es obligatorio, po.");
-      return;
-    }
-    if (!editing && !/^[a-z0-9_.-]{3,30}$/i.test(form.username.trim())) {
-      setFormError("El usuario debe tener entre 3 y 30 caracteres (letras, números, punto, guion o guion bajo).");
-      return;
-    }
-    if (!editing && form.password.length < 6) {
-      setFormError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (editing && form.password && form.password.length < 6) {
-      setFormError("La nueva contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      setFormError("El email no tiene un formato válido.");
-      return;
-    }
-
-    save.mutate();
-  };
-
-  const handleGenerateReset = (user: AdminUser) => {
-    setNotice(null);
-    setActionError(null);
-    setResetLink(null);
-    generateReset.mutate(user.id);
-  };
-
-  const handleDelete = (user: AdminUser) => {
-    setNotice(null);
-    setActionError(null);
-    if (!window.confirm(`¿Eliminar la cuenta de ${user.name} (@${user.username}) y todos sus regalones?`)) {
-      return;
-    }
-    remove.mutate(user.id);
-  };
+  const loading = usersQuery.isLoading || favoritesQuery.isLoading;
+  const hasError = usersQuery.isError || favoritesQuery.isError;
+  const onlyAdmin =
+    !loading && users.length === 1 && users[0]?.role === "admin";
 
   return (
     <section>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-lg sm:text-xl font-black text-gray-800">Entrenadores</h2>
-          <p className="text-xs text-gray-500">
-            {users.length} cuenta{users.length === 1 ? "" : "s"} registrada{users.length === 1 ? "" : "s"} en el sitio
-          </p>
-        </div>
-        <button
-          onClick={showForm ? closeForm : openCreate}
-          className="btn-accent inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-sm"
+      <AdminSectionHeader
+        title="Entrenadores"
+        description={
+          loading
+            ? "Cargando las cuentas del sitio…"
+            : `${users.length} cuenta${users.length === 1 ? "" : "s"} registrada${
+                users.length === 1 ? "" : "s"
+              } · ${favorites.length} regalón${favorites.length === 1 ? "" : "es"} en total.`
+        }
+        actions={
+          <button
+            type="button"
+            onClick={openCreate}
+            className="btn-accent focus-accent inline-flex items-center justify-center gap-2 rounded-control px-4 py-2.5 text-sm font-bold shadow-sm transition duration-150"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Nuevo entrenador
+          </button>
+        }
+      />
+
+      {hasError ? (
+        <div
+          role="alert"
+          className="glass-surface rounded-card border border-red-200 bg-red-50/80 p-4 text-sm font-semibold text-red-700"
         >
-          <span>{showForm ? "✕" : "+"}</span>
-          <span>{showForm ? "Cerrar formulario" : "Nuevo entrenador"}</span>
-        </button>
-      </div>
-
-      {notice && (
-        <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
-          ✅ {notice}
+          No pudimos cargar los entrenadores. Revisa tu sesión e inténtalo de nuevo.
+          <button
+            type="button"
+            onClick={() => {
+              usersQuery.refetch();
+              favoritesQuery.refetch();
+            }}
+            className="focus-accent ml-2 underline decoration-2 underline-offset-2"
+          >
+            Reintentar
+          </button>
         </div>
-      )}
-      {actionError && (
-        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
-          ⚠️ {actionError}
-        </div>
-      )}
-
-      {resetLink && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-black text-amber-900">
-                🔑 Enlace de recuperación para @{resetLink.username}
-              </p>
-              <p className="text-[11px] text-amber-700 mt-0.5">
-                Vence el {new Date(resetLink.expiresAt).toLocaleString("es-CL")}.{" "}
-                {resetLink.emailSent
-                  ? "También se envió al correo registrado."
-                  : resetLink.hasEmail
-                    ? "No se pudo enviar por correo; compártelo tú."
-                    : "El entrenador no tiene email registrado; compártelo tú."}
-              </p>
-            </div>
+      ) : loading ? (
+        <>
+          <div className="glass-surface hidden rounded-card border border-line p-4 shadow-soft md:block">
+            <SkeletonRows rows={5} />
+          </div>
+          <div className="grid gap-3 md:hidden">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="skeleton h-32 w-full rounded-card" />
+            ))}
+          </div>
+        </>
+      ) : onlyAdmin ? (
+        <EmptyState
+          tone="trainers"
+          illustration={<PokeballIcon className="h-8 w-8" />}
+          title="Invita a más entrenadores"
+          description="Por ahora solo está la cuenta de administrador. Crea la primera cuenta para que empiecen a guardar sus regalones."
+          action={
             <button
               type="button"
-              onClick={() => setResetLink(null)}
-              aria-label="Cerrar enlace"
-              className="shrink-0 w-7 h-7 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-black transition"
+              onClick={openCreate}
+              className="btn-accent focus-accent inline-flex items-center gap-2 rounded-control px-4 py-2.5 text-sm font-bold shadow-sm transition duration-150"
             >
-              ✕
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+              Crear entrenador
             </button>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 mt-3">
-            <input
-              readOnly
-              value={resetLink.url}
-              onFocus={(event) => event.currentTarget.select()}
-              className="flex-1 min-w-0 border border-amber-300 rounded-xl px-3 py-2 text-xs bg-white text-amber-900 font-mono"
-            />
-            <button
-              type="button"
-              onClick={copyResetLink}
-              className="shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl text-xs font-bold transition"
-            >
-              Copiar enlace
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="glass-surface glass-blur mb-5 border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-sm"
-        >
-          <h3 className="text-sm font-black text-gray-800 mb-4">
-            {editing ? `Editar a ${editing.name}` : "Crear nuevo entrenador"}
-          </h3>
-
-          {formError && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
-              ⚠️ {formError}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="block">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Usuario
-              </span>
-              <input
-                type="text"
-                value={form.username}
-                disabled={!!editing}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-500"
-                placeholder="ej: ash_ketchum"
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Nombre visible
-              </span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="ej: Ash Ketchum"
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Email (opcional)
-              </span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="entrenador@correo.cl"
-              />
-              <span className="block text-[10px] text-gray-400 mt-1">
-                Se usa para enviar el enlace de recuperación de contraseña.
-              </span>
-            </label>
-
-            <label className="block">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                {editing ? "Nueva contraseña (opcional)" : "Contraseña"}
-              </span>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder={editing ? "Dejar vacío para mantener la actual" : "Mínimo 6 caracteres"}
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                Rol
-              </span>
-              <select
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <option value="trainer">Entrenador</option>
-                <option value="admin">Administrador</option>
-              </select>
-            </label>
-
-            <label className="block sm:col-span-2">
-              <span className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                URL del avatar (opcional)
-              </span>
-              <input
-                type="url"
-                value={form.avatar}
-                onChange={(e) => setForm({ ...form, avatar: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="https://..."
-              />
-            </label>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 mt-5">
-            <button
-              type="submit"
-              disabled={save.isPending}
-              className="btn-accent px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-sm disabled:opacity-50"
-            >
-              {save.isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear entrenador"}
-            </button>
-            <button
-              type="button"
-              onClick={closeForm}
-              className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
-
-      {isLoading ? (
-        <div className="text-center py-12 text-sm text-gray-500 font-medium">Cargando entrenadores...</div>
-      ) : isError ? (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-semibold">
-          No se pudieron cargar los entrenadores. Revisa tu sesión e inténtalo de nuevo.
-        </div>
+          }
+        />
       ) : users.length === 0 ? (
-        <div className="glass-surface text-center py-12 border border-gray-200 rounded-2xl text-sm text-gray-500">
-          Todavía no hay entrenadores registrados.
-        </div>
+        <EmptyState
+          icon={UsersRound}
+          tone="trainers"
+          title="Todavía no hay entrenadores"
+          description="Crea la primera cuenta para empezar a armar la liga."
+          action={
+            <button
+              type="button"
+              onClick={openCreate}
+              className="btn-accent focus-accent inline-flex items-center gap-2 rounded-control px-4 py-2.5 text-sm font-bold shadow-sm transition duration-150"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Crear entrenador
+            </button>
+          }
+        />
       ) : (
         <>
-          {/* Tabla escritorio */}
-          <div className="glass-surface hidden md:block border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="glass-surface hidden overflow-hidden rounded-card border border-line shadow-soft md:block">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
+              <caption className="sr-only">Cuentas de entrenadores del sitio</caption>
+              <thead className="bg-white/40 text-[11px] uppercase tracking-wider text-ink-500">
                 <tr>
-                  <th className="text-left font-bold px-4 py-3">Entrenador</th>
-                  <th className="text-left font-bold px-4 py-3">Rol</th>
-                  <th className="text-left font-bold px-4 py-3">Creado</th>
-                  <th className="text-right font-bold px-4 py-3">Acciones</th>
+                  <th scope="col" className="px-4 py-3 text-left font-bold">Entrenador</th>
+                  <th scope="col" className="px-4 py-3 text-left font-bold">Rol</th>
+                  <th scope="col" className="px-4 py-3 text-left font-bold">Regalones</th>
+                  <th scope="col" className="px-4 py-3 text-left font-bold">Creado</th>
+                  <th scope="col" className="px-4 py-3 text-right font-bold">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {users.map((user) => {
-                  const badge = roleBadge(user.role);
-                  const isSelf = currentUser?.username === user.username;
-                  return (
-                    <tr key={user.id} className="hover:bg-gray-50/70 transition">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={user.avatar}
-                            alt={user.name}
-                            className="w-9 h-9 rounded-full bg-gray-100 object-contain border border-gray-200 shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-800 truncate">
-                              {user.name} {isSelf && <span className="text-[10px] text-red-600">(tú)</span>}
-                            </p>
-                            <p className="text-xs text-gray-400 truncate">@{user.username}</p>
-                            {user.email && (
-                              <p className="text-[11px] text-gray-400 truncate">✉️ {user.email}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-black border ${badge.className}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString("es-CL")}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleGenerateReset(user)}
-                            disabled={generateReset.isPending}
-                            title="Generar enlace de recuperación"
-                            className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Enlace
-                          </button>
-                          <button
-                            onClick={() => openEdit(user)}
-                            className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user)}
-                            disabled={isSelf || remove.isPending}
-                            title={isSelf ? "No puedes eliminar tu propia cuenta" : "Eliminar entrenador"}
-                            className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody>
+                <tr aria-hidden="true">
+                  <td colSpan={5} className="p-0">
+                    <PokeballDivider />
+                  </td>
+                </tr>
+                {users.map((user) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    favoritesCount={favoriteCounts.get(user.username) ?? 0}
+                    isSelf={currentUser?.username === user.username}
+                    copied={copied === String(user.id)}
+                    copying={copyingId === user.id}
+                    deleting={remove.isPending}
+                    onCopyLink={handleCopyLink}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
 
-          {/* Tarjetas móvil */}
-          <div className="md:hidden space-y-3">
-            {users.map((user) => {
-              const badge = roleBadge(user.role);
-              const isSelf = currentUser?.username === user.username;
-              return (
-                <div key={user.id} className="glass-surface border border-gray-200 rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-11 h-11 rounded-full bg-gray-100 object-contain border border-gray-200 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-gray-800 truncate">
-                        {user.name} {isSelf && <span className="text-[10px] text-red-600">(tú)</span>}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">@{user.username}</p>
-                      {user.email && (
-                        <p className="text-[11px] text-gray-400 truncate">✉️ {user.email}</p>
-                      )}
-                    </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border shrink-0 ${badge.className}`}>
-                      {badge.label}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-2">
-                    Creado el {new Date(user.createdAt).toLocaleDateString("es-CL")}
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => handleGenerateReset(user)}
-                      disabled={generateReset.isPending}
-                      className="flex-1 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Enlace
-                    </button>
-                    <button
-                      onClick={() => openEdit(user)}
-                      className="flex-1 px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      disabled={isSelf || remove.isPending}
-                      className="flex-1 px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid gap-3 md:hidden">
+            {users.map((user) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                favoritesCount={favoriteCounts.get(user.username) ?? 0}
+                isSelf={currentUser?.username === user.username}
+                copied={copied === String(user.id)}
+                copying={copyingId === user.id}
+                deleting={remove.isPending}
+                onCopyLink={handleCopyLink}
+                onEdit={openEdit}
+                onDelete={setDeleteTarget}
+              />
+            ))}
           </div>
         </>
       )}
+
+      <UserFormDrawer
+        open={formOpen}
+        editing={editing}
+        pending={save.isPending}
+        error={formError}
+        onClose={closeForm}
+        onSubmit={(values) => {
+          setFormError(null);
+          save.mutate(values);
+        }}
+      />
+
+      <DeleteUserDialog
+        user={deleteTarget}
+        loading={remove.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={(user) => remove.mutate(user)}
+      />
+
+      <ResetLinkModal data={resetLink} onClose={() => setResetLink(null)} />
     </section>
   );
 }

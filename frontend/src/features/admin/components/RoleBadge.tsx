@@ -1,35 +1,38 @@
+import { Backpack, ShieldCheck } from "lucide-react";
 import type { AdminUser } from "../../../services/api";
 
 export type Role = AdminUser["role"];
 
-const ROLE_STYLES: Record<Role, { label: string; badge: string; dot: string }> = {
+const ROLE_STYLES: Record<
+  Role,
+  { label: string; badge: string; Icon: typeof ShieldCheck }
+> = {
   admin: {
     label: "Administrador",
-    badge: "border-accent-recovery/25 bg-accent-recovery/10 text-accent-recovery",
-    dot: "bg-accent-recovery",
+    badge: "border-violet-200 bg-violet-50 text-violet-700",
+    Icon: ShieldCheck,
   },
   trainer: {
     label: "Entrenador",
-    badge: "border-sky-200 bg-sky-50 text-sky-700",
-    dot: "bg-sky-500",
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    Icon: Backpack,
   },
 };
 
 interface Props {
   role: Role;
-  withDot?: boolean;
+  withIcon?: boolean;
 }
 
-export default function RoleBadge({ role, withDot = true }: Props) {
+export default function RoleBadge({ role, withIcon = true }: Props) {
   const style = ROLE_STYLES[role];
+  const Icon = style.Icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black ${style.badge}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${style.badge}`}
     >
-      {withDot && (
-        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-      )}
+      {withIcon && <Icon className="h-3 w-3" aria-hidden="true" />}
       {style.label}
     </span>
   );
