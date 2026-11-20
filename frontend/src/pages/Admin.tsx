@@ -127,6 +127,7 @@ function AdminDashboard() {
       >
         <StatCard
           label="Entrenadores"
+          shortLabel="Cuentas"
           icon={Users}
           tone="trainers"
           value={stats.total}
@@ -143,6 +144,7 @@ function AdminDashboard() {
         />
         <StatCard
           label="Regalón reciente"
+          shortLabel="Reciente"
           icon={Clock}
           tone="recent"
           loading={statsLoading}
@@ -166,6 +168,7 @@ function AdminDashboard() {
         </StatCard>
         <StatCard
           label="Recuperaciones"
+          shortLabel="Recup."
           icon={KeyRound}
           tone="recovery"
           value={stats.pendingResets}

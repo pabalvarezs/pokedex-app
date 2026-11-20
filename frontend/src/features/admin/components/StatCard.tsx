@@ -14,6 +14,8 @@ const TONES: Record<StatTone, string> = {
 
 interface Props {
   label: string;
+  /** Etiqueta breve para móvil, donde las tarjetas son angostas. */
+  shortLabel?: string;
   icon: LucideIcon;
   tone: StatTone;
   /** Métrica numérica. Se anima con count-up. */
@@ -26,6 +28,7 @@ interface Props {
 
 export default function StatCard({
   label,
+  shortLabel,
   icon: Icon,
   tone,
   value = 0,
@@ -41,14 +44,15 @@ export default function StatCard({
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wider text-ink-500">
-          {label}
+        <p className="min-w-0 flex-1 break-words text-[10px] font-bold uppercase leading-tight tracking-wider text-ink-500 sm:text-xs">
+          <span className="sm:hidden">{shortLabel ?? label}</span>
+          <span className="hidden sm:inline">{label}</span>
         </p>
         <span
           aria-hidden="true"
-          className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ring-1 ${TONES[tone]}`}
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ring-1 sm:h-11 sm:w-11 ${TONES[tone]}`}
         >
-          <Icon className="h-5 w-5" strokeWidth={2.25} />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.25} />
         </span>
       </div>
 
