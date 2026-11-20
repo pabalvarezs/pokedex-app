@@ -91,7 +91,7 @@ export default function AdminTabs({
     <div
       role="tablist"
       aria-label="Secciones del panel de administración"
-      className="glass-surface glass-blur mb-5 flex w-full snap-x gap-1.5 overflow-x-auto rounded-card border border-line p-1 shadow-soft sm:inline-flex sm:w-auto sm:overflow-visible"
+      className="glass-surface glass-blur mx-auto mb-5 flex w-full snap-x gap-1.5 overflow-x-auto rounded-card border border-line p-1 shadow-soft sm:w-fit sm:overflow-visible"
     >
       {ADMIN_TABS.map((tab) => {
         const active = value === tab.id;
