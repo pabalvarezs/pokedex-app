@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import type { StatTone } from "./StatCard";
 
 const HALOS: Record<StatTone, string> = {
@@ -9,7 +10,9 @@ const HALOS: Record<StatTone, string> = {
 };
 
 interface Props {
-  emoji: string;
+  emoji?: string;
+  icon?: LucideIcon;
+  illustration?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -18,6 +21,8 @@ interface Props {
 
 export default function EmptyState({
   emoji,
+  icon: Icon,
+  illustration,
   title,
   description,
   action,
@@ -27,11 +32,11 @@ export default function EmptyState({
     <div className="glass-surface animate-fade-up rounded-card border border-line px-6 py-12 text-center shadow-soft">
       <span
         aria-hidden="true"
-        className={`mx-auto mb-4 grid h-14 w-14 animate-pop place-items-center rounded-2xl text-2xl ${HALOS[tone]}`}
+        className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl ${HALOS[tone]} motion-safe:animate-pop`}
       >
-        {emoji}
+        {illustration ?? (Icon ? <Icon className="h-6 w-6" /> : <span className="text-2xl">{emoji}</span>)}
       </span>
-      <p className="text-sm font-black text-ink-900">{title}</p>
+      <p className="text-sm font-extrabold text-ink-900">{title}</p>
       {description && (
         <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-ink-500">
           {description}

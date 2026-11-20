@@ -1,7 +1,67 @@
+import { POKEMON_TYPES } from "../../../utils/pokemon";
+
+export interface TypeColor {
+  /** Nombre en español para mostrar. */
+  es: string;
+  bg: string;
+  text: string;
+  ring: string;
+  /** Degradado CSS listo para `backgroundImage`. */
+  gradient: string;
+  /** Tinte suave para el hover de filas. */
+  tint: string;
+}
+
 /**
- * Re-export de la paleta de tipos que ya usa toda la Pokédex.
- * `utils/pokemon.ts` sigue siendo la única fuente de verdad: acá no se
- * duplican colores ni se abre una segunda paleta que pueda divergir.
+ * Tintes explícitos para que Tailwind los genere (no puede inferir clases
+ * construidas en runtime). Una entrada por cada tipo de la Pokédex.
  */
-export { POKEMON_TYPES, getTypeBadge } from "../../../utils/pokemon";
-export type { TypeInfo } from "../../../utils/pokemon";
+const TYPE_TINTS: Record<string, string> = {
+  normal: "hover:bg-neutral-50",
+  fire: "hover:bg-red-50",
+  water: "hover:bg-blue-50",
+  electric: "hover:bg-yellow-50",
+  grass: "hover:bg-emerald-50",
+  ice: "hover:bg-cyan-50",
+  fighting: "hover:bg-orange-50",
+  poison: "hover:bg-purple-50",
+  ground: "hover:bg-amber-50",
+  flying: "hover:bg-indigo-50",
+  psychic: "hover:bg-pink-50",
+  bug: "hover:bg-lime-50",
+  rock: "hover:bg-stone-50",
+  ghost: "hover:bg-violet-50",
+  dragon: "hover:bg-indigo-50",
+  dark: "hover:bg-neutral-100",
+  steel: "hover:bg-slate-50",
+  fairy: "hover:bg-pink-50",
+};
+
+const FALLBACK: TypeColor = {
+  es: "Desconocido",
+  bg: "bg-slate-400",
+  text: "text-white",
+  ring: "ring-slate-400",
+  gradient: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+  tint: "hover:bg-slate-50",
+};
+
+export const TYPE_COLORS: Record<string, TypeColor> = Object.keys(
+  POKEMON_TYPES
+).reduce<Record<string, TypeColor>>((acc, key) => {
+  const info = POKEMON_TYPES[key];
+  acc[key] = {
+    es: info.es,
+    bg: info.bg,
+    text: info.text,
+    ring: info.bg.replace(/^bg-/, "ring-"),
+    gradient: `linear-gradient(135deg, ${info.gradient[0]} 0%, ${info.gradient[1]} 100%)`,
+    tint: TYPE_TINTS[key] ?? FALLBACK.tint,
+  };
+  return acc;
+}, {});
+
+export function getTypeColor(type: string | null | undefined): TypeColor {
+  if (!type) return FALLBACK;
+  return TYPE_COLORS[type.toLowerCase()] ?? FALLBACK;
+}

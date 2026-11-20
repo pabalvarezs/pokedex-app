@@ -1,24 +1,41 @@
-import { useMemo } from "react";
-import { usePokemonPreviews } from "../../../hooks/usePokemonPreviews";
+import { useQuery } from "@tanstack/react-query";
+
+interface PokeApiTypeSlot {
+  type: { name: string };
+}
+
+interface PokeApiPokemon {
+  types: PokeApiTypeSlot[];
+}
+
+async function fetchPokemonTypes(pokemonId: number): Promise<string[]> {
+  const response = await fetch(
+    `https://pokeapi.co/api/v2/pokemon/${pokemonId}`
+  );
+  if (!response.ok) {
+    throw new Error(`No se pudieron cargar los tipos de #${pokemonId}`);
+  }
+  const data = (await response.json()) as PokeApiPokemon;
+  return data.types.map((slot) => slot.type.name);
+}
 
 /**
- * Devuelve los tipos por ID de Pokémon apoyándose en el hook de previews que
- * ya existe (mismo endpoint `/api/pokemon/:id`, misma caché en memoria).
+ * Tipos de un Pokémon desde PokeAPI. Se cachea para siempre en la sesión
+ * (los tipos no cambian) y se conserva 24 h si la pantalla se desmonta.
  */
-export function usePokemonTypes(ids: number[]) {
-  const { previews, pending, failed } = usePokemonPreviews(ids);
-  const signature = ids.join(",");
+export function usePokemonTypes(pokemonId: number) {
+  const query = useQuery({
+    queryKey: ["pokemon", "types", pokemonId],
+    queryFn: () => fetchPokemonTypes(pokemonId),
+    enabled: Number.isInteger(pokemonId) && pokemonId > 0,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    retry: 1,
+  });
 
-  const types = useMemo(() => {
-    const result: Record<number, string[]> = {};
-    for (const id of ids) {
-      const preview = previews[id];
-      if (preview) result[id] = preview.types;
-    }
-    return result;
-    // `signature` resume los IDs sin depender de la identidad del array.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previews, signature]);
-
-  return { types, pending, failed };
+  return {
+    types: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
 }

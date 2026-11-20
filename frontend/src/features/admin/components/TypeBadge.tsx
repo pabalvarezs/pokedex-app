@@ -1,14 +1,20 @@
-import BaseTypeBadge from "../../../components/favorites/TypeBadge";
+import { getTypeColor } from "../lib/typeColors";
 
 interface Props {
-  type?: string | null;
+  type: string;
+  size?: "sm" | "md";
 }
 
-/**
- * Reutiliza el badge de la sección de favoritos. tolera que el tipo todavía
- * no haya llegado (carga diferida) sin romper el layout de la tabla.
- */
-export default function TypeBadge({ type }: Props) {
-  if (!type) return null;
-  return <BaseTypeBadge type={type} />;
+export default function TypeBadge({ type, size = "md" }: Props) {
+  const color = getTypeColor(type);
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full font-extrabold uppercase tracking-wider ring-1 ${color.bg} ${color.text} ${color.ring} ${
+        size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
+      }`}
+    >
+      {color.es}
+    </span>
+  );
 }
