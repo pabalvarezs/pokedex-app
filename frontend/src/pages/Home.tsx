@@ -426,7 +426,7 @@ export default function Home() {
       {/* Buscador predictivo */}
       <section
         aria-label="Buscador de Pokémon"
-        className="glass-surface glass-blur rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-20 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         <PokemonSearch />
       </section>
@@ -434,7 +434,7 @@ export default function Home() {
       {/* Panel de filtros */}
       <section
         aria-label="Filtros y ordenamiento"
-        className="glass-surface glass-blur mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-10 mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         {/* Fila 1: Botones de sección + Sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
