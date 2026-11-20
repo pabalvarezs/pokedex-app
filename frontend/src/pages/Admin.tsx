@@ -1,97 +1,136 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Clock, KeyRound, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
+import PokemonArtwork from "../components/PokemonArtwork";
+import AdminTabs, { type AdminTab } from "../features/admin/components/AdminTabs";
+import EmptyState from "../features/admin/components/EmptyState";
+import StatCard from "../features/admin/components/StatCard";
+import { useAdminStats } from "../features/admin/hooks/useAdminStats";
 
-type Tab = "users" | "favorites" | "resets";
+function spriteUrl(id: number) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+}
 
 export default function Admin() {
   const { user, isAdmin } = useAuth();
-  const [tab, setTab] = useState<Tab>("users");
 
   if (!isAdmin) {
     return (
-      <div className="glass-surface glass-blur max-w-md mx-auto py-16 px-4 text-center rounded-3xl border border-gray-200 shadow-sm mt-6">
-        <span className="text-5xl mb-4 block">🛡️</span>
-        <h1 className="text-xl font-black text-gray-800 mb-2">Acceso restringido</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          {user
-            ? "Tu cuenta no tiene permisos de admin, po."
-            : "Conéctate con una cuenta de admin pa' gestionar el sitio."}
-        </p>
-        <Link
-          to={user ? "/" : "/login"}
-          className="inline-block px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition shadow-sm"
-        >
-          {user ? "Volver a la Pokédex" : "Ir a iniciar sesión"}
-        </Link>
+      <div className="mx-auto mt-6 max-w-md px-4 py-2">
+        <EmptyState
+          emoji="🛡️"
+          title="Acceso restringido"
+          description={
+            user
+              ? "Tu cuenta no tiene permisos de admin, po."
+              : "Conéctate con una cuenta de admin pa' gestionar el sitio."
+          }
+          action={
+            <Link
+              to={user ? "/" : "/login"}
+              className="inline-block rounded-control bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+            >
+              {user ? "Volver a la Pokédex" : "Ir a iniciar sesión"}
+            </Link>
+          }
+        />
       </div>
     );
   }
 
+  return <AdminDashboard />;
+}
+
+/** Se monta solo con sesión de admin: así no dispara queries admin a otros usuarios. */
+function AdminDashboard() {
+  const { user } = useAuth();
+  const [tab, setTab] = useState<AdminTab>("users");
+  const { stats, isLoading: statsLoading } = useAdminStats();
+
   return (
-    <div className="max-w-6xl mx-auto py-2 sm:py-4">
-      <div className="mb-5">
-        <div className="flex items-center gap-2.5">
-          <span className="w-10 h-10 rounded-2xl bg-gray-900 text-white flex items-center justify-center text-xl shrink-0">
-            🛡️
-          </span>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-black text-gray-800 truncate">
-              Panel de admin
-            </h1>
-            <p className="text-xs text-gray-500 truncate">
-              Hola, {user?.name}. Administra los entrenadores y sus regalones.
-            </p>
-          </div>
+    <div className="mx-auto max-w-6xl py-2 sm:py-4">
+      <header className="mb-5 flex items-center gap-2.5">
+        <span className="grid h-11 w-11 shrink-0 animate-pop place-items-center rounded-control bg-gray-900 text-xl text-white">
+          🛡️
+        </span>
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-black text-gray-800 sm:text-2xl">
+            Panel de admin
+          </h1>
+          <p className="truncate text-xs text-gray-500">
+            Hola, {user?.name}. Administra los entrenadores y sus regalones.
+          </p>
         </div>
-      </div>
+      </header>
 
-      <div className="glass-surface glass-blur flex flex-col sm:flex-row gap-1.5 p-1 border border-gray-200 rounded-2xl mb-5 shadow-sm w-full sm:w-auto sm:inline-flex">
-        <button
-          onClick={() => setTab("users")}
-          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
-            tab === "users"
-              ? "bg-red-600 text-white shadow-sm"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
+      <section
+        aria-label="Resumen del panel"
+        className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4"
+      >
+        <StatCard
+          label="Entrenadores"
+          icon={Users}
+          tone="trainers"
+          value={stats.total}
+          loading={statsLoading}
+          index={0}
+        />
+        <StatCard
+          label="Regalones"
+          icon={Star}
+          tone="gifts"
+          value={stats.favorites}
+          loading={statsLoading}
+          index={1}
+        />
+        <StatCard
+          label="Regalón reciente"
+          icon={Clock}
+          tone="recent"
+          loading={statsLoading}
+          index={2}
         >
-          <span>👥</span>
-          <span>Entrenadores</span>
-        </button>
-        <button
-          onClick={() => setTab("favorites")}
-          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
-            tab === "favorites"
-              ? "bg-amber-500 text-amber-950 shadow-sm"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <span>⭐</span>
-          <span>Regalones</span>
-        </button>
-        <button
-          onClick={() => setTab("resets")}
-          className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
-            tab === "resets"
-              ? "bg-slate-800 text-white shadow-sm"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <span>🔑</span>
-          <span>Recuperaciones</span>
-        </button>
-      </div>
+          {stats.recentFavorite ? (
+            <div className="mt-1 flex items-center gap-2">
+              <PokemonArtwork
+                id={stats.recentFavorite.pokemonId}
+                name={stats.recentFavorite.name}
+                src={spriteUrl(stats.recentFavorite.pokemonId)}
+                className="h-9 w-9 shrink-0 object-contain"
+              />
+              <p className="min-w-0 truncate text-lg font-extrabold capitalize leading-tight text-ink-900">
+                {stats.recentFavorite.name}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-1 text-lg font-extrabold text-ink-500">Sin regalones</p>
+          )}
+        </StatCard>
+        <StatCard
+          label="Recuperaciones"
+          icon={KeyRound}
+          tone="recovery"
+          value={stats.pendingResets}
+          loading={statsLoading}
+          index={3}
+        />
+      </section>
 
-      {tab === "users" ? (
-        <UsersAdmin />
-      ) : tab === "favorites" ? (
-        <FavoritesAdmin />
-      ) : (
-        <PasswordResetsAdmin />
-      )}
+      <AdminTabs value={tab} onChange={setTab} />
+
+      <div key={tab} role="tabpanel" className="animate-fade-up">
+        {tab === "users" ? (
+          <UsersAdmin />
+        ) : tab === "favorites" ? (
+          <FavoritesAdmin />
+        ) : (
+          <PasswordResetsAdmin />
+        )}
+      </div>
     </div>
   );
 }
