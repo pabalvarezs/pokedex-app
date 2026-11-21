@@ -9,6 +9,7 @@ import {
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
+import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
 import { getTypeBadge } from "../utils/pokemon";
 import SectionHero, { type HeroStat } from "../components/favorites/SectionHero";
 import FavoritesToolbar, {
@@ -58,6 +59,7 @@ function gridClass(count: number) {
 export default function Favorites() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const reduceMotion = useReducedMotionSafe();
   // Sin sesión no se consultan favoritos: el backend exige token válido
   const userId = user?.username;
 
@@ -212,11 +214,7 @@ export default function Favorites() {
   const handleRemove = (favorite: Favorite) => {
     if (exitingId !== null || remove.isPending) return;
 
-    const reducedMotion =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reducedMotion) {
+    if (reduceMotion) {
       finishRemove(favorite);
       return;
     }

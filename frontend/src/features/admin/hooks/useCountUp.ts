@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useReducedMotionSafe } from "../../../hooks/useReducedMotionSafe";
 
 const DEFAULT_DURATION = 600;
 
@@ -10,9 +11,10 @@ const DEFAULT_DURATION = 600;
 export function useCountUp(value: number, duration = DEFAULT_DURATION): number {
   const [display, setDisplay] = useState(0);
   const current = useRef(0);
+  const reduceMotion = useReducedMotionSafe();
 
   useEffect(() => {
-    if (duration <= 0 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (duration <= 0 || reduceMotion) {
       current.current = value;
       setDisplay(value);
       return;
@@ -39,7 +41,7 @@ export function useCountUp(value: number, duration = DEFAULT_DURATION): number {
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [value, duration]);
+  }, [value, duration, reduceMotion]);
 
   return display;
 }

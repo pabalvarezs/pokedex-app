@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import {
   Bar,
   BarChart,
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function FavoritesPerDayChart({ data, range }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const total = data.reduce((sum, point) => sum + point.total, 0);
   const withData = data.filter((point) => point.total > 0).length;
   const summary = `Regalones guardados por día en los últimos ${range} días: ${total} en total, con actividad en ${withData} días.`;

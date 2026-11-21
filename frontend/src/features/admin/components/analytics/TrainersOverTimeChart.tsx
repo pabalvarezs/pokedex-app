@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import {
   Area,
   AreaChart,
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function TrainersOverTimeChart({ data, range }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const last = data[data.length - 1]?.total ?? 0;
   const first = data[0]?.total ?? 0;
   const summary = `Entrenadores registrados acumulados en los últimos ${range} días: ${first} al inicio y ${last} al final del rango.`;

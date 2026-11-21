@@ -1,6 +1,8 @@
 import type { KeyboardEvent } from "react";
 import { KeyRound, Star, Users, type LucideIcon } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { m } from "framer-motion";
+import { useReducedMotionSafe } from "../../../hooks/useReducedMotionSafe";
+import { motionTokens } from "../../../lib/motion";
 
 export type AdminTab = "users" | "favorites" | "resets";
 
@@ -64,7 +66,7 @@ export default function AdminTabs({
   counts,
   loading = false,
 }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   const moveFocus = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
@@ -113,16 +115,12 @@ export default function AdminTabs({
             }`}
           >
             {active && (
-              <motion.span
+              <m.span
                 layoutId="tab-pill"
                 aria-hidden="true"
                 className="absolute inset-0 rounded-control shadow-soft"
                 style={{ backgroundColor: "var(--accent)" }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 480, damping: 38 }
-                }
+                transition={reduceMotion ? { duration: 0 } : motionTokens.spring}
               />
             )}
 

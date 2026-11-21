@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useReducedMotionSafe } from "../../hooks/useReducedMotionSafe";
 
 import "./scroll-top.css";
 
@@ -17,6 +18,7 @@ import "./scroll-top.css";
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const reduceMotion = useReducedMotionSafe();
 
   // Umbral de aparición: cambiar este valor para mostrar antes/después
   const SCROLL_THRESHOLD = 300;
@@ -39,9 +41,9 @@ export default function ScrollToTop() {
   const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: reduceMotion ? "auto" : "smooth",
     });
-  }, []);
+  }, [reduceMotion]);
 
   useEffect(() => {
     // Comprueba en montaje (recarga de página a mitad de contenido)

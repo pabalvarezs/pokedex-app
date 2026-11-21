@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import { List } from "lucide-react";
 import {
   Bar,
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function FavoritesPerTrainerChart({ data, onOpenAll }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const height = Math.max(220, data.length * 34);
   const summary = `Regalones por entrenador. ${data
     .slice(0, 3)

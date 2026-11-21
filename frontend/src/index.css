@@ -386,3 +386,12 @@
     background-color: rgba(255, 255, 255, 0.94);
   }
 }
+
+/* Las animaciones de entrada de Tailwind también respetan la preferencia
+   del usuario. Se declara fuera de @layer para prevalecer sobre utilidades. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-pop {
+    animation: none;
+  }
+}
