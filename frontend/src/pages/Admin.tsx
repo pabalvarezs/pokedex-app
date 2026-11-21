@@ -195,14 +195,17 @@ function AdminDashboard() {
           onChange={changeTab}
           counts={counts}
           loading={statsLoading}
+          panelId="panel-admin-tab"
         />
 
         <AnimatePresence mode="wait" initial={false}>
           <m.div
             key={tab}
+            id="panel-admin-tab"
             role="tabpanel"
-            aria-label={meta.label}
-            className="relative z-10 pt-4"
+            aria-labelledby={`tab-${tab}`}
+            tabIndex={0}
+            className="relative z-10 pt-4 focus:outline-none"
             variants={fadeUp}
             initial={reduceMotion ? false : "hidden"}
             animate="visible"

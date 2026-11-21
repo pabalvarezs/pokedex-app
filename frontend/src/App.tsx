@@ -1,17 +1,24 @@
+import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
-import Home from "./pages/Home";
-import PokemonDetail from "./pages/PokemonDetail";
-import Favorites from "./pages/Favorites";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import TypePage from "./pages/TypePage";
-import Admin from "./pages/Admin";
+import RouteTransition from "./components/layout/RouteTransition";
+import RouteFallback from "./components/layout/RouteFallback";
 import ScrollToTop from "./components/ScrollToTop";
 import SiteHeader from "./components/layout/SiteHeader";
 import SiteFooter from "./components/layout/SiteFooter";
 import { AuthProvider } from "./context/AuthContext";
+
+// El catálogo es la portada y se mantiene en el chunk inicial por ser la
+// ruta más visitada; el resto se carga bajo demanda al navegar.
+import Home from "./pages/Home";
+
+const PokemonDetail = lazy(() => import("./pages/PokemonDetail"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const TypePage = lazy(() => import("./pages/TypePage"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 export default function App() {
   return (
@@ -31,17 +38,21 @@ export default function App() {
           tabIndex={-1}
           className="flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6"
         >
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/pokemon/:id" element={<PokemonDetail />} />
-            <Route path="/search/:name" element={<PokemonDetail />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/recuperar" element={<ForgotPassword />} />
-            <Route path="/restablecer/:token" element={<ResetPassword />} />
-            <Route path="/type/:type" element={<TypePage />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
+          <RouteTransition>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/pokemon/:id" element={<PokemonDetail />} />
+                <Route path="/search/:name" element={<PokemonDetail />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/recuperar" element={<ForgotPassword />} />
+                <Route path="/restablecer/:token" element={<ResetPassword />} />
+                <Route path="/type/:type" element={<TypePage />} />
+                <Route path="/admin" element={<Admin />} />
+              </Routes>
+            </Suspense>
+          </RouteTransition>
         </main>
 
         <SiteFooter />

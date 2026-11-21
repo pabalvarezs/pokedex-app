@@ -240,20 +240,20 @@ describe("App", () => {
     expect(await screen.findByText(/Inicia sesión para ver tus regalones/i)).toBeTruthy();
   });
 
-  it("no muestra las credenciales de prueba en el login", () => {
+  it("no muestra las credenciales de prueba en el login", async () => {
     renderApp(["/login"]);
 
-    expect(screen.getByText(/Acceso de entrenadores/i)).toBeTruthy();
+    expect(await screen.findByText(/Acceso de entrenadores/i)).toBeTruthy();
     expect(screen.queryByText(/Credenciales de prueba/i)).toBeNull();
     expect(screen.queryByText(/pablito2026/i)).toBeNull();
     expect(screen.queryByText(/Pablito/i)).toBeNull();
   });
 
-  it("ofrece recuperar la contraseña desde el login", () => {
+  it("ofrece recuperar la contraseña desde el login", async () => {
     renderApp(["/login"]);
 
     expect(
-      screen.getByRole("link", { name: /¿Olvidaste tu contraseña\?/i })
+      await screen.findByRole("link", { name: /¿Olvidaste tu contraseña\?/i })
     ).toBeTruthy();
   });
 
