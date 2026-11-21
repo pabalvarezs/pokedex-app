@@ -266,22 +266,21 @@ export default function UsersAdmin() {
                     <PokeballDivider />
                   </td>
                 </tr>
-                <AnimatedList as="tr" items={users} getKey={(user) => user.id}>
-                  {(user) => (
-                    <UserRow
-                      user={user}
-                      favoritesCount={favoriteCounts.get(user.username) ?? 0}
-                      isSelf={currentUser?.username === user.username}
-                      copied={copied === String(user.id)}
-                      copying={copyingId === user.id}
-                      deleting={remove.isPending}
-                      showLastLogin={hasLastLogin}
-                      onCopyLink={handleCopyLink}
-                      onEdit={openEdit}
-                      onDelete={setDeleteTarget}
-                    />
-                  )}
-                </AnimatedList>
+                {users.map((user) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    favoritesCount={favoriteCounts.get(user.username) ?? 0}
+                    isSelf={currentUser?.username === user.username}
+                    copied={copied === String(user.id)}
+                    copying={copyingId === user.id}
+                    deleting={remove.isPending}
+                    showLastLogin={hasLastLogin}
+                    onCopyLink={handleCopyLink}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
               </tbody>
             </table>
           </div>

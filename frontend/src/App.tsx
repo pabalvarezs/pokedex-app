@@ -65,7 +65,16 @@ export default function App() {
           richColors
           closeButton
           offset={16}
-          toastOptions={{ duration: 3200, className: "font-sans" }}
+          toastOptions={{
+            duration: 3200,
+            className: "font-sans !rounded-control !border-line !shadow-ambient",
+            classNames: {
+              title: "!text-sm !font-bold",
+              description: "!text-ink-700",
+              actionButton: "!bg-red-600 !text-white",
+              cancelButton: "!bg-slate-200 !text-ink-700",
+            },
+          }}
         />
       </div>
     </AuthProvider>

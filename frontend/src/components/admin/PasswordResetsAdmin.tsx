@@ -139,16 +139,15 @@ export default function PasswordResetsAdmin() {
                     <PokeballDivider />
                   </td>
                 </tr>
-                <AnimatedList as="tr" items={requests} getKey={(request) => request.id}>
-                  {(request) => (
-                    <ResetRequestRow
-                      request={request}
-                      owner={usersByUsername.get(request.username)}
-                      generating={generatingId === request.id}
-                      onGenerate={handleGenerate}
-                    />
-                  )}
-                </AnimatedList>
+                {requests.map((request) => (
+                  <ResetRequestRow
+                    key={request.id}
+                    request={request}
+                    owner={usersByUsername.get(request.username)}
+                    generating={generatingId === request.id}
+                    onGenerate={handleGenerate}
+                  />
+                ))}
               </tbody>
             </table>
           </div>

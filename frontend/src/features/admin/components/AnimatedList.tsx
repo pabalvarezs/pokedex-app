@@ -25,36 +25,32 @@ interface AnimatedListProps<T> {
   items: T[];
   getKey: (item: T) => string | number;
   children: (item: T) => ReactNode;
-  /** `tr` para tablas, `div` para grillas o listas apiladas. */
-  as?: "tr" | "div";
   maxAnimated?: number;
 }
 
 /**
  * Lista con entrada/salida animada y reacomodación suave mediante `layout`.
  * Solo anima los primeros `maxAnimated` elementos para no saturar el hilo
- * principal; el resto se renderiza con el elemento nativo correspondiente.
+ * principal; el resto se renderiza como `div` sin movimiento.
+ * No usar dentro de `<tbody>`: las filas ya son `<tr>` y se anidarían.
  */
 export default function AnimatedList<T>({
   items,
   getKey,
   children,
-  as = "div",
   maxAnimated = MAX_ANIMATED,
 }: AnimatedListProps<T>) {
   const reduceMotion = useReducedMotionSafe();
-  const MotionItem = (as === "tr" ? m.tr : m.div) as typeof m.div;
-  const NativeItem = as;
 
   return (
     <AnimatePresence initial={false} mode="sync">
       {items.map((item, index) => {
         const key = getKey(item);
         if (reduceMotion || index >= maxAnimated) {
-          return <NativeItem key={key}>{children(item)}</NativeItem>;
+          return <div key={key}>{children(item)}</div>;
         }
         return (
-          <MotionItem
+          <m.div
             key={key}
             layout="position"
             variants={itemVariants}
@@ -63,7 +59,7 @@ export default function AnimatedList<T>({
             exit="exit"
           >
             {children(item)}
-          </MotionItem>
+          </m.div>
         );
       })}
     </AnimatePresence>

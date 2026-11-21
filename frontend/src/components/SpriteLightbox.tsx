@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { createPortal } from "react-dom";
 
@@ -48,6 +48,8 @@ export default function SpriteLightbox({
   );
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   // Apertura / cierre con transición
   useEffect(() => {
@@ -67,6 +69,8 @@ export default function SpriteLightbox({
     if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
+    previouslyFocused.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.body.style.overflow = "hidden";
     const focusTimer = window.setTimeout(
       () => closeButtonRef.current?.focus(),
@@ -76,6 +80,7 @@ export default function SpriteLightbox({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
+      previouslyFocused.current?.focus();
     };
   }, [open]);
 
@@ -149,7 +154,7 @@ export default function SpriteLightbox({
     <div
       role="presentation"
       onMouseDown={handleBackdropMouseDown}
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-2 backdrop-blur-md transition-opacity duration-200 sm:p-6 ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-2 backdrop-blur-md transition-opacity duration-200 motion-reduce:transition-none sm:p-6 ${
         entered ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -157,8 +162,8 @@ export default function SpriteLightbox({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="sprite-lightbox-title"
-        className={`glass-surface glass-blur relative flex h-[94dvh] w-full max-w-[min(1180px,94vw)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-surface shadow-[0_32px_90px_-20px_rgba(15,23,42,0.65)] transition-all duration-200 ease-out sm:h-[88dvh] sm:max-h-[880px] ${
+        aria-labelledby={titleId}
+        className={`glass-surface glass-blur relative flex h-[94dvh] w-full max-w-[min(1180px,94vw)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-surface shadow-[0_32px_90px_-20px_rgba(15,23,42,0.65)] transition-all duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:h-[88dvh] sm:max-h-[880px] ${
           entered
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-3 scale-[0.97] opacity-0"
@@ -172,7 +177,7 @@ export default function SpriteLightbox({
                 #{pokemonId}
               </span>
               <h2
-                id="sprite-lightbox-title"
+                id={titleId}
                 className="truncate text-lg font-extrabold capitalize leading-tight text-ink-900 sm:text-xl"
               >
                 {pokemonName}

@@ -60,21 +60,16 @@ export default function FavoritesTable({
                 <PokeballDivider />
               </td>
             </tr>
-            <AnimatedList
-              as="tr"
-              items={favorites}
-              getKey={(favorite) => favorite.id}
-            >
-              {(favorite) => (
-                <FavoriteRow
-                  favorite={favorite}
-                  ownerName={ownerName(favorite)}
-                  deleting={deleting}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              )}
-            </AnimatedList>
+            {favorites.map((favorite) => (
+              <FavoriteRow
+                key={favorite.id}
+                favorite={favorite}
+                ownerName={ownerName(favorite)}
+                deleting={deleting}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
           </tbody>
         </table>
       </div>
