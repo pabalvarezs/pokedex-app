@@ -1,4 +1,5 @@
 import type { AdminFavorite } from "../../../services/api";
+import AnimatedList from "./AnimatedList";
 import FavoriteCard from "./FavoriteCard";
 import FavoriteRow from "./FavoriteRow";
 import PokeballDivider from "./PokeballDivider";
@@ -59,32 +60,41 @@ export default function FavoritesTable({
                 <PokeballDivider />
               </td>
             </tr>
-            {favorites.map((favorite) => (
-              <FavoriteRow
-                key={favorite.id}
-                favorite={favorite}
-                ownerName={ownerName(favorite)}
-                deleting={deleting}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
+            <AnimatedList
+              as="tr"
+              items={favorites}
+              getKey={(favorite) => favorite.id}
+            >
+              {(favorite) => (
+                <FavoriteRow
+                  favorite={favorite}
+                  ownerName={ownerName(favorite)}
+                  deleting={deleting}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              )}
+            </AnimatedList>
           </tbody>
         </table>
       </div>
 
       <div className="space-y-3 md:hidden">
-        {favorites.map((favorite) => (
-          <FavoriteCard
-            key={favorite.id}
-            favorite={favorite}
-            ownerName={ownerName(favorite)}
-            deleting={deleting}
-            alwaysShowActions
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))}
+        <AnimatedList
+          items={favorites}
+          getKey={(favorite) => favorite.id}
+        >
+          {(favorite) => (
+            <FavoriteCard
+              favorite={favorite}
+              ownerName={ownerName(favorite)}
+              deleting={deleting}
+              alwaysShowActions
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          )}
+        </AnimatedList>
       </div>
     </>
   );

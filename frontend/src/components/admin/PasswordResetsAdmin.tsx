@@ -11,6 +11,7 @@ import {
   type PasswordResetRequest,
 } from "../../services/api";
 import AdminSectionHeader from "../../features/admin/components/AdminSectionHeader";
+import AnimatedList from "../../features/admin/components/AnimatedList";
 import EmptyState from "../../features/admin/components/EmptyState";
 import PokeballDivider from "../../features/admin/components/PokeballDivider";
 import ResetLinkModal from "../../features/admin/components/ResetLinkModal";
@@ -138,29 +139,31 @@ export default function PasswordResetsAdmin() {
                     <PokeballDivider />
                   </td>
                 </tr>
-                {requests.map((request) => (
-                  <ResetRequestRow
-                    key={request.id}
-                    request={request}
-                    owner={usersByUsername.get(request.username)}
-                    generating={generatingId === request.id}
-                    onGenerate={handleGenerate}
-                  />
-                ))}
+                <AnimatedList as="tr" items={requests} getKey={(request) => request.id}>
+                  {(request) => (
+                    <ResetRequestRow
+                      request={request}
+                      owner={usersByUsername.get(request.username)}
+                      generating={generatingId === request.id}
+                      onGenerate={handleGenerate}
+                    />
+                  )}
+                </AnimatedList>
               </tbody>
             </table>
           </div>
 
           <div className="grid gap-3 md:hidden">
-            {requests.map((request) => (
-              <ResetRequestCard
-                key={request.id}
-                request={request}
-                owner={usersByUsername.get(request.username)}
-                generating={generatingId === request.id}
-                onGenerate={handleGenerate}
-              />
-            ))}
+            <AnimatedList items={requests} getKey={(request) => request.id}>
+              {(request) => (
+                <ResetRequestCard
+                  request={request}
+                  owner={usersByUsername.get(request.username)}
+                  generating={generatingId === request.id}
+                  onGenerate={handleGenerate}
+                />
+              )}
+            </AnimatedList>
           </div>
         </>
       )}
