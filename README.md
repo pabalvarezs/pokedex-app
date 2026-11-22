@@ -389,6 +389,14 @@ frontend/
   tests/
 ```
 
+## Licencia
+
+PokeChile se publica bajo **PolyForm Noncommercial License 1.0.0** (texto completo en [`LICENSE`](LICENSE)). Puedes usar, modificar y compartir el proyecto siempre que sea con fines **no comerciales**: estudio, proyectos personales, entretención, afición y otros usos permitidos por la licencia. No se permite usar el proyecto ni derivados para obtener rentabilidad económica.
+
+Esta licencia cubre solo el código y el arte original de PokeChile. Los nombres, imágenes y marcas de Pokémon y de la Poké Ball pertenecen a Nintendo/Game Freak/The Pokémon Company; la licencia no concede derechos sobre ellos.
+
+> Al ser una licencia no comercial, GitHub no la muestra como «open source» en la etiqueta del repositorio. El archivo `LICENSE` es igualmente público y aplicable.
+
 ## Decisiones y límites conocidos
 
 - **Usuarios en base de datos:** contraseñas con scrypt y tokens HMAC firmados con `AUTH_SECRET`.
