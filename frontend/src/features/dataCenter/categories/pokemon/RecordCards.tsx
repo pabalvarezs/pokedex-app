@@ -48,7 +48,7 @@ function RecordCard({
       {entries.length === 0 ? (
         <p className="mt-3 text-xs font-semibold text-ink-500">Sin datos</p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 max-h-60 space-y-2 overflow-y-auto pr-1">
           {entries.map((entry) => (
             <li key={entry.id} className="flex items-center gap-2">
               <PokemonArtwork

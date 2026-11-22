@@ -77,7 +77,7 @@ export default function InsightsPanels({
                     <p className="text-[10px] text-ink-500">{role.hint}</p>
                   </div>
                 </div>
-                <ul className="mt-3 space-y-2">
+                <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
                   {leaders.length === 0 ? (
                     <li className="text-xs font-semibold text-ink-500">Sin datos</li>
                   ) : (
