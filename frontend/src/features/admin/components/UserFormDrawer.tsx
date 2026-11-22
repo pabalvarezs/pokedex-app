@@ -1,29 +1,18 @@
-import { useId, useEffect, useState, type FormEvent } from "react";
-import {
-  Eye,
-  EyeOff,
-  Image,
-  Lock,
-  Mail,
-  Tag,
-  User,
-} from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Image, Lock, Mail, Tag, User } from "lucide-react";
 import type { AdminUser } from "../../../services/api";
+import { makeUserSchema } from "../lib/formSchemas";
+import type { UserFormValues } from "../lib/formSchemas";
+import { cn } from "../lib/cn";
 import Drawer from "./Drawer";
 import FormSelect from "./FormSelect";
 import FormTextField from "./FormTextField";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import UserAvatar from "./UserAvatar";
-import type { Role } from "./RoleBadge";
 
-export interface UserFormValues {
-  username: string;
-  name: string;
-  password: string;
-  role: Role;
-  avatar: string;
-  email: string;
-}
+export type { UserFormValues } from "../lib/formSchemas";
 
 interface Props {
   open: boolean;
@@ -43,9 +32,6 @@ const EMPTY_FORM: UserFormValues = {
   email: "",
 };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_PATTERN = /^[a-z0-9_.-]{3,30}$/i;
-
 export default function UserFormDrawer({
   open,
   editing,
@@ -55,13 +41,30 @@ export default function UserFormDrawer({
   onSubmit,
 }: Props) {
   const formId = useId();
-  const [form, setForm] = useState<UserFormValues>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<Record<keyof UserFormValues, string>>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, submitCount },
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(makeUserSchema(Boolean(editing))),
+    defaultValues: EMPTY_FORM,
+    mode: "onSubmit",
+  });
+
+  const name = watch("name");
+  const username = watch("username");
+  const role = watch("role");
+  const avatar = watch("avatar");
+  const password = watch("password");
 
   useEffect(() => {
     if (!open) return;
-    setForm(
+    reset(
       editing
         ? {
             username: editing.username,
@@ -73,47 +76,18 @@ export default function UserFormDrawer({
           }
         : EMPTY_FORM
     );
-    setErrors({});
     setShowPassword(false);
-  }, [open, editing]);
+    setShake(false);
+  }, [open, editing, reset]);
 
-  const update = <Key extends keyof UserFormValues>(
-    key: Key,
-    value: UserFormValues[Key]
-  ) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const next: Partial<Record<keyof UserFormValues, string>> = {};
-
-    if (!form.name.trim()) next.name = "Ponle un nombre al entrenador, po.";
-    if (!editing && !USERNAME_PATTERN.test(form.username.trim())) {
-      next.username = "Entre 3 y 30 caracteres: letras, números, punto, guion o guion bajo.";
-    }
-    if (!editing && form.password.length < 6) {
-      next.password = "La contraseña necesita al menos 6 caracteres.";
-    }
-    if (editing && form.password && form.password.length < 6) {
-      next.password = "Si la cambias, debe tener al menos 6 caracteres.";
-    }
-    if (form.email.trim() && !EMAIL_PATTERN.test(form.email.trim())) {
-      next.email = "Ese correo no se ve bien. Revísalo.";
-    }
-
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
-
-    onSubmit({
-      username: form.username.trim(),
-      name: form.name.trim(),
-      password: form.password,
-      role: form.role,
-      avatar: form.avatar.trim(),
-      email: form.email.trim(),
-    });
-  };
+  useEffect(() => {
+    if (submitCount === 0 || Object.keys(errors).length === 0) return;
+    setShake(true);
+    const timeout = window.setTimeout(() => setShake(false), 350);
+    return () => window.clearTimeout(timeout);
+    // Se ejecuta solo cuando cambia el número de envíos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitCount]);
 
   return (
     <Drawer
@@ -143,7 +117,7 @@ export default function UserFormDrawer({
             {pending && (
               <span
                 aria-hidden="true"
-                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
               />
             )}
             {pending
@@ -155,7 +129,12 @@ export default function UserFormDrawer({
         </>
       }
     >
-      <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+      <form
+        id={formId}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className={cn("space-y-4", shake && "animate-shake motion-reduce:animate-none")}
+      >
         {error && (
           <div
             role="alert"
@@ -167,9 +146,9 @@ export default function UserFormDrawer({
 
         <div className="flex items-center gap-3 rounded-control border border-line bg-white/60 p-3">
           <UserAvatar
-            src={form.avatar}
-            name={form.name || "Nuevo entrenador"}
-            role={form.role}
+            src={avatar}
+            name={name || "Nuevo entrenador"}
+            role={role}
             size="lg"
           />
           <div className="min-w-0">
@@ -177,97 +156,139 @@ export default function UserFormDrawer({
               Vista previa
             </p>
             <p className="truncate text-sm font-extrabold text-ink-900">
-              {form.name || "Nombre del entrenador"}
+              {name || "Nombre del entrenador"}
             </p>
             <p className="truncate text-xs text-ink-500">
-              {form.username ? `@${form.username}` : "sin usuario todavía"}
+              {username ? `@${username}` : "sin usuario todavía"}
             </p>
           </div>
         </div>
 
-        <FormTextField
-          label="Usuario"
-          value={form.username}
-          onChange={(event) => update("username", event.target.value)}
-          disabled={Boolean(editing)}
-          autoComplete="off"
-          placeholder="ej: ash_ketchum"
-          icon={<User className="h-4 w-4" aria-hidden="true" />}
-          hint={editing ? "El usuario no se puede cambiar." : undefined}
-          error={errors.username}
+        <Controller
+          control={control}
+          name="username"
+          render={({ field, fieldState }) => (
+            <FormTextField
+              label="Usuario"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={Boolean(editing)}
+              autoComplete="off"
+              placeholder="ej: ash_ketchum"
+              icon={<User className="h-4 w-4" aria-hidden="true" />}
+              hint={editing ? "El usuario no se puede cambiar." : undefined}
+              error={fieldState.error?.message}
+            />
+          )}
         />
 
-        <FormTextField
-          label="Nombre visible"
-          value={form.name}
-          onChange={(event) => update("name", event.target.value)}
-          autoComplete="off"
-          placeholder="ej: Ash Ketchum"
-          icon={<Tag className="h-4 w-4" aria-hidden="true" />}
-          error={errors.name}
+        <Controller
+          control={control}
+          name="name"
+          render={({ field, fieldState }) => (
+            <FormTextField
+              label="Nombre visible"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              autoComplete="off"
+              placeholder="ej: Ash Ketchum"
+              icon={<Tag className="h-4 w-4" aria-hidden="true" />}
+              error={fieldState.error?.message}
+            />
+          )}
         />
 
-        <FormTextField
-          label="Email (opcional)"
-          type="email"
-          value={form.email}
-          onChange={(event) => update("email", event.target.value)}
-          autoComplete="off"
-          placeholder="entrenador@correo.cl"
-          icon={<Mail className="h-4 w-4" aria-hidden="true" />}
-          hint="Se usa para enviar el enlace de recuperación."
-          error={errors.email}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <FormTextField
+              label="Email (opcional)"
+              type="email"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              autoComplete="off"
+              placeholder="entrenador@correo.cl"
+              icon={<Mail className="h-4 w-4" aria-hidden="true" />}
+              hint="Se usa para enviar el enlace de recuperación."
+              error={fieldState.error?.message}
+            />
+          )}
         />
 
         <div>
-          <FormTextField
-            label={editing ? "Nueva contraseña (opcional)" : "Contraseña"}
-            type={showPassword ? "text" : "password"}
-            value={form.password}
-            onChange={(event) => update("password", event.target.value)}
-            autoComplete="new-password"
-            placeholder={editing ? "Dejar vacío para mantenerla" : "Mínimo 6 caracteres"}
-            icon={<Lock className="h-4 w-4" aria-hidden="true" />}
-            error={errors.password}
-            rightSlot={
-              <button
-                type="button"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                className="focus-accent grid h-7 w-7 place-items-center rounded-full text-ink-500 transition duration-150 hover:bg-slate-100"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <Eye className="h-4 w-4" aria-hidden="true" />
-                )}
-              </button>
-            }
+          <Controller
+            control={control}
+            name="password"
+            render={({ field, fieldState }) => (
+              <FormTextField
+                label={editing ? "Nueva contraseña (opcional)" : "Contraseña"}
+                type={showPassword ? "text" : "password"}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                autoComplete="new-password"
+                placeholder={editing ? "Dejar vacío para mantenerla" : "Mínimo 6 caracteres"}
+                icon={<Lock className="h-4 w-4" aria-hidden="true" />}
+                error={fieldState.error?.message}
+                rightSlot={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    className="focus-accent grid h-7 w-7 place-items-center rounded-full text-ink-500 transition duration-150 hover:bg-slate-100"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </button>
+                }
+              />
+            )}
           />
-          <PasswordStrengthMeter password={form.password} />
+          <PasswordStrengthMeter password={password} />
         </div>
 
-        <FormSelect
-          label="Rol"
-          value={form.role}
-          onChange={(event) => update("role", event.target.value as Role)}
-          options={[
-            { value: "trainer", label: "Entrenador" },
-            { value: "admin", label: "Administrador" },
-          ]}
-          hint="Los administradores pueden gestionar cuentas y regalones."
+        <Controller
+          control={control}
+          name="role"
+          render={({ field }) => (
+            <FormSelect
+              label="Rol"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              options={[
+                { value: "trainer", label: "Entrenador" },
+                { value: "admin", label: "Administrador" },
+              ]}
+              hint="Los administradores pueden gestionar cuentas y regalones."
+            />
+          )}
         />
 
-        <FormTextField
-          label="URL del avatar (opcional)"
-          type="url"
-          value={form.avatar}
-          onChange={(event) => update("avatar", event.target.value)}
-          autoComplete="off"
-          placeholder="https://…"
-          icon={<Image className="h-4 w-4" aria-hidden="true" />}
-          hint="Si la imagen falla, mostramos al Pikachu de la casa."
+        <Controller
+          control={control}
+          name="avatar"
+          render={({ field }) => (
+            <FormTextField
+              label="URL del avatar (opcional)"
+              type="url"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              autoComplete="off"
+              placeholder="https://…"
+              icon={<Image className="h-4 w-4" aria-hidden="true" />}
+              hint="Si la imagen falla, mostramos al Pikachu de la casa."
+            />
+          )}
         />
       </form>
     </Drawer>

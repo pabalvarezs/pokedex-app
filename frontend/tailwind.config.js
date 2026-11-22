@@ -56,10 +56,16 @@ export default {
         pop: {
           "50%": { transform: "scale(1.12)" },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-5px)" },
+          "75%": { transform: "translateX(5px)" },
+        },
       },
       animation: {
         "fade-up": "fade-up .2s ease-out",
         pop: "pop .35s ease-out",
+        shake: "shake .3s ease-in-out",
       },
     },
   },

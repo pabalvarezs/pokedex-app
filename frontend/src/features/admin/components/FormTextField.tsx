@@ -61,7 +61,11 @@ export default function FormTextField({
         )}
       </div>
       {error ? (
-        <p id={`${inputId}-error`} className="mt-1 text-[11px] font-semibold text-red-600">
+        <p
+          id={`${inputId}-error`}
+          role="alert"
+          className="mt-1 animate-fade-up text-[11px] font-semibold text-red-600"
+        >
           {error}
         </p>
       ) : hint ? (
