@@ -176,8 +176,11 @@ export default function Favorites() {
 
     const typeCounts = new Map<string, number>();
     const generationCounts = new Map<number, number>();
-    let hpTotal = 0;
-    let hpSamples = 0;
+    // Se guarda en un contenedor mutable: TypeScript no sigue las asignaciones
+    // dentro del callback de forEach para el análisis de tipos.
+    const strongestRef: { current: { name: string; total: number } | null } = {
+      current: null,
+    };
 
     visibleFavorites.forEach((favorite) => {
       const preview = previews[favorite.pokemonId];
@@ -190,10 +193,20 @@ export default function Favorites() {
         generationCounts.set(generation, (generationCounts.get(generation) ?? 0) + 1);
       }
 
-      const hp = preview?.stats?.find((stat) => stat.name === "hp")?.base_stat;
-      if (typeof hp === "number") {
-        hpTotal += hp;
-        hpSamples += 1;
+      const total = preview?.stats?.reduce(
+        (sum, stat) => sum + stat.base_stat,
+        0
+      );
+      const currentStrongest = strongestRef.current;
+      if (
+        total &&
+        total > 0 &&
+        (!currentStrongest || total > currentStrongest.total)
+      ) {
+        strongestRef.current = {
+          name: displayName(preview?.name ?? favorite.name),
+          total,
+        };
       }
     });
 
@@ -229,11 +242,12 @@ export default function Favorites() {
       hint: displayName(previews[highest.pokemonId]?.name ?? highest.name),
     });
 
-    if (hpSamples > 0) {
+    const strongest = strongestRef.current;
+    if (strongest) {
       stats.push({
-        label: "PS promedio",
-        value: `${Math.round(hpTotal / hpSamples)} PS`,
-        hint: "promedio del equipo",
+        label: "Más fuerte",
+        value: `${strongest.total} pts`,
+        hint: strongest.name,
       });
     }
 
