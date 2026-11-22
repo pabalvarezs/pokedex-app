@@ -43,4 +43,18 @@ describe("EvolutionChain", () => {
 
     expect(screen.getByText(/Pikachu no evoluciona/i)).toBeTruthy();
   });
+
+  it("resalta la variedad actual aunque no sea la especie base", () => {
+    renderChain(
+      [
+        { members: [{ id: 677, name: "espurr" }] },
+        { members: [{ id: 10025, name: "meowstic-female" }] },
+      ],
+      10025
+    );
+
+    const current = screen.getByText("Meowstic Female").closest("a");
+    expect(current?.getAttribute("aria-current")).toBe("page");
+    expect(screen.getByText("#10025")).toBeTruthy();
+  });
 });

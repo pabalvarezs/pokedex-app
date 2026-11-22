@@ -4,6 +4,7 @@ import {
   formatEvolutionCondition,
   pickMegaVarieties,
   pickMegasForCurrentForm,
+  resolveEvolutionChainForForm,
   type EvolutionChainLink,
 } from "../src/services/pokemon";
 
@@ -260,5 +261,89 @@ describe("pickMegasForCurrentForm", () => {
   it("mantiene todas si el nombre no identifica una forma concreta", () => {
     expect(pickMegasForCurrentForm(meowstic, "meowstic")).toEqual(meowstic);
     expect(pickMegasForCurrentForm(meowstic, undefined)).toEqual(meowstic);
+  });
+});
+
+describe("resolveEvolutionChainForForm", () => {
+  const meowsticVarieties = [
+    { name: "meowstic-male", url: "https://pokeapi.co/api/v2/pokemon/678/", isDefault: true },
+    { name: "meowstic-female", url: "https://pokeapi.co/api/v2/pokemon/10025/", isDefault: false },
+    { name: "meowstic-male-mega", url: "https://pokeapi.co/api/v2/pokemon/10314/", isDefault: false },
+    { name: "meowstic-female-mega", url: "https://pokeapi.co/api/v2/pokemon/10326/", isDefault: false },
+  ];
+  const meowsticChain = [
+    { members: [{ id: 677, name: "espurr" }] },
+    { members: [{ id: 678, name: "meowstic", condition: "Nivel 25" }] },
+  ];
+
+  it("sustituye la especie por la forma base de la Mega femenina", () => {
+    const result = resolveEvolutionChainForForm(
+      meowsticChain,
+      678,
+      "meowstic",
+      "meowstic-female-mega",
+      meowsticVarieties
+    );
+
+    expect(result.currentId).toBe(10025);
+    expect(result.chain[1].members[0]).toEqual({
+      id: 10025,
+      name: "meowstic-female",
+      condition: "Nivel 25",
+    });
+    expect(meowsticChain[1].members[0]).toEqual({
+      id: 678,
+      name: "meowstic",
+      condition: "Nivel 25",
+    });
+  });
+
+  it("respeta formas permanentes sin Mega", () => {
+    const result = resolveEvolutionChainForForm(
+      [{ members: [{ id: 801, name: "magearna" }] }],
+      801,
+      "magearna",
+      "magearna-original",
+      [
+        { name: "magearna", url: "https://pokeapi.co/api/v2/pokemon/801/" },
+        { name: "magearna-original", url: "https://pokeapi.co/api/v2/pokemon/10147/" },
+      ]
+    );
+
+    expect(result.currentId).toBe(10147);
+    expect(result.chain[0].members[0]).toEqual({
+      id: 10147,
+      name: "magearna-original",
+    });
+  });
+
+  it("resuelve Tatsugiri droopy desde su Mega", () => {
+    const result = resolveEvolutionChainForForm(
+      [{ members: [{ id: 978, name: "tatsugiri" }] }],
+      978,
+      "tatsugiri",
+      "tatsugiri-droopy-mega",
+      [
+        { name: "tatsugiri-curly", url: "https://pokeapi.co/api/v2/pokemon/978/" },
+        { name: "tatsugiri-droopy", url: "https://pokeapi.co/api/v2/pokemon/10258/" },
+        { name: "tatsugiri-droopy-mega", url: "https://pokeapi.co/api/v2/pokemon/10323/" },
+      ]
+    );
+
+    expect(result.currentId).toBe(10258);
+    expect(result.chain[0].members[0].name).toBe("tatsugiri-droopy");
+  });
+
+  it("deja la cadena intacta si la forma no pertenece a la especie", () => {
+    const result = resolveEvolutionChainForForm(
+      meowsticChain,
+      678,
+      "meowstic",
+      "meowstic",
+      meowsticVarieties
+    );
+
+    expect(result.currentId).toBe(678);
+    expect(result.chain).toBe(meowsticChain);
   });
 });

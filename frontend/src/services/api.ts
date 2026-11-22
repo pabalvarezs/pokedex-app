@@ -177,6 +177,8 @@ export interface Pokemon {
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
+  /** Variedad resaltada en la cadena (forma base si se ve una Mega). */
+  evolutionCurrentId?: number;
   megaForms?: MegaForm[];
   gmaxForms?: GmaxForm[];
   /** Otras etapas de la cadena que sí pueden Gigamaxizar. */

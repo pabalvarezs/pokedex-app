@@ -74,6 +74,8 @@ export interface Pokemon {
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
+  /** ID de la variedad resaltada en la cadena (forma base si se ve una Mega). */
+  evolutionCurrentId?: number;
   megaForms?: MegaForm[];
   gmaxForms?: GmaxForm[];
   /** Otras etapas de la cadena que sí pueden Gigamaxizar. */
@@ -613,6 +615,48 @@ export function buildEvolutionStages(chain: EvolutionChainLink): EvolutionStage[
   return stages.filter(Boolean);
 }
 
+/**
+ * PokéAPI entrega la cadena por especie, siempre con la variedad por defecto.
+ * Al ver otra variedad se muestra esa forma en su etapa (Meowstic hembra,
+ * Magearna original, Tatsugiri droopy…). Mega y Gigamax se resuelven a su
+ * forma base para no meter transformaciones temporales en la cadena.
+ * No muta la cadena original porque está en caché.
+ */
+export function resolveEvolutionChainForForm(
+  chain: EvolutionStage[],
+  speciesId: number | undefined,
+  speciesName: string | undefined,
+  currentName: string,
+  varieties: SpeciesVariety[]
+): { chain: EvolutionStage[]; currentId: number | undefined } {
+  const baseName = currentName.split(/-(?:mega|gmax)(?:-|$)/)[0];
+  const variety = varieties.find((candidate) => candidate.name === baseName);
+  const rawId = variety?.url.split("/").filter(Boolean).pop();
+  const formId = rawId ? Number(rawId) : undefined;
+  const isTarget = (member: EvolutionMember) =>
+    (speciesId !== undefined && member.id === speciesId) ||
+    (speciesName !== undefined && member.name === speciesName);
+
+  if (
+    !variety ||
+    formId === undefined ||
+    !Number.isInteger(formId) ||
+    !chain.some((stage) => stage.members.some(isTarget))
+  ) {
+    return { chain, currentId: speciesId };
+  }
+
+  return {
+    chain: chain.map((stage) => ({
+      ...stage,
+      members: stage.members.map((member) =>
+        isTarget(member) ? { ...member, id: formId, name: variety.name } : member
+      ),
+    })),
+    currentId: formId,
+  };
+}
+
 async function getEvolutionChain(url: string): Promise<EvolutionStage[]> {
   const chainId = url.split("/").filter(Boolean).pop();
   if (!chainId) return [];
@@ -1016,6 +1060,13 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
   for (const form of gmaxForms) typesById[form.id] = form.types;
 
   const speciesName = data.species?.name ?? data.name;
+  const resolvedEvolution = resolveEvolutionChainForForm(
+    evolutionChain,
+    speciesId,
+    speciesName,
+    data.name,
+    speciesInfo.varieties ?? []
+  );
   const variantFamily = buildVariantFamily({
     speciesId:
       speciesId && Number.isInteger(speciesId) && speciesId > 0
@@ -1047,7 +1098,8 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     moves,
     cries: data.cries,
     description: speciesInfo.description,
-    evolutionChain,
+    evolutionChain: resolvedEvolution.chain,
+    evolutionCurrentId: resolvedEvolution.currentId,
     megaForms,
     gmaxForms,
     gmaxRelatives,
