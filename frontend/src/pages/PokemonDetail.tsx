@@ -439,7 +439,7 @@ export default function PokemonDetail() {
           <div className="border-t border-line-soft bg-slate-50/70 p-6 sm:p-8">
             <EvolutionChain
               stages={data.evolutionChain}
-              currentId={data.speciesId ?? data.id}
+              currentId={data.evolutionCurrentId ?? data.speciesId ?? data.id}
             />
           </div>
         )}

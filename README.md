@@ -192,9 +192,13 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 - Grid responsive de 2/3/4–5 columnas con tarjetas uniformes: artwork protagonista con `object-fit: contain`, nombre sin truncar (hasta dos líneas), badge de categoría, tipos, región, condición o descripción y permanencia. La tarjeta completa abre `/pokemon/:id`.
 - Paginación progresiva con «Mostrar más variantes» (`PAGE_SIZE = 10`). Cambiar de filtro o de búsqueda reinicia la página y la barra de estado indica «Mostrando X de Y formas».
 - Las variantes `mega` y `gmax` no se duplican: se ofrecen como accesos destacados a `#mega-title` y `#dynamax-title`, mientras sus fichas detalladas siguen en `MegaForms` y `DynamaxForms`.
+- Los nombres de las Megaevoluciones salen del mismo catálogo que `variantFamily` (`megaVariantLabel`, derivado de `displayNameForVariant`), así que formas con prefijo como Meowstic, Magearna o Tatsugiri conservan títulos distintos en `#mega-title`.
+- Al abrir la ficha de una forma concreta (por ejemplo #678, Meowstic macho), la sección de Megaevoluciones muestra solo la Mega de esa forma. Las alternativas de una misma forma (X/Y, normal/Z) siguen mostrándose juntas; ver una preevolución (por ejemplo Espurr, #677) muestra todas, porque ambas formas son evoluciones posibles.
+- La cadena evolutiva muestra la variedad que se está viendo en lugar de la por defecto: desde la Mega de Meowstic hembra (#10326) aparece Espurr → Meowstic hembra (#10025). Mega y Gigamax se resuelven a su forma base para no incluir transformaciones temporales en la cadena.
 - Los Pokémon paradoja se presentan en un bloque independiente, separados de las formas locales, con su era (Pasado/Futuro) y enlace a su ficha.
 - Estado vacío elegante cuando no hay variantes, cuando la búsqueda no encuentra coincidencias o cuando la familia solo contiene transformaciones delegadas.
 - Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.
+- El grid excluye la forma que se está viendo y ofrece las demás, incluida la base: en la ficha de Meowstic hembra (#10025) aparece Meowstic macho (#678) en vez de la propia hembra.
 - `PokemonDetail` solo monta la sección cuando `variantFamily` está presente; el componente además cubre el estado vacío de forma defensiva.
 
 **Sin tabla Prisma:** Los Pokémon no viven en PostgreSQL. El catálogo backend versionado (`variants.ts`) es la fuente de metadatos, siguiendo el patrón de `gmaxMoves.ts`.
@@ -384,6 +388,14 @@ frontend/
   public/                  # favicon original (SVG, ICO y PNG)
   tests/
 ```
+
+## Licencia
+
+PokeChile se publica bajo **PolyForm Noncommercial License 1.0.0** (texto completo en [`LICENSE`](LICENSE)). Puedes usar, modificar y compartir el proyecto siempre que sea con fines **no comerciales**: estudio, proyectos personales, entretención, afición y otros usos permitidos por la licencia. No se permite usar el proyecto ni derivados para obtener rentabilidad económica.
+
+Esta licencia cubre solo el código y el arte original de PokeChile. Los nombres, imágenes y marcas de Pokémon y de la Poké Ball pertenecen a Nintendo/Game Freak/The Pokémon Company; la licencia no concede derechos sobre ellos.
+
+> Al ser una licencia no comercial, GitHub no la muestra como «open source» en la etiqueta del repositorio. El archivo `LICENSE` es igualmente público y aplicable.
 
 ## Decisiones y límites conocidos
 

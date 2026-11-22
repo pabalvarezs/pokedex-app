@@ -35,7 +35,6 @@
 .scroll-top {
   border-radius: 50%;
   pointer-events: none; /* mientras está oculto no recibe clics */
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   /* evitar que se seleccione el texto al hacer clic rápido */
   user-select: none;
   -webkit-tap-highlight-color: transparent;

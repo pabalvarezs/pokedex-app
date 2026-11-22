@@ -62,4 +62,58 @@ describe("MegaForms", () => {
 
     expect(container.textContent).toBe("");
   });
+
+  it("muestra tanto la Mega normal como la Mega Z", () => {
+    renderForms([
+      {
+        id: 10057,
+        name: "absol-mega",
+        baseName: "absol",
+        types: ["dark"],
+        artwork: "https://example.com/absol-mega.png",
+      },
+      {
+        id: 10307,
+        name: "absol-mega-z",
+        baseName: "absol",
+        variant: "Z",
+        types: ["dark", "fairy"],
+        artwork: "https://example.com/absol-mega-z.png",
+      },
+    ]);
+
+    expect(screen.getByText("Mega Absol")).toBeTruthy();
+    expect(screen.getByText("Mega Absol Z")).toBeTruthy();
+    expect(screen.getByText("2 formas")).toBeTruthy();
+  });
+
+  it("distingue Megas con prefijo que antes compartían título", () => {
+    renderForms([
+      {
+        id: 10300,
+        name: "tatsugiri-curly-mega",
+        baseName: "tatsugiri",
+        variant: "Curly",
+        types: ["dragon"],
+      },
+      {
+        id: 10301,
+        name: "tatsugiri-droopy-mega",
+        baseName: "tatsugiri",
+        variant: "Droopy",
+        types: ["dragon"],
+      },
+      {
+        id: 10302,
+        name: "tatsugiri-stretchy-mega",
+        baseName: "tatsugiri",
+        variant: "Stretchy",
+        types: ["dragon"],
+      },
+    ]);
+
+    expect(screen.getByText("Mega Tatsugiri Curly")).toBeTruthy();
+    expect(screen.getByText("Mega Tatsugiri Droopy")).toBeTruthy();
+    expect(screen.getByText("Mega Tatsugiri Stretchy")).toBeTruthy();
+  });
 });

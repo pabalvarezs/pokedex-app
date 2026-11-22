@@ -182,7 +182,7 @@ export default function PokemonCard({ pokemon }: Props) {
             </svg>
           </h3>
 
-          <div className="flex min-h-[22px] flex-nowrap items-center justify-center gap-1 whitespace-nowrap">
+          <div className="flex min-h-[22px] flex-wrap items-center justify-center gap-1 whitespace-nowrap">
             {typeBadges}
           </div>
         </div>

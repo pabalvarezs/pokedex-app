@@ -547,6 +547,21 @@ function displayNameForVariant(
 }
 
 /**
+ * Etiqueta corta que distingue una Mega dentro de su especie (X, Y, Z,
+ * «Macho», «Original», «Curly», …). Se deriva del mismo nombre que usa
+ * `variantFamily` para no mantener dos catálogos de nombres.
+ */
+export function megaVariantLabel(
+  slug: string,
+  speciesName: string
+): string | undefined {
+  const displayName = displayNameForVariant(slug, speciesName, "mega", undefined);
+  const prefix = `Mega ${baseDisplayName(speciesName)} `;
+  const label = displayName.startsWith(prefix) ? displayName.slice(prefix.length) : "";
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : undefined;
+}
+
+/**
  * Metadatos curados. Solo se usan para enriquecer la clasificación; la
  * existencia de la variante siempre viene de `varieties`.
  */
@@ -1546,8 +1561,10 @@ export function buildVariantFamily(
   const currentTypes =
     input.typesById?.[input.currentId] ?? input.currentTypes;
 
+  // Se excluye la forma que se está viendo, no la base: al abrir una variante
+  // interesan las otras formas, incluida la especie por defecto.
   const variants = entries
-    .filter((variety) => variety.id !== baseId)
+    .filter((variety) => variety.id !== input.currentId)
     .map((variety): PokemonVariant => {
       const resolved = classifyVariant(variety.name, input.speciesName);
       const types =
@@ -1557,7 +1574,8 @@ export function buildVariantFamily(
       return {
         id: variety.id,
         name: variety.name,
-        displayName: resolved.displayName,
+        displayName:
+          variety.name === input.speciesName ? baseDisplay : resolved.displayName,
         category: resolved.categoryRef,
         description: resolved.description,
         ...(resolved.condition ? { condition: resolved.condition } : {}),
@@ -1568,8 +1586,8 @@ export function buildVariantFamily(
         kind: "record",
         navigable: true,
         order: resolved.order,
-        isDefault: false,
-        isCurrent: variety.id === input.currentId,
+        isDefault: variety.id === baseId,
+        isCurrent: false,
         sprite: variantSpriteUrl(variety.id),
         artwork: variantArtworkUrl(variety.id),
         ...(types?.length ? { types } : {}),

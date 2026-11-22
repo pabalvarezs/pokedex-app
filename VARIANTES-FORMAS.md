@@ -139,3 +139,13 @@ No se crea una tabla de variantes porque:
 - Pokémon con varias categorías (por ejemplo, Charizard: Mega y Gigamax).
 - Pokémon sin variantes: `PokemonDetail` no monta la sección; el componente muestra además un estado vacío defensivo.
 - Formas temporales: se marcan como `temporary` o `battle` y muestran su condición.
+
+## 7. Nombres de las Megaevoluciones
+
+Las Megas con prefijo previo a `-mega` (`meowstic-male-mega`, `meowstic-female-mega`, `magearna-original-mega`, `tatsugiri-curly-mega`, `tatsugiri-droopy-mega` y `tatsugiri-stretchy-mega`) necesitan una etiqueta además de X/Y/Z para no compartir título. `megaVariantLabel()` deriva esa etiqueta de `displayNameForVariant()`, el mismo catálogo que nombra `variantFamily`, y `getMegaForm()` la guarda en `megaForms[].variant`. Así `MegaForms` muestra títulos distintos sin mantener un segundo catálogo de nombres.
+
+Cuando se abre la ficha de una forma concreta, `pickMegasForCurrentForm()` reduce `megaForms` a la Mega de esa forma: Meowstic macho (#678) o hembra (#10025), Magearna (#801) u original (#10147), y Tatsugiri curly (#978), droopy (#10258) o stretchy (#10259). Las alternativas de una misma forma (X/Y, normal/Z) no se filtran. Ver una preevolución (por ejemplo Espurr, #677) muestra todas las Megas de la etapa final, porque ambas formas son evoluciones posibles.
+
+La cadena evolutiva de PokéAPI es por especie y trae siempre la variedad por defecto, así que la Mega hembra (#10326) mostraba a Meowstic macho (#678). `resolveEvolutionChainForForm()` sustituye el miembro de la especie por la variedad real que se está viendo y devuelve `evolutionCurrentId` para resaltarla. Las transformaciones temporales (Mega y Gigamax) se resuelven a su forma base: desde #10326 se muestra Espurr → Meowstic hembra (#10025). La cadena original se clona porque está en caché.
+
+`buildVariantFamily()` excluye del grid la forma que se está viendo (`currentId`), no la por defecto. Antes, al abrir #10025 el listado mostraba esa misma hembra; ahora muestra las otras formas de la especie, incluido el macho #678 como tarjeta navegable. Lo mismo aplica a Magearna original, Tatsugiri droopy, las gorras de Pikachu y cualquier otra variedad no por defecto.

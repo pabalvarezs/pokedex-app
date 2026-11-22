@@ -6,6 +6,7 @@ import {
   getVariantCategory,
   variantSpriteUrl,
   variantArtworkUrl,
+  megaVariantLabel,
   VARIANT_CATEGORIES,
 } from "../src/services/variants";
 
@@ -211,6 +212,28 @@ describe("classifyVariant", () => {
   });
 });
 
+describe("megaVariantLabel", () => {
+  it("devuelve X, Y o Z para las variantes con sufijo", () => {
+    expect(megaVariantLabel("charizard-mega-x", "charizard")).toBe("X");
+    expect(megaVariantLabel("charizard-mega-y", "charizard")).toBe("Y");
+    expect(megaVariantLabel("absol-mega-z", "absol")).toBe("Z");
+  });
+
+  it("distingue Megas con prefijo que antes compartían título", () => {
+    expect(megaVariantLabel("meowstic-male-mega", "meowstic")).toBe("Macho");
+    expect(megaVariantLabel("meowstic-female-mega", "meowstic")).toBe("Hembra");
+    expect(megaVariantLabel("magearna-original-mega", "magearna")).toBe("Original");
+    expect(megaVariantLabel("tatsugiri-curly-mega", "tatsugiri")).toBe("Curly");
+    expect(megaVariantLabel("tatsugiri-droopy-mega", "tatsugiri")).toBe("Droopy");
+    expect(megaVariantLabel("tatsugiri-stretchy-mega", "tatsugiri")).toBe("Stretchy");
+  });
+
+  it("no devuelve etiqueta para la Mega simple", () => {
+    expect(megaVariantLabel("absol-mega", "absol")).toBeUndefined();
+    expect(megaVariantLabel("gengar-mega", "gengar")).toBeUndefined();
+  });
+});
+
 describe("buildVariantFamily", () => {
   const baseInput = {
     speciesId: 25,
@@ -252,7 +275,7 @@ describe("buildVariantFamily", () => {
     expect(family.variants.find((v) => v.id === 10094)?.isCurrent).toBe(false);
   });
 
-  it("marca la variante actual cuando es distinta de la base", () => {
+  it("muestra la base en lugar de la variante actual", () => {
     const family = buildVariantFamily({
       ...baseInput,
       currentId: 10094,
@@ -261,8 +284,35 @@ describe("buildVariantFamily", () => {
     expect(family.isDefault).toBe(false);
     expect(family.currentId).toBe(10094);
     expect(family.currentDisplayName).toBe("Pikachu con gorra original");
-    const cap = family.variants.find((v) => v.id === 10094);
-    expect(cap?.isCurrent).toBe(true);
+    expect(family.variants.find((v) => v.id === 10094)).toBeUndefined();
+    expect(family.variants.find((v) => v.id === 25)?.displayName).toBe("Pikachu");
+  });
+
+  it("muestra el macho al ver la variedad hembra de Meowstic", () => {
+    const family = buildVariantFamily({
+      speciesId: 678,
+      speciesName: "meowstic",
+      currentId: 10025,
+      currentName: "meowstic-female",
+      currentTypes: ["psychic"],
+      varieties: [
+        { name: "meowstic-male", url: "https://pokeapi.co/api/v2/pokemon/678/", isDefault: true },
+        { name: "meowstic-female", url: "https://pokeapi.co/api/v2/pokemon/10025/", isDefault: false },
+        { name: "meowstic-male-mega", url: "https://pokeapi.co/api/v2/pokemon/10314/", isDefault: false },
+        { name: "meowstic-female-mega", url: "https://pokeapi.co/api/v2/pokemon/10326/", isDefault: false },
+      ],
+      typesById: {
+        10025: ["psychic"],
+        10314: ["psychic"],
+        10326: ["fairy"],
+      },
+    });
+
+    expect(family.variants.find((v) => v.id === 10025)).toBeUndefined();
+    const male = family.variants.find((v) => v.id === 678);
+    expect(male?.name).toBe("meowstic-male");
+    expect(male?.displayName).toBe("Meowstic macho");
+    expect(male?.isDefault).toBe(true);
   });
 
   it("incluye currentCategory cuando no es la base", () => {
@@ -305,7 +355,7 @@ describe("buildVariantFamily", () => {
     expect(family.speciesName).toBe("pikachu");
   });
 
-  it("añade entrada sintética cuando currentId no está en varieties", () => {
+  it("no muestra la entrada sintética de la forma actual", () => {
     const family = buildVariantFamily({
       ...baseInput,
       varieties: [
@@ -314,8 +364,9 @@ describe("buildVariantFamily", () => {
       currentId: 99999,
       currentName: "pikachu-fake",
     });
-    expect(family.total).toBe(1); // Solo la fake, porque la base se excluye
-    expect(family.variants[0].id).toBe(99999);
+    expect(family.total).toBe(1); // Solo la base, porque la actual se excluye
+    expect(family.variants[0].id).toBe(25);
+    expect(family.variants.find((v) => v.id === 99999)).toBeUndefined();
   });
 });
 
