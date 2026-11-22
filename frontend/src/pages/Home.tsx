@@ -9,7 +9,6 @@ import {
 import PokemonCard from "../components/PokemonCard";
 import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
 import PokemonSearch from "../components/PokemonSearch";
-import useScrollRestoration from "../hooks/useScrollRestoration";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
 // --- Tipos de ordenamiento ---
@@ -36,9 +35,6 @@ function dedupeById(pokemon: Pokemon[]): Pokemon[] {
 }
 
 export default function Home() {
-  // Restaura el scroll al volver de la ficha (botón Volver o atrás del navegador).
-  useScrollRestoration();
-
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeGens, setActiveGens] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("id");
