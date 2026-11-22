@@ -65,12 +65,22 @@ export default function SectionHero({ count, stats }: Props) {
             className="mt-3 flex flex-wrap items-center gap-3 text-3xl font-black tracking-tight outline-none sm:text-4xl"
           >
             Mis Regalones
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3 py-1.5 text-sm font-black text-amber-950 shadow-sm">
-              <StarIcon className="h-4 w-4" />
-              <span aria-label={count === null ? "Cargando cantidad" : `${count} regalones`}>
-                {count === null ? "…" : animatedCount.toLocaleString("es-CL")}
+            <div className="inline-flex shrink-0 items-center gap-3 rounded-card border border-amber-200/80 bg-gradient-to-br from-amber-300 to-amber-400 px-4 py-2.5 shadow-[0_10px_30px_-10px_rgba(251,191,36,0.85)] ring-1 ring-inset ring-white/50">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/60 text-amber-800 shadow-sm">
+                <StarIcon className="h-6 w-6" />
               </span>
-            </span>
+              <span className="flex flex-col leading-none">
+                <span
+                  className="text-4xl font-black tabular-nums tracking-tight text-amber-950 sm:text-5xl"
+                  aria-label={count === null ? "Cargando cantidad" : `${count} regalones`}
+                >
+                  {count === null ? "…" : animatedCount.toLocaleString("es-CL")}
+                </span>
+                <span className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-900/80">
+                  regalones
+                </span>
+              </span>
+            </div>
           </h1>
 
           <p className="mt-2 max-w-xl text-sm font-medium text-red-50 sm:text-base">
@@ -81,10 +91,11 @@ export default function SectionHero({ count, stats }: Props) {
 
         <Link
           to="/"
-          className="inline-flex min-h-[44px] w-fit items-center gap-1.5 rounded-control border border-white/40 bg-white/10 px-4 py-2.5 text-sm font-bold text-white shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-red-700"
+          aria-label="Agregar más regalones"
+          className="ml-auto inline-flex min-h-[36px] w-fit shrink-0 items-center gap-1 rounded-full border border-white/25 bg-white/10 px-2.5 py-1.5 text-[11px] font-bold text-white/90 backdrop-blur-sm transition hover:bg-white hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-red-700"
         >
-          <span aria-hidden="true">＋</span>
-          Agregar más
+          <span aria-hidden="true" className="text-sm leading-none">＋</span>
+          Agregar
         </Link>
       </div>
 
