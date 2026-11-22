@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCountUp } from "../../hooks/useCountUp";
+import TypeBadge from "../TypeBadge";
 import { PokeballIcon, StarIcon } from "./icons";
 
 export interface HeroStat {
@@ -8,6 +9,8 @@ export interface HeroStat {
   hint?: string;
   /** Miniatura opcional (se reutiliza el artwork ya cargado en las tarjetas). */
   sprite?: string;
+  /** Tipos a mostrar con los badges del sitio (p. ej. el tipo estrella). */
+  badges?: string[];
 }
 
 interface Props {
@@ -90,7 +93,7 @@ export default function SectionHero({ count, stats }: Props) {
           {stats.map((stat, index) => (
             <div
               key={stat.label}
-              className={`rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur-sm ${
+              className={`min-w-0 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur-sm ${
                 index === stats.length - 1 && stats.length % 2 === 1
                   ? "col-span-2 sm:col-span-1"
                   : ""
@@ -115,6 +118,13 @@ export default function SectionHero({ count, stats }: Props) {
                     {stat.value}
                   </span>
                 </span>
+                {stat.badges && stat.badges.length > 0 && (
+                  <div className="mt-1.5 flex flex-nowrap items-center gap-1.5 overflow-hidden">
+                    {stat.badges.map((type) => (
+                      <TypeBadge key={type} type={type} size="xs" showIcon className="shrink-0" />
+                    ))}
+                  </div>
+                )}
                 {stat.hint && (
                   <span className="mt-0.5 block truncate text-xs font-semibold text-red-50">
                     {stat.hint}

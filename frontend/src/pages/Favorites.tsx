@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
 import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
-import { getTypeBadge } from "../utils/pokemon";
+import { GENERATIONS, getGenerationForId } from "../utils/pokemon";
 import SectionHero, { type HeroStat } from "../components/favorites/SectionHero";
 import FavoritesToolbar, {
   type FavoriteSort,
@@ -175,21 +175,48 @@ export default function Favorites() {
     });
 
     const typeCounts = new Map<string, number>();
+    const generationCounts = new Map<number, number>();
+    let hpTotal = 0;
+    let hpSamples = 0;
+
     visibleFavorites.forEach((favorite) => {
-      (previews[favorite.pokemonId]?.types ?? []).forEach((type) => {
+      const preview = previews[favorite.pokemonId];
+      (preview?.types ?? []).forEach((type) => {
         typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
       });
+
+      const generation = preview?.generation ?? getGenerationForId(favorite.pokemonId);
+      if (generation) {
+        generationCounts.set(generation, (generationCounts.get(generation) ?? 0) + 1);
+      }
+
+      const hp = preview?.stats?.find((stat) => stat.name === "hp")?.base_stat;
+      if (typeof hp === "number") {
+        hpTotal += hp;
+        hpSamples += 1;
+      }
     });
 
     if (typeCounts.size > 0) {
-      const [topType, amount] = [...typeCounts.entries()].sort(
-        (a, b) => b[1] - a[1]
-      )[0];
-      const info = getTypeBadge(topType);
+      const rankedTypes = [...typeCounts.entries()].sort((a, b) => b[1] - a[1]);
+      const [, amount] = rankedTypes[0];
       stats.push({
         label: "Tipo estrella",
-        value: `${info.emoji} ${info.es}`,
-        hint: amount > 1 ? `${amount} en tu equipo` : "El único de su tipo",
+        value: `${amount} Pokémon`,
+        badges: rankedTypes.slice(0, Math.min(2, rankedTypes.length)).map(([type]) => type),
+        hint: "el más presente en tu equipo",
+      });
+    }
+
+    if (generationCounts.size > 0) {
+      const [topGeneration, count] = [...generationCounts.entries()].sort(
+        (a, b) => b[1] - a[1]
+      )[0];
+      const generation = GENERATIONS.find((item) => item.id === topGeneration);
+      stats.push({
+        label: "Generación favorita",
+        value: `Gen ${topGeneration}`,
+        hint: `${generation?.region ?? "Kanto"} · ${count} ${count === 1 ? "regalón" : "regalones"}`,
       });
     }
 
@@ -202,7 +229,21 @@ export default function Favorites() {
       hint: displayName(previews[highest.pokemonId]?.name ?? highest.name),
     });
 
-    return stats.slice(0, 3);
+    if (hpSamples > 0) {
+      stats.push({
+        label: "PS promedio",
+        value: `${Math.round(hpTotal / hpSamples)} PS`,
+        hint: "promedio del equipo",
+      });
+    }
+
+    stats.push({
+      label: "Tipos distintos",
+      value: String(typeCounts.size),
+      hint: "en tu colección",
+    });
+
+    return stats;
   }, [visibleFavorites, previews]);
 
   const finishRemove = (favorite: Favorite) => {

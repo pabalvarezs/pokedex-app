@@ -67,6 +67,24 @@ export function getBadgeBgColor(type: string): string {
   return BADGE_BG[type.toLowerCase()] ?? "#334155";
 }
 
+/** Rangos de la Pokédex nacional para derivar la generación sin otra request. */
+const GENERATION_RANGES: [number, number, number][] = [
+  [1, 151, 1],
+  [152, 251, 2],
+  [252, 386, 3],
+  [387, 493, 4],
+  [494, 649, 5],
+  [650, 721, 6],
+  [722, 809, 7],
+  [810, 905, 8],
+  [906, 1025, 9],
+];
+
+/** Generación aproximada por ID mientras llega el preview real. */
+export function getGenerationForId(id: number): number | undefined {
+  return GENERATION_RANGES.find(([from, to]) => id >= from && id <= to)?.[2];
+}
+
 export const GENERATIONS: { id: number; name: string; region: string }[] = [
   { id: 1, name: "Gen 1", region: "Kanto" },
   { id: 2, name: "Gen 2", region: "Johto" },
