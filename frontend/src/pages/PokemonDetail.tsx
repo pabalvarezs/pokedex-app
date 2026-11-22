@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { m } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPokemon, searchPokemon } from "../services/api";
@@ -220,9 +221,10 @@ export default function PokemonDetail() {
               className="artwork-frame group relative mx-auto flex aspect-square w-full max-w-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-card border border-slate-200/80 p-6 shadow-ambient transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200"
             >
               <img
+                key={officialArtwork}
                 src={officialArtwork}
                 alt={data.name}
-                className="max-h-full max-w-full object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.04]"
+                className="max-h-full max-w-full animate-fade-up object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:animate-none"
               />
               <span className="pointer-events-none absolute bottom-3 right-3 rounded-lg bg-slate-900/70 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
                 🔍 Ver en grande
@@ -368,9 +370,12 @@ export default function PokemonDetail() {
                         {s.base_stat}
                       </span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        <m.div
+                          className={`h-full rounded-full origin-left ${barColor}`}
                           style={{ width: `${percentage}%` }}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
                         />
                       </div>
                     </div>

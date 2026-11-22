@@ -406,7 +406,7 @@ export default function Home() {
       </a>
 
       {/* Título */}
-      <header className="mb-5 sm:mb-6">
+      <header className="mb-5 animate-fade-up sm:mb-6">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
           Pokédex a la chilena
@@ -426,7 +426,7 @@ export default function Home() {
       {/* Buscador predictivo */}
       <section
         aria-label="Buscador de Pokémon"
-        className="glass-surface glass-blur relative z-20 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-20 animate-fade-up rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         <PokemonSearch />
       </section>
@@ -434,7 +434,7 @@ export default function Home() {
       {/* Panel de filtros */}
       <section
         aria-label="Filtros y ordenamiento"
-        className="glass-surface glass-blur relative z-10 mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-10 mt-4 animate-fade-up rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         {/* Fila 1: Botones de sección + Sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

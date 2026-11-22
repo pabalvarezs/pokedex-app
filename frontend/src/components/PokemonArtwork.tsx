@@ -37,9 +37,11 @@ export default function PokemonArtwork({
   }, [id, src]);
 
   const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setIndex(0);
+    setLoaded(false);
   }, [sources]);
 
   if (index >= sources.length) {
@@ -67,13 +69,20 @@ export default function PokemonArtwork({
 
   return (
     <img
+      key={sources[index]}
       src={sources[index]}
       alt={name}
-      className={className}
+      className={`transition-opacity duration-300 motion-reduce:transition-none ${
+        loaded ? "opacity-100" : "opacity-0"
+      } ${className}`}
       loading={priority ? "eager" : "lazy"}
       decoding="async"
       draggable={false}
-      onError={() => setIndex((current) => current + 1)}
+      onLoad={() => setLoaded(true)}
+      onError={() => {
+        setLoaded(false);
+        setIndex((current) => current + 1);
+      }}
     />
   );
 }

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useCountUp } from "../../hooks/useCountUp";
 import { PokeballIcon, StarIcon } from "./icons";
 
 export interface HeroStat {
@@ -16,10 +17,12 @@ interface Props {
 }
 
 export default function SectionHero({ count, stats }: Props) {
+  const animatedCount = useCountUp(count ?? 0);
+
   return (
     <section
       aria-labelledby="favorites-title"
-      className="relative overflow-hidden rounded-[28px] px-5 py-7 text-white shadow-ambient sm:px-8 sm:py-9"
+      className="relative animate-fade-up overflow-hidden rounded-[28px] px-5 py-7 text-white shadow-ambient sm:px-8 sm:py-9"
       style={{
         backgroundImage:
           "linear-gradient(135deg, #7f1d1d 0%, #b91c1c 48%, #dc2626 100%)",
@@ -35,7 +38,7 @@ export default function SectionHero({ count, stats }: Props) {
         }}
       />
       <PokeballIcon
-        className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 text-white/10 sm:-right-10 sm:h-80 sm:w-80"
+        className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 text-white/10 motion-safe:animate-pokemon-idle sm:-right-10 sm:h-80 sm:w-80"
       />
       <span
         aria-hidden="true"
@@ -62,7 +65,7 @@ export default function SectionHero({ count, stats }: Props) {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3 py-1.5 text-sm font-black text-amber-950 shadow-sm">
               <StarIcon className="h-4 w-4" />
               <span aria-label={count === null ? "Cargando cantidad" : `${count} regalones`}>
-                {count === null ? "…" : count}
+                {count === null ? "…" : animatedCount.toLocaleString("es-CL")}
               </span>
             </span>
           </h1>
@@ -105,7 +108,7 @@ export default function SectionHero({ count, stats }: Props) {
                       aria-hidden="true"
                       loading="lazy"
                       decoding="async"
-                      className="h-7 w-7 shrink-0 object-contain drop-shadow"
+                      className="h-7 w-7 shrink-0 object-contain drop-shadow transition-opacity duration-300 motion-reduce:transition-none"
                     />
                   )}
                   <span className="min-w-0 flex-1 truncate text-base font-extrabold text-white sm:text-lg">
