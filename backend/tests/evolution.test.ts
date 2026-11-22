@@ -3,6 +3,7 @@ import {
   buildEvolutionStages,
   formatEvolutionCondition,
   pickMegaVarieties,
+  pickMegasForCurrentForm,
   type EvolutionChainLink,
 } from "../src/services/pokemon";
 
@@ -203,5 +204,61 @@ describe("pickMegaVarieties", () => {
   it("tolera listas vacías o indefinidas", () => {
     expect(pickMegaVarieties([])).toEqual([]);
     expect(pickMegaVarieties(undefined)).toEqual([]);
+  });
+});
+
+describe("pickMegasForCurrentForm", () => {
+  const meowstic = [
+    { name: "meowstic-male-mega" },
+    { name: "meowstic-female-mega" },
+  ];
+  const magearna = [
+    { name: "magearna-mega" },
+    { name: "magearna-original-mega" },
+  ];
+  const tatsugiri = [
+    { name: "tatsugiri-curly-mega" },
+    { name: "tatsugiri-droopy-mega" },
+    { name: "tatsugiri-stretchy-mega" },
+  ];
+
+  it("deja solo la Mega de la forma que se está viendo", () => {
+    expect(pickMegasForCurrentForm(meowstic, "meowstic-male")).toEqual([
+      { name: "meowstic-male-mega" },
+    ]);
+    expect(pickMegasForCurrentForm(meowstic, "meowstic-female")).toEqual([
+      { name: "meowstic-female-mega" },
+    ]);
+    expect(pickMegasForCurrentForm(magearna, "magearna-original")).toEqual([
+      { name: "magearna-original-mega" },
+    ]);
+    expect(pickMegasForCurrentForm(tatsugiri, "tatsugiri-droopy")).toEqual([
+      { name: "tatsugiri-droopy-mega" },
+    ]);
+  });
+
+  it("reconoce la propia Mega como forma actual", () => {
+    expect(pickMegasForCurrentForm(meowstic, "meowstic-male-mega")).toEqual([
+      { name: "meowstic-male-mega" },
+    ]);
+    expect(pickMegasForCurrentForm(tatsugiri, "tatsugiri-stretchy-mega")).toEqual([
+      { name: "tatsugiri-stretchy-mega" },
+    ]);
+  });
+
+  it("mantiene todas las alternativas de una misma forma", () => {
+    const charizard = [
+      { name: "charizard-mega-x" },
+      { name: "charizard-mega-y" },
+    ];
+    const absol = [{ name: "absol-mega" }, { name: "absol-mega-z" }];
+
+    expect(pickMegasForCurrentForm(charizard, "charizard")).toEqual(charizard);
+    expect(pickMegasForCurrentForm(absol, "absol")).toEqual(absol);
+  });
+
+  it("mantiene todas si el nombre no identifica una forma concreta", () => {
+    expect(pickMegasForCurrentForm(meowstic, "meowstic")).toEqual(meowstic);
+    expect(pickMegasForCurrentForm(meowstic, undefined)).toEqual(meowstic);
   });
 });

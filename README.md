@@ -193,6 +193,7 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 - Paginación progresiva con «Mostrar más variantes» (`PAGE_SIZE = 10`). Cambiar de filtro o de búsqueda reinicia la página y la barra de estado indica «Mostrando X de Y formas».
 - Las variantes `mega` y `gmax` no se duplican: se ofrecen como accesos destacados a `#mega-title` y `#dynamax-title`, mientras sus fichas detalladas siguen en `MegaForms` y `DynamaxForms`.
 - Los nombres de las Megaevoluciones salen del mismo catálogo que `variantFamily` (`megaVariantLabel`, derivado de `displayNameForVariant`), así que formas con prefijo como Meowstic, Magearna o Tatsugiri conservan títulos distintos en `#mega-title`.
+- Al abrir la ficha de una forma concreta (por ejemplo #678, Meowstic macho), la sección de Megaevoluciones muestra solo la Mega de esa forma. Las alternativas de una misma forma (X/Y, normal/Z) siguen mostrándose juntas; ver una preevolución (por ejemplo Espurr, #677) muestra todas, porque ambas formas son evoluciones posibles.
 - Los Pokémon paradoja se presentan en un bloque independiente, separados de las formas locales, con su era (Pasado/Futuro) y enlace a su ficha.
 - Estado vacío elegante cuando no hay variantes, cuando la búsqueda no encuentra coincidencias o cuando la familia solo contiene transformaciones delegadas.
 - Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.

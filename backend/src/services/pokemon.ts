@@ -644,6 +644,34 @@ export function pickMegaVarieties<T extends { name: string }>(
   );
 }
 
+/**
+ * Parte de un slug que identifica a la forma, sin contar la Mega:
+ * `meowstic-female-mega` → `meowstic-female`, `absol-mega-z` → `absol`.
+ */
+function formBase(name: string): string {
+  const megaIndex = name.indexOf("-mega");
+  return megaIndex > 0 ? name.slice(0, megaIndex) : name;
+}
+
+/**
+ * Cuando una especie tiene Megas de formas distintas (Meowstic, Magearna,
+ * Tatsugiri), al ver una forma concreta solo se muestran sus Megas. Si el
+ * nombre actual no casa con ninguna, se mantienen todas para no ocultar
+ * información en vistas ambiguas (preevoluciones o búsquedas por especie).
+ */
+export function pickMegasForCurrentForm<T extends { name: string }>(
+  varieties: T[],
+  currentName: string | undefined
+): T[] {
+  if (!currentName) return varieties;
+
+  const currentBase = formBase(currentName);
+  const matches = varieties.filter(
+    (variety) => formBase(variety.name) === currentBase
+  );
+  return matches.length > 0 ? matches : varieties;
+}
+
 async function getMegaForm(
   variety: SpeciesVariety,
   baseName: string
@@ -676,8 +704,13 @@ async function getMegaForm(
 /**
  * Busca las Mega formas de la última etapa de la cadena. Se consultan las
  * variedades de cada especie final porque las megas no viven en evolution-chain.
+ * Si se está viendo esa misma especie, se limitan a la forma concreta actual.
  */
-async function getMegaForms(stages: EvolutionStage[]): Promise<MegaForm[]> {
+async function getMegaForms(
+  stages: EvolutionStage[],
+  currentName?: string,
+  currentSpeciesName?: string
+): Promise<MegaForm[]> {
   const finalStage = stages[stages.length - 1];
   if (!finalStage) return [];
 
@@ -686,7 +719,11 @@ async function getMegaForms(stages: EvolutionStage[]): Promise<MegaForm[]> {
     8,
     async (member) => {
       const speciesInfo = await getSpeciesInfo(member.id);
-      const varieties = pickMegaVarieties(speciesInfo.varieties);
+      const megas = pickMegaVarieties(speciesInfo.varieties);
+      const varieties =
+        member.name === currentSpeciesName
+          ? pickMegasForCurrentForm(megas, currentName)
+          : megas;
       return Promise.all(
         varieties.map((variety) => getMegaForm(variety, member.name))
       );
@@ -958,7 +995,11 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     ),
   ]);
 
-  const megaForms = await getMegaForms(evolutionChain);
+  const megaForms = await getMegaForms(
+    evolutionChain,
+    data.name,
+    data.species?.name
+  );
   const gmaxForms = await getGmaxForms(
     speciesInfo,
     data.species?.name ?? data.name

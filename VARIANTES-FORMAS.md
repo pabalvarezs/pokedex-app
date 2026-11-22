@@ -143,3 +143,5 @@ No se crea una tabla de variantes porque:
 ## 7. Nombres de las Megaevoluciones
 
 Las Megas con prefijo previo a `-mega` (`meowstic-male-mega`, `meowstic-female-mega`, `magearna-original-mega`, `tatsugiri-curly-mega`, `tatsugiri-droopy-mega` y `tatsugiri-stretchy-mega`) necesitan una etiqueta además de X/Y/Z para no compartir título. `megaVariantLabel()` deriva esa etiqueta de `displayNameForVariant()`, el mismo catálogo que nombra `variantFamily`, y `getMegaForm()` la guarda en `megaForms[].variant`. Así `MegaForms` muestra títulos distintos sin mantener un segundo catálogo de nombres.
+
+Cuando se abre la ficha de una forma concreta, `pickMegasForCurrentForm()` reduce `megaForms` a la Mega de esa forma: Meowstic macho (#678) o hembra (#10025), Magearna (#801) u original (#10147), y Tatsugiri curly (#978), droopy (#10258) o stretchy (#10259). Las alternativas de una misma forma (X/Y, normal/Z) no se filtran. Ver una preevolución (por ejemplo Espurr, #677) muestra todas las Megas de la etapa final, porque ambas formas son evoluciones posibles.
