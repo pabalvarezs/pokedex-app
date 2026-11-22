@@ -2,7 +2,7 @@ import { lazy, Suspense, type CSSProperties } from "react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, m } from "framer-motion";
-import { Clock, KeyRound, ShieldAlert, ShieldCheck, Star, Users } from "lucide-react";
+import { Clock, KeyRound, ShieldAlert, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LayoutMotionProvider from "../context/LayoutMotionProvider";
 import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
@@ -11,6 +11,7 @@ import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
 import PokemonArtwork from "../components/PokemonArtwork";
+import { ChileBallIcon } from "../components/layout/icons";
 import { Skeleton } from "../features/admin/components/Skeleton";
 import AdminTabs, {
   getAdminTabMeta,
@@ -116,8 +117,8 @@ function AdminDashboard() {
       <PokeballWatermark />
 
       <header className="mb-5 flex items-center gap-2.5">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-gray-900 text-white motion-safe:animate-pop">
-          <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control border-2 border-red-600 bg-white motion-safe:animate-pop">
+          <ChileBallIcon center="red" className="h-7 w-7" />
         </span>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-black text-gray-800 sm:text-2xl">

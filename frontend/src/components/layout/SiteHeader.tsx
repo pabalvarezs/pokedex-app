@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
+  ChileBallIcon,
   CloseIcon,
   HomeIcon,
   KeyIcon,
@@ -97,8 +98,8 @@ export default function SiteHeader() {
             aria-label="PokeChile, ir a la portada"
             className={`group flex min-w-0 items-center gap-2 rounded-control text-base font-black tracking-wide transition hover:opacity-95 sm:text-xl ${FOCUS_RING}`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-sm ring-2 ring-white/40 transition group-hover:scale-105 motion-reduce:transform-none">
-              <PokeballIcon className="h-5 w-5" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-2 ring-white/40 transition group-hover:scale-105 motion-reduce:transform-none">
+              <ChileBallIcon className="h-[26px] w-[26px]" />
             </span>
             <span className="truncate">PokeChile</span>
           </Link>
