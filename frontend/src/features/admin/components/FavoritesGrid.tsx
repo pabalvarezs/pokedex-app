@@ -1,4 +1,5 @@
 import type { AdminFavorite } from "../../../services/api";
+import AnimatedList from "./AnimatedList";
 import FavoriteCard from "./FavoriteCard";
 
 interface Props {
@@ -18,16 +19,17 @@ export default function FavoritesGrid({
 }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
-      {favorites.map((favorite) => (
-        <FavoriteCard
-          key={favorite.id}
-          favorite={favorite}
-          ownerName={ownerName(favorite)}
-          deleting={deleting}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      ))}
+      <AnimatedList items={favorites} getKey={(favorite) => favorite.id}>
+        {(favorite) => (
+          <FavoriteCard
+            favorite={favorite}
+            ownerName={ownerName(favorite)}
+            deleting={deleting}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        )}
+      </AnimatedList>
     </div>
   );
 }

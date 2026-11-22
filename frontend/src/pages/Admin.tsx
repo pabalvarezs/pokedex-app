@@ -1,9 +1,12 @@
 import { lazy, Suspense, type CSSProperties } from "react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { Clock, KeyRound, ShieldAlert, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import LayoutMotionProvider from "../context/LayoutMotionProvider";
+import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
+import { fadeUp } from "../lib/motion";
 import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
@@ -60,9 +63,9 @@ export default function Admin() {
 /** Se monta solo con sesión de admin: así no dispara queries admin a otros usuarios. */
 function AdminDashboard() {
   const { user } = useAuth();
-  const { stats, isLoading: statsLoading } = useAdminStats();
+  const { stats, isLoading: statsLoading, isError: statsError } = useAdminStats();
   const [searchParams, setSearchParams] = useSearchParams();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   const rawTab = searchParams.get("tab");
   const tab: AdminTab = isAdminTab(rawTab) ? rawTab : "users";
@@ -126,6 +129,15 @@ function AdminDashboard() {
         </div>
       </header>
 
+      {statsError && (
+        <div
+          role="alert"
+          className="glass-surface mb-5 rounded-card border border-red-200 bg-red-50/80 p-3 text-xs font-semibold text-red-700"
+        >
+          No pudimos actualizar el resumen. Espera un momento o recarga la página.
+        </div>
+      )}
+
       <section
         aria-label="Resumen del panel"
         className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4"
@@ -186,33 +198,38 @@ function AdminDashboard() {
         <AnalyticsSection />
       </Suspense>
 
-      <AdminTabs
-        value={tab}
-        onChange={changeTab}
-        counts={counts}
-        loading={statsLoading}
-      />
+      <LayoutMotionProvider>
+        <AdminTabs
+          value={tab}
+          onChange={changeTab}
+          counts={counts}
+          loading={statsLoading}
+          panelId="panel-admin-tab"
+        />
 
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={tab}
-          role="tabpanel"
-          aria-label={meta.label}
-          className="relative z-10 pt-4"
-          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-          transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
-        >
-          {tab === "users" ? (
-            <UsersAdmin />
-          ) : tab === "favorites" ? (
-            <FavoritesAdmin />
-          ) : (
-            <PasswordResetsAdmin />
-          )}
-        </motion.div>
-      </AnimatePresence>
+        <AnimatePresence mode="wait" initial={false}>
+          <m.div
+            key={tab}
+            id="panel-admin-tab"
+            role="tabpanel"
+            aria-labelledby={`tab-${tab}`}
+            tabIndex={0}
+            className="relative z-10 pt-4 focus:outline-none"
+            variants={fadeUp}
+            initial={reduceMotion ? false : "hidden"}
+            animate="visible"
+            exit={reduceMotion ? undefined : "exit"}
+          >
+            {tab === "users" ? (
+              <UsersAdmin />
+            ) : tab === "favorites" ? (
+              <FavoritesAdmin />
+            ) : (
+              <PasswordResetsAdmin />
+            )}
+          </m.div>
+        </AnimatePresence>
+      </LayoutMotionProvider>
     </div>
   );
 }

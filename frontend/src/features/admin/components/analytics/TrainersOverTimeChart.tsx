@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import {
   Area,
   AreaChart,
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function TrainersOverTimeChart({ data, range }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const last = data[data.length - 1]?.total ?? 0;
   const first = data[0]?.total ?? 0;
   const summary = `Entrenadores registrados acumulados en los últimos ${range} días: ${first} al inicio y ${last} al final del rango.`;
@@ -55,6 +55,7 @@ export default function TrainersOverTimeChart({ data, range }: Props) {
           <Tooltip
             labelFormatter={(label) => formatDayLabel(String(label))}
             formatter={(value) => [`${String(value)} entrenadores`, "Acumulado"]}
+            wrapperStyle={{ transition: "opacity 150ms ease-out" }}
             contentStyle={{
               borderRadius: 12,
               border: "1px solid #e2e8f0",
@@ -71,6 +72,8 @@ export default function TrainersOverTimeChart({ data, range }: Props) {
             dot={false}
             activeDot={{ r: 4 }}
             isAnimationActive={!reduceMotion}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -13,7 +13,7 @@ export default function SiteFooter() {
           <p className="text-xs font-extrabold tracking-wide text-ink-900">
             PokeChile
             <span className="ml-1.5 font-medium text-ink-500">
-              · Hecho con cariño en Chile 🇨🇱
+              · Hecho con cariño en Chile
             </span>
           </p>
         </div>

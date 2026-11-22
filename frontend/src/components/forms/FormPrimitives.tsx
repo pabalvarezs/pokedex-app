@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { getTypeBadge } from "../../utils/pokemon";
+import TypeBadge from "../TypeBadge";
 import PokemonArtwork from "../PokemonArtwork";
 
 /** Nombre legible para slugs de PokeAPI: "charizard-mega-x" → "Charizard Mega X". */
@@ -37,19 +37,9 @@ export function TypePills({
     <div
       className={`flex flex-wrap items-center gap-1.5 ${dense ? "justify-center" : ""}`}
     >
-      {types.map((type) => {
-        const badge = getTypeBadge(type);
-        return (
-          <span
-            key={type}
-            className={`rounded-full border font-extrabold uppercase tracking-wide ${
-              dense ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
-            } ${badge.bg} ${badge.text} ${badge.border}`}
-          >
-            {badge.es}
-          </span>
-        );
-      })}
+      {types.map((type) => (
+        <TypeBadge key={type} type={type} size={dense ? "xs" : "sm"} />
+      ))}
     </div>
   );
 }

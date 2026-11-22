@@ -56,10 +56,21 @@ export default {
         pop: {
           "50%": { transform: "scale(1.12)" },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-5px)" },
+          "75%": { transform: "translateX(5px)" },
+        },
+        "pokemon-idle": {
+          "0%, 100%": { transform: "translateY(0) rotate(-3deg)" },
+          "50%": { transform: "translateY(-4px) rotate(3deg)" },
+        },
       },
       animation: {
         "fade-up": "fade-up .2s ease-out",
         pop: "pop .35s ease-out",
+        shake: "shake .3s ease-in-out",
+        "pokemon-idle": "pokemon-idle 3.5s ease-in-out infinite",
       },
     },
   },

@@ -1,7 +1,20 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { m } from "framer-motion";
+import type { Variants } from "framer-motion";
+import { useReducedMotionSafe } from "../../../hooks/useReducedMotionSafe";
+import { motionDurations, motionTokens, STAGGER_STEP } from "../../../lib/motion";
 import { useCountUp } from "../hooks/useCountUp";
 import { Skeleton } from "./Skeleton";
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: (position: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { ...motionTokens.transitions.enter, delay: position * STAGGER_STEP },
+  }),
+};
 
 export type StatTone = "trainers" | "gifts" | "recent" | "recovery";
 
@@ -37,11 +50,17 @@ export default function StatCard({
   index = 0,
 }: Props) {
   const display = useCountUp(loading ? 0 : value);
+  const reduceMotion = useReducedMotionSafe();
 
   return (
-    <article
-      className="glass-surface flex animate-fade-up flex-col rounded-card border border-line p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift motion-safe:hover:-translate-y-0.5"
-      style={{ animationDelay: `${index * 60}ms` }}
+    <m.article
+      custom={index}
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover={reduceMotion ? undefined : { y: -2 }}
+      transition={{ duration: motionDurations.fast }}
+      className="glass-surface flex flex-col rounded-card border border-line p-4 shadow-soft transition-shadow duration-200 hover:shadow-lift"
     >
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 flex-1 break-words text-[10px] font-bold uppercase leading-tight tracking-wider text-ink-500 sm:text-xs">
@@ -67,6 +86,6 @@ export default function StatCard({
           </p>
         )}
       </div>
-    </article>
+    </m.article>
   );
 }

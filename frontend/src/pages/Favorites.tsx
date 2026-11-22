@@ -9,7 +9,8 @@ import {
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
-import { getTypeBadge } from "../utils/pokemon";
+import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
+import { GENERATIONS, getGenerationForId } from "../utils/pokemon";
 import SectionHero, { type HeroStat } from "../components/favorites/SectionHero";
 import FavoritesToolbar, {
   type FavoriteSort,
@@ -58,6 +59,7 @@ function gridClass(count: number) {
 export default function Favorites() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const reduceMotion = useReducedMotionSafe();
   // Sin sesión no se consultan favoritos: el backend exige token válido
   const userId = user?.username;
 
@@ -173,21 +175,61 @@ export default function Favorites() {
     });
 
     const typeCounts = new Map<string, number>();
+    const generationCounts = new Map<number, number>();
+    // Se guarda en un contenedor mutable: TypeScript no sigue las asignaciones
+    // dentro del callback de forEach para el análisis de tipos.
+    const strongestRef: { current: { name: string; total: number } | null } = {
+      current: null,
+    };
+
     visibleFavorites.forEach((favorite) => {
-      (previews[favorite.pokemonId]?.types ?? []).forEach((type) => {
+      const preview = previews[favorite.pokemonId];
+      (preview?.types ?? []).forEach((type) => {
         typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
       });
+
+      const generation = preview?.generation ?? getGenerationForId(favorite.pokemonId);
+      if (generation) {
+        generationCounts.set(generation, (generationCounts.get(generation) ?? 0) + 1);
+      }
+
+      const total = preview?.stats?.reduce(
+        (sum, stat) => sum + stat.base_stat,
+        0
+      );
+      const currentStrongest = strongestRef.current;
+      if (
+        total &&
+        total > 0 &&
+        (!currentStrongest || total > currentStrongest.total)
+      ) {
+        strongestRef.current = {
+          name: displayName(preview?.name ?? favorite.name),
+          total,
+        };
+      }
     });
 
     if (typeCounts.size > 0) {
-      const [topType, amount] = [...typeCounts.entries()].sort(
-        (a, b) => b[1] - a[1]
-      )[0];
-      const info = getTypeBadge(topType);
+      const rankedTypes = [...typeCounts.entries()].sort((a, b) => b[1] - a[1]);
+      const [, amount] = rankedTypes[0];
       stats.push({
         label: "Tipo estrella",
-        value: `${info.emoji} ${info.es}`,
-        hint: amount > 1 ? `${amount} en tu equipo` : "El único de su tipo",
+        value: `${amount} Pokémon`,
+        badges: rankedTypes.slice(0, Math.min(2, rankedTypes.length)).map(([type]) => type),
+        hint: "el más presente en tu equipo",
+      });
+    }
+
+    if (generationCounts.size > 0) {
+      const [topGeneration, count] = [...generationCounts.entries()].sort(
+        (a, b) => b[1] - a[1]
+      )[0];
+      const generation = GENERATIONS.find((item) => item.id === topGeneration);
+      stats.push({
+        label: "Generación favorita",
+        value: `Gen ${topGeneration}`,
+        hint: `${generation?.region ?? "Kanto"} · ${count} ${count === 1 ? "regalón" : "regalones"}`,
       });
     }
 
@@ -200,7 +242,22 @@ export default function Favorites() {
       hint: displayName(previews[highest.pokemonId]?.name ?? highest.name),
     });
 
-    return stats.slice(0, 3);
+    const strongest = strongestRef.current;
+    if (strongest) {
+      stats.push({
+        label: "Más fuerte",
+        value: `${strongest.total} pts`,
+        hint: strongest.name,
+      });
+    }
+
+    stats.push({
+      label: "Tipos distintos",
+      value: String(typeCounts.size),
+      hint: "en tu colección",
+    });
+
+    return stats;
   }, [visibleFavorites, previews]);
 
   const finishRemove = (favorite: Favorite) => {
@@ -212,11 +269,7 @@ export default function Favorites() {
   const handleRemove = (favorite: Favorite) => {
     if (exitingId !== null || remove.isPending) return;
 
-    const reducedMotion =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reducedMotion) {
+    if (reduceMotion) {
       finishRemove(favorite);
       return;
     }
@@ -357,7 +410,7 @@ export default function Favorites() {
               />
             ) : (
               <div
-                className={`favorites-grid-enter mt-5 grid gap-4 ${gridClass(
+                className={`favorites-grid-enter mt-5 grid animate-fade-up gap-4 ${gridClass(
                   shownFavorites.length
                 )}`}
               >

@@ -32,7 +32,7 @@ export default function EmptyState({
     <div className="glass-surface animate-fade-up rounded-card border border-line px-6 py-12 text-center shadow-soft">
       <span
         aria-hidden="true"
-        className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl ${HALOS[tone]} motion-safe:animate-pop`}
+        className={`mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl ${HALOS[tone]} motion-safe:animate-pokemon-idle`}
       >
         {illustration ?? (Icon ? <Icon className="h-6 w-6" /> : <span className="text-2xl">{emoji}</span>)}
       </span>

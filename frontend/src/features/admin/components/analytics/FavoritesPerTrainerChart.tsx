@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import { List } from "lucide-react";
 import {
   Bar,
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function FavoritesPerTrainerChart({ data, onOpenAll }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const height = Math.max(220, data.length * 34);
   const summary = `Regalones por entrenador. ${data
     .slice(0, 3)
@@ -75,6 +75,7 @@ export default function FavoritesPerTrainerChart({ data, onOpenAll }: Props) {
             <Tooltip
               cursor={{ fill: "rgba(148, 163, 184, 0.12)" }}
               formatter={(value) => [`${String(value)} regalones`, "Guardados"]}
+              wrapperStyle={{ transition: "opacity 150ms ease-out" }}
               contentStyle={{
                 borderRadius: 12,
                 border: "1px solid #e2e8f0",
@@ -82,7 +83,13 @@ export default function FavoritesPerTrainerChart({ data, onOpenAll }: Props) {
                 boxShadow: "0 8px 24px rgba(15, 23, 42, 0.10)",
               }}
             />
-            <Bar dataKey="count" radius={[0, 5, 5, 0]} isAnimationActive={!reduceMotion}>
+            <Bar
+              dataKey="count"
+              radius={[0, 5, 5, 0]}
+              isAnimationActive={!reduceMotion}
+              animationDuration={600}
+              animationEasing="ease-out"
+            >
               {data.map((trainer) => (
                 <Cell
                   key={trainer.key}

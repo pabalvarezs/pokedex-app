@@ -84,9 +84,20 @@ export default function AnalyticsSection() {
         {open && (
           <div id="analytics-content" className="border-t border-line-soft p-4">
             {isError ? (
-              <p role="alert" className="text-xs font-semibold text-red-700">
+              <div role="alert" className="text-xs font-semibold text-red-700">
                 No pudimos juntar las cifras. Revisa tu sesión e inténtalo de nuevo.
-              </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    usersQuery.refetch();
+                    favoritesQuery.refetch();
+                    resetsQuery.refetch();
+                  }}
+                  className="focus-accent ml-2 underline decoration-2 underline-offset-2"
+                >
+                  Reintentar
+                </button>
+              </div>
             ) : loading ? (
               <div className="grid gap-4 lg:grid-cols-2">
                 {[0, 1, 2, 3].map((item) => (
@@ -101,7 +112,7 @@ export default function AnalyticsSection() {
                 description="Cuando se creen entrenadores y se guarden regalones, las cifras aparecerán acá."
               />
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid animate-fade-up gap-4 lg:grid-cols-2">
                 <FavoritesPerDayChart data={analytics.favoritesByDay} range={range} />
                 <TrainersOverTimeChart data={analytics.trainersOverTime} range={range} />
                 <FavoritesPerTrainerChart

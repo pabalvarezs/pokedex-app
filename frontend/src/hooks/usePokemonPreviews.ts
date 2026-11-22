@@ -12,6 +12,8 @@ export interface PokemonPreview {
   types: string[];
   stats: PokemonStat[];
   artwork?: string;
+  /** Generación de la ficha; se usa para el resumen de la colección. */
+  generation?: number;
 }
 
 export interface PokemonPreviewsResult {
@@ -30,6 +32,7 @@ function rememberPreview(id: number, pokemon: Awaited<ReturnType<typeof getPokem
     name: pokemon.name,
     types: pokemon.types ?? [],
     stats: pokemon.stats ?? [],
+    generation: pokemon.generation ?? undefined,
     artwork:
       pokemon.sprites?.other?.["official-artwork"]?.front_default ??
       pokemon.sprites?.front_default,

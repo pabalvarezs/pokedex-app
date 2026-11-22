@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import {
   Bar,
   BarChart,
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function FavoritesPerDayChart({ data, range }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const total = data.reduce((sum, point) => sum + point.total, 0);
   const withData = data.filter((point) => point.total > 0).length;
   const summary = `Regalones guardados por día en los últimos ${range} días: ${total} en total, con actividad en ${withData} días.`;
@@ -55,6 +55,7 @@ export default function FavoritesPerDayChart({ data, range }: Props) {
               cursor={{ fill: "rgba(148, 163, 184, 0.12)" }}
               labelFormatter={(label) => formatDayLabel(String(label))}
               formatter={(value) => [`${String(value)} regalones`, "Guardados"]}
+              wrapperStyle={{ transition: "opacity 150ms ease-out" }}
               contentStyle={{
                 borderRadius: 12,
                 border: "1px solid #e2e8f0",
@@ -67,6 +68,8 @@ export default function FavoritesPerDayChart({ data, range }: Props) {
               fill="var(--accent)"
               radius={[5, 5, 0, 0]}
               isAnimationActive={!reduceMotion}
+              animationDuration={600}
+              animationEasing="ease-out"
             />
           </BarChart>
         </ResponsiveContainer>

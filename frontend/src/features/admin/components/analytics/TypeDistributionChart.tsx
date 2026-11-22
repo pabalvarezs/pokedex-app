@@ -1,4 +1,4 @@
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotionSafe } from "../../../../hooks/useReducedMotionSafe";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { TypeDatum } from "../../hooks/useAdminAnalytics";
 import ChartCard from "./ChartCard";
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function TypeDistributionChart({ data, loading = false }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const total = data.reduce((sum, slice) => sum + slice.count, 0);
   const summary = `Distribución de tipos Pokémon entre los regalones guardados: ${data
     .slice(0, 5)
@@ -44,6 +44,8 @@ export default function TypeDistributionChart({ data, loading = false }: Props) 
                 stroke="#ffffff"
                 strokeWidth={2}
                 isAnimationActive={!reduceMotion}
+                animationDuration={600}
+                animationEasing="ease-out"
               >
                 {data.map((slice) => (
                   <Cell key={slice.key} fill={slice.color} />
@@ -54,6 +56,7 @@ export default function TypeDistributionChart({ data, loading = false }: Props) 
                   `${String(value)} apariciones`,
                   String(name),
                 ]}
+                wrapperStyle={{ transition: "opacity 150ms ease-out" }}
                 contentStyle={{
                   borderRadius: 12,
                   border: "1px solid #e2e8f0",

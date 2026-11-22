@@ -16,6 +16,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { PokeballIcon } from "../../components/layout/icons";
 import AdminSectionHeader from "../../features/admin/components/AdminSectionHeader";
+import AnimatedList from "../../features/admin/components/AnimatedList";
 import DeleteUserDialog from "../../features/admin/components/DeleteUserDialog";
 import EmptyState from "../../features/admin/components/EmptyState";
 import PokeballDivider from "../../features/admin/components/PokeballDivider";
@@ -285,21 +286,22 @@ export default function UsersAdmin() {
           </div>
 
           <div className="grid gap-3 md:hidden">
-            {users.map((user) => (
-              <UserCard
-                key={user.id}
-                user={user}
-                favoritesCount={favoriteCounts.get(user.username) ?? 0}
-                isSelf={currentUser?.username === user.username}
-                copied={copied === String(user.id)}
-                copying={copyingId === user.id}
-                deleting={remove.isPending}
-                showLastLogin={hasLastLogin}
-                onCopyLink={handleCopyLink}
-                onEdit={openEdit}
-                onDelete={setDeleteTarget}
-              />
-            ))}
+            <AnimatedList items={users} getKey={(user) => user.id}>
+              {(user) => (
+                <UserCard
+                  user={user}
+                  favoritesCount={favoriteCounts.get(user.username) ?? 0}
+                  isSelf={currentUser?.username === user.username}
+                  copied={copied === String(user.id)}
+                  copying={copyingId === user.id}
+                  deleting={remove.isPending}
+                  showLastLogin={hasLastLogin}
+                  onCopyLink={handleCopyLink}
+                  onEdit={openEdit}
+                  onDelete={setDeleteTarget}
+                />
+              )}
+            </AnimatedList>
           </div>
         </>
       )}

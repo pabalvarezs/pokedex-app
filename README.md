@@ -4,7 +4,8 @@ PokeChile es una Pokédex full-stack con estética chilena: busca Pokémon de fo
 
 ## Stack
 
-- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, TanStack Query, React Router, Axios
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, TanStack Query, React Router, Axios, Framer Motion (LazyMotion), Sonner, Recharts
+- **UI y formularios:** clsx + tailwind-merge, react-hook-form + zod (@hookform/resolvers), lucide-react
 - **Backend:** Node.js, Express, TypeScript, Prisma, Axios (proxy/caché de PokéAPI)
 - **Base de datos:** PostgreSQL 16
 - **Infra local:** Docker Compose
@@ -298,6 +299,45 @@ Cada variante incluye:
 - Pikachu-alola-cap clasificado como `attire`, no como `regional`.
 - Zacian crowned con `permanence: "permanent"` (permanece mientras lleva el objeto).
 
+## Sistema de animaciones
+
+Toda la app comparte un único lenguaje de movimiento, centrado en `transform` y `opacity` (nunca se animan `width`, `height`, `top` ni `left`) y con respeto total a `prefers-reduced-motion`.
+
+### Fundamentos
+
+- **`frontend/src/lib/motion.ts`:** tokens centralizados — duraciones `fast 0.15 s`, `base 0.2 s`, `slow 0.35 s`; easings `easeOut` (entradas) y `easeIn` (salidas); un spring suave (`stiffness 300`, `damping 28`) para elementos interactivos; variants reutilizables `fadeIn`, `fadeUp`, `scaleIn`, `slideInRight` (drawer), `slideInUp` (bottom sheet) y `staggerContainer` (paso de 60 ms).
+- **`MotionProvider`** (`src/context/`): `LazyMotion features={domAnimation} strict` + `MotionConfig reducedMotion="user"` en la raíz. Los componentes usan `m.*` en vez de `motion.*` para reducir el bundle.
+- **`LayoutMotionProvider`:** carga `domMax` bajo demanda solo en el subárbol que necesita `layout`/`layoutId` (pestañas), en un chunk aparte.
+- **`useReducedMotionSafe()`:** normaliza el hook de Framer Motion a booleano para desactivar por JS los casos que `MotionConfig` no cubre (count-up, Recharts, scroll).
+
+### Dónde se aplica
+
+| Superficie | Movimiento |
+|---|---|
+| Rutas | `AnimatePresence mode="wait"`, fade + desplazamiento de 10 px, 200 ms; `Suspense` con skeleton por ruta. |
+| Pestañas del admin | Píldora con `layoutId`, spring suave; panel con fade + 8 px. |
+| Stat cards | Entrada escalonada (60 ms), count-up y hover con `translateY(-2px)`. |
+| Listas y grillas | Entrada/salida y reacomodación con `layout`, limitadas a 12 ítems animados por lista. |
+| Modal / Drawer | Fade del fondo y entrada deslizada (abajo en móvil, derecha en desktop); salida manteniendo el portal montado. Foco atrapado y devuelto. |
+| Formularios | Shake breve en error, mensajes con `role="alert"` y `aria-describedby`. |
+| Gráficos | Recharts con `animationDuration: 600` y `isAnimationActive` desactivado con movimiento reducido. |
+| Skeletons y vacíos | Shimmer, fade hacia el contenido y Poké Ball con flotación idle muy sutil. |
+| Páginas públicas | Fade de artwork al cargar, hero con count-up, barras de stats con `scaleX`. |
+
+### Rendimiento
+
+- Las 8 rutas excepto la portada se cargan con `React.lazy`; Recharts y el panel de administración quedan fuera del bundle inicial.
+- El bundle principal pasó de ~736 KB (209 KB gzip) a ~450 KB (145 KB gzip). El chunk de analíticas (~496 KB / 142 KB gzip) solo se descarga al entrar a `/admin`.
+- `nginx.conf` habilita gzip (nivel 6) para JS, CSS, JSON y SVG.
+- Se evita `will-change` permanente; no se animan más de ~20 elementos a la vez.
+
+### Decisiones descartadas
+
+- **Virtualización (`@tanstack/react-virtual`):** diferida; choca con `layout`/`AnimatePresence` en las listas que se reacomodan.
+- **Radix/shadcn y `vaul`:** innecesarios; los diálogos ya tenían focus trap y no hay bottom sheets dedicados.
+- **`date-fns`:** `src/features/admin/lib/dates.ts` ya usa `Intl` con zona `America/Santiago` y locale `es-CL`.
+- **Arrastre para cerrar el Drawer:** requeriría cargar `domMax` en todo el árbol de portales; no justifica el coste.
+
 ## Tests
 
 ```bash
@@ -334,10 +374,13 @@ frontend/
   src/components/admin/    # CRUD de entrenadores y regalones
   src/components/          # buscador predictivo, card, cadena evolutiva, megas, dinamax, variantes y filtros
   src/components/forms/    # primitivas compartidas de Megaevoluciones y Gigamax
+  src/context/             # AuthContext, MotionProvider y LayoutMotionProvider
+  src/hooks/               # count-up, movimiento reducido, previews y restauración de scroll
+  src/lib/motion.ts        # tokens y variants del sistema de animaciones
+  src/features/admin/      # panel: tabs, tablas, drawers, modales, gráficos y esquemas zod
   src/utils/dynamax.ts     # multiplicador de PS, niveles y restricciones de Dinamax
   src/utils/maxMoves.ts    # Max Moves genéricos y nota de potencia
   src/services/api.ts      # cliente Axios tipado
-  src/context/AuthContext  # sesión, rol y localStorage
   public/                  # favicon original (SVG, ICO y PNG)
   tests/
 ```
@@ -357,3 +400,5 @@ frontend/
 - **Esquema con `db push`:** no hay historial de migraciones; es un proyecto de demostración.
 - **Favicon original:** el arte se dibujó desde cero (Poké Ball con paleta y estrella chilena) para no reutilizar fan art ni recursos de terceros. Pokémon y Poké Ball son marcas de Nintendo/Game Freak.
 - **Docker Compose levanta servidores de desarrollo:** para producción hay que construir los artefactos y servir el frontend con un servidor estático.
+- **Movimiento reducido:** todas las animaciones se desactivan con `prefers-reduced-motion`; las filas `<tr>` de las tablas no usan `layout` porque generarían anidamiento DOM inválido, así que esas listas se reordenan de forma instantánea.
+- **Validación de formularios:** los formularios del panel usan esquemas zod compartidos (`frontend/src/features/admin/lib/formSchemas.ts`) que reflejan las mismas reglas que el backend; los mensajes de error son anunciados por lectores de pantalla.

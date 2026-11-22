@@ -37,6 +37,54 @@ export const POKEMON_TYPES: Record<string, TypeInfo> = {
   fairy: { es: "Hada", bg: "bg-pink-300", text: "text-neutral-900", border: "border-pink-400", badge: "#EE99AC", emoji: "✨", gradient: ["#FDF2F8", "#FBCFE8"], accent: "#BE185D" },
 };
 
+/**
+ * Fondo sólido de la insignia: versión oscura del color del tipo, elegida
+ * para que el texto siempre blanco supere contraste AA incluso en text-[9px].
+ * Se mantiene la familia cromática del tipo para no perder la identidad.
+ */
+const BADGE_BG: Record<string, string> = {
+  normal: "#57534E",
+  fire: "#9A3412",
+  water: "#1D4ED8",
+  electric: "#92400E",
+  grass: "#166534",
+  ice: "#155E75",
+  fighting: "#991B1B",
+  poison: "#6B21A8",
+  ground: "#92400E",
+  flying: "#3730A3",
+  psychic: "#9D174D",
+  bug: "#3F6212",
+  rock: "#44403C",
+  ghost: "#4C1D95",
+  dragon: "#3730A3",
+  dark: "#1C1917",
+  steel: "#334155",
+  fairy: "#9D174D",
+};
+
+export function getBadgeBgColor(type: string): string {
+  return BADGE_BG[type.toLowerCase()] ?? "#334155";
+}
+
+/** Rangos de la Pokédex nacional para derivar la generación sin otra request. */
+const GENERATION_RANGES: [number, number, number][] = [
+  [1, 151, 1],
+  [152, 251, 2],
+  [252, 386, 3],
+  [387, 493, 4],
+  [494, 649, 5],
+  [650, 721, 6],
+  [722, 809, 7],
+  [810, 905, 8],
+  [906, 1025, 9],
+];
+
+/** Generación aproximada por ID mientras llega el preview real. */
+export function getGenerationForId(id: number): number | undefined {
+  return GENERATION_RANGES.find(([from, to]) => id >= from && id <= to)?.[2];
+}
+
 export const GENERATIONS: { id: number; name: string; region: string }[] = [
   { id: 1, name: "Gen 1", region: "Kanto" },
   { id: 2, name: "Gen 2", region: "Johto" },

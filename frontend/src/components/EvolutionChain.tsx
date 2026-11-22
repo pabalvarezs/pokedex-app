@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { EvolutionStage } from "../services/api";
 import { usePokemonPreviews } from "../hooks/usePokemonPreviews";
 import { getTypeBadge } from "../utils/pokemon";
+import TypeBadge from "./TypeBadge";
 import PokemonArtwork from "./PokemonArtwork";
 
 interface EvolutionChainProps {
@@ -177,15 +178,7 @@ function EvolutionCard({ member, isCurrent, types }: EvolutionCardProps) {
         <div className="mt-1.5 flex min-h-[20px] flex-wrap items-center justify-center gap-1">
           {types && types.length > 0 ? (
             types.map((type) => {
-              const badge = getTypeBadge(type);
-              return (
-                <span
-                  key={type}
-                  className={`rounded-full border px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-                >
-                  {badge.es}
-                </span>
-              );
+              return <TypeBadge key={type} type={type} size="xs" />;
             })
           ) : (
             <span className="text-[9px] font-semibold uppercase tracking-wide text-ink-500/70">

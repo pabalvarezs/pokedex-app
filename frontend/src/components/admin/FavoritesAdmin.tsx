@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, m } from "framer-motion";
 import { Plus, SearchX, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -218,22 +219,34 @@ export default function FavoritesAdmin() {
                 </button>
               }
             />
-          ) : view === "grid" ? (
-            <FavoritesGrid
-              favorites={filtered}
-              ownerName={ownerName}
-              deleting={remove.isPending}
-              onEdit={openEdit}
-              onDelete={setDeleteTarget}
-            />
           ) : (
-            <FavoritesTable
-              favorites={filtered}
-              ownerName={ownerName}
-              deleting={remove.isPending}
-              onEdit={openEdit}
-              onDelete={setDeleteTarget}
-            />
+            <AnimatePresence mode="wait" initial={false}>
+              <m.div
+                key={view}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+              >
+                {view === "grid" ? (
+                  <FavoritesGrid
+                    favorites={filtered}
+                    ownerName={ownerName}
+                    deleting={remove.isPending}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                ) : (
+                  <FavoritesTable
+                    favorites={filtered}
+                    ownerName={ownerName}
+                    deleting={remove.isPending}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                )}
+              </m.div>
+            </AnimatePresence>
           )}
         </>
       )}

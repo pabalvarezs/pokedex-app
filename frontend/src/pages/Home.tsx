@@ -8,8 +8,8 @@ import {
 } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
+import TypeBadge from "../components/TypeBadge";
 import PokemonSearch from "../components/PokemonSearch";
-import useScrollRestoration from "../hooks/useScrollRestoration";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
 // --- Tipos de ordenamiento ---
@@ -36,9 +36,6 @@ function dedupeById(pokemon: Pokemon[]): Pokemon[] {
 }
 
 export default function Home() {
-  // Restaura el scroll al volver de la ficha (botón Volver o atrás del navegador).
-  useScrollRestoration();
-
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeGens, setActiveGens] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("id");
@@ -406,7 +403,7 @@ export default function Home() {
       </a>
 
       {/* Título */}
-      <header className="mb-5 sm:mb-6">
+      <header className="mb-5 animate-fade-up sm:mb-6">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
           Pokédex a la chilena
@@ -419,14 +416,14 @@ export default function Home() {
           PokeChile
         </h1>
         <p className="mt-2 max-w-3xl text-body text-ink-500">
-          La Pokédex chilena: pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones 🇨🇱
+          La Pokédex chilena: pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones.
         </p>
       </header>
 
       {/* Buscador predictivo */}
       <section
         aria-label="Buscador de Pokémon"
-        className="glass-surface glass-blur relative z-20 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-20 animate-fade-up rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         <PokemonSearch />
       </section>
@@ -434,7 +431,7 @@ export default function Home() {
       {/* Panel de filtros */}
       <section
         aria-label="Filtros y ordenamiento"
-        className="glass-surface glass-blur relative z-10 mt-4 rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
+        className="glass-surface glass-blur relative z-10 mt-4 animate-fade-up rounded-card border border-line bg-surface p-3 shadow-card sm:p-4"
       >
         {/* Fila 1: Botones de sección + Sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -560,20 +557,16 @@ export default function Home() {
               >
                 Todos
               </button>
-              {Object.entries(POKEMON_TYPES).map(([key, info]) => (
-                <button
-                  type="button"
+              {Object.keys(POKEMON_TYPES).map((key) => (
+                <TypeBadge
                   key={key}
+                  type={key}
+                  size="sm"
+                  interactive
+                  selected={isTypeSelected(key)}
                   onClick={() => toggleType(key)}
-                  aria-pressed={isTypeSelected(key)}
-                  className={`min-h-[40px] rounded-full border px-3 py-1.5 text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 ${
-                    isTypeSelected(key)
-                      ? `${info.bg} ${info.text} ${info.border} shadow-sm ring-2 ring-slate-400 ring-offset-1`
-                      : "border-line bg-white text-ink-700 hover:border-slate-400 hover:bg-slate-50"
-                  }`}
-                >
-                  {info.es}
-                </button>
+                  className="min-h-[40px]"
+                />
               ))}
             </div>
             <p className="mt-2 text-[11px] font-medium text-ink-500">
@@ -659,15 +652,13 @@ export default function Home() {
               if (!info) return null;
               const isExcluded = typeMode === "exclude";
               return (
-                <span
-                  key={key}
-                  className={`flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-bold ${
-                    isExcluded
-                      ? "border-line bg-white text-ink-700"
-                      : `${info.bg} ${info.text} border-transparent`
-                  }`}
-                >
-                  {isExcluded ? `Sin ${info.es}` : info.es}
+                <span key={key} className="inline-flex items-center gap-1">
+                  <TypeBadge
+                    type={key}
+                    size="sm"
+                    selected={!isExcluded}
+                    prefix={isExcluded ? "Sin" : undefined}
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -827,7 +818,7 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="pokemon-grid">
+            <div className="pokemon-grid animate-fade-up">
               {sortedPokemon.map((p) => (
                 <PokemonCard key={p.id} pokemon={p} />
               ))}

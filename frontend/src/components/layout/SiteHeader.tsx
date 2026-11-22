@@ -101,7 +101,6 @@ export default function SiteHeader() {
               <PokeballIcon className="h-5 w-5" />
             </span>
             <span className="truncate">PokeChile</span>
-            <span className="shrink-0 text-base" aria-hidden="true">🇨🇱</span>
           </Link>
 
           {/* Navegación escritorio */}

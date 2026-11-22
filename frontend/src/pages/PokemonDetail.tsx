@@ -1,15 +1,19 @@
 import { useState } from "react";
+import { m } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPokemon, searchPokemon } from "../services/api";
 import FavoriteButton from "../components/FavoriteButton";
+import PokemonDetailSkeleton from "../components/PokemonDetailSkeleton";
+import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import EvolutionChain from "../components/EvolutionChain";
 import MegaForms from "../components/MegaForms";
 import DynamaxForms from "../components/DynamaxForms";
 import SpriteLightbox from "../components/SpriteLightbox";
 import type { SpriteItem } from "../components/SpriteLightbox";
 import VariantsAndForms from "../components/VariantsAndForms";
-import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
+import { STAT_NAMES, GENERATIONS } from "../utils/pokemon";
+import TypeBadge from "../components/TypeBadge";
 
 export default function PokemonDetail() {
   const { id, name } = useParams();
@@ -28,6 +32,10 @@ export default function PokemonDetail() {
     enabled: !!id || !!name,
   });
 
+  // Un mínimo de 650 ms evita el parpadeo en respuestas muy rápidas; si la
+  // petición tarda más, el skeleton desaparece en cuanto llegan los datos.
+  const showingSkeleton = useMinimumLoading(isLoading);
+
   const playCry = (url?: string) => {
     if (!url) return;
     try {
@@ -41,15 +49,7 @@ export default function PokemonDetail() {
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="mx-auto max-w-ficha py-20 text-center">
-        <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-red-600 border-t-transparent"></div>
-        <p className="text-lg font-semibold text-ink-700">
-          Buscando la ficha completa de este Pokémon al tiro...
-        </p>
-      </div>
-    );
+  if (showingSkeleton) return <PokemonDetailSkeleton />;
 
   if (isError || !data)
     return (
@@ -146,6 +146,7 @@ export default function PokemonDetail() {
       {/* Botón Volver y Header superior */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 rounded-control border border-line bg-white px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
         >
@@ -192,18 +193,15 @@ export default function PokemonDetail() {
 
             {/* Badges de Tipos */}
             <div className="flex flex-wrap gap-2 sm:justify-end sm:pb-1">
-              {(data.types ?? []).map((t) => {
-                const info = getTypeBadge(t);
-                return (
-                  <Link
-                    key={t}
-                    to={`/type/${t}`}
-                    className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 ${info.bg} ${info.text} ${info.border}`}
-                  >
-                    {info.es}
-                  </Link>
-                );
-              })}
+              {(data.types ?? []).map((t) => (
+                <Link
+                  key={t}
+                  to={`/type/${t}`}
+                  className="inline-flex rounded-full transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                >
+                  <TypeBadge type={t} size="md" />
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -220,9 +218,10 @@ export default function PokemonDetail() {
               className="artwork-frame group relative mx-auto flex aspect-square w-full max-w-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-card border border-slate-200/80 p-6 shadow-ambient transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200"
             >
               <img
+                key={officialArtwork}
                 src={officialArtwork}
                 alt={data.name}
-                className="max-h-full max-w-full object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.04]"
+                className="max-h-full max-w-full animate-fade-up object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.04] motion-reduce:animate-none"
               />
               <span className="pointer-events-none absolute bottom-3 right-3 rounded-lg bg-slate-900/70 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
                 🔍 Ver en grande
@@ -232,6 +231,7 @@ export default function PokemonDetail() {
             {/* Controles: Shiny y Grito */}
             <div className="mt-6 flex w-full flex-col gap-2 sm:flex-row">
               <button
+                type="button"
                 onClick={() => setShowShiny(!showShiny)}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-control border px-3 py-2.5 text-xs font-bold transition ${
                   showShiny
@@ -245,6 +245,7 @@ export default function PokemonDetail() {
 
               {data.cries?.latest && (
                 <button
+                  type="button"
                   onClick={() => playCry(data.cries?.latest)}
                   disabled={isPlayingCry}
                   title="Escuchar sonido / grito del Pokémon"
@@ -262,6 +263,7 @@ export default function PokemonDetail() {
                   Sprites del juego
                 </p>
                 <button
+                  type="button"
                   onClick={() => openSpriteModal()}
                   className="text-xs font-bold text-red-600 hover:underline"
                 >
@@ -272,6 +274,7 @@ export default function PokemonDetail() {
               <div className="flex flex-wrap justify-center gap-2">
                 {allSprites.slice(0, 4).map((sprite) => (
                   <button
+                    type="button"
                     key={sprite.key}
                     onClick={() => openSpriteModal(sprite)}
                     className="group rounded-control border border-line bg-slate-50 p-1 text-center transition hover:border-red-300 hover:bg-red-50"
@@ -368,9 +371,12 @@ export default function PokemonDetail() {
                         {s.base_stat}
                       </span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        <m.div
+                          className={`h-full rounded-full origin-left ${barColor}`}
                           style={{ width: `${percentage}%` }}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
                         />
                       </div>
                     </div>

@@ -1,6 +1,8 @@
 import type { KeyboardEvent } from "react";
 import { KeyRound, Star, Users, type LucideIcon } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { m } from "framer-motion";
+import { useReducedMotionSafe } from "../../../hooks/useReducedMotionSafe";
+import { motionTokens } from "../../../lib/motion";
 
 export type AdminTab = "users" | "favorites" | "resets";
 
@@ -56,6 +58,8 @@ interface Props {
   onChange: (tab: AdminTab) => void;
   counts?: Record<AdminTab, number>;
   loading?: boolean;
+  /** Id del panel que controlan estos tabs; debe coincidir con el tabpanel. */
+  panelId?: string;
 }
 
 export default function AdminTabs({
@@ -63,11 +67,13 @@ export default function AdminTabs({
   onChange,
   counts,
   loading = false,
+  panelId = "panel-admin-tab",
 }: Props) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   const moveFocus = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const key = event.key;
+    if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(key)) return;
     event.preventDefault();
 
     const tabs = Array.from(
@@ -79,12 +85,18 @@ export default function AdminTabs({
     if (index < 0) return;
 
     const nextIndex =
-      event.key === "ArrowRight"
-        ? (index + 1) % tabs.length
-        : (index - 1 + tabs.length) % tabs.length;
+      key === "Home"
+        ? 0
+        : key === "End"
+          ? tabs.length - 1
+          : key === "ArrowRight"
+            ? (index + 1) % tabs.length
+            : (index - 1 + tabs.length) % tabs.length;
 
-    tabs[nextIndex]?.focus();
-    onChange(ADMIN_TABS[nextIndex].id);
+    const next = tabs[nextIndex];
+    const nextTab = ADMIN_TABS[nextIndex];
+    next?.focus();
+    if (next && nextTab) onChange(nextTab.id);
   };
 
   return (
@@ -101,9 +113,12 @@ export default function AdminTabs({
         return (
           <button
             key={tab.id}
+            id={`tab-${tab.id}`}
             type="button"
             role="tab"
             aria-selected={active}
+            aria-controls={panelId}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(tab.id)}
             onKeyDown={moveFocus}
             className={`focus-accent relative flex shrink-0 snap-start items-center justify-center rounded-control px-3 py-2.5 text-sm font-bold transition duration-150 sm:px-4 ${
@@ -113,16 +128,12 @@ export default function AdminTabs({
             }`}
           >
             {active && (
-              <motion.span
+              <m.span
                 layoutId="tab-pill"
                 aria-hidden="true"
                 className="absolute inset-0 rounded-control shadow-soft"
                 style={{ backgroundColor: "var(--accent)" }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 480, damping: 38 }
-                }
+                transition={reduceMotion ? { duration: 0 } : motionTokens.spring}
               />
             )}
 
