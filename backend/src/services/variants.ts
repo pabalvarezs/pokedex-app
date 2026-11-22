@@ -547,6 +547,21 @@ function displayNameForVariant(
 }
 
 /**
+ * Etiqueta corta que distingue una Mega dentro de su especie (X, Y, Z,
+ * «Macho», «Original», «Curly», …). Se deriva del mismo nombre que usa
+ * `variantFamily` para no mantener dos catálogos de nombres.
+ */
+export function megaVariantLabel(
+  slug: string,
+  speciesName: string
+): string | undefined {
+  const displayName = displayNameForVariant(slug, speciesName, "mega", undefined);
+  const prefix = `Mega ${baseDisplayName(speciesName)} `;
+  const label = displayName.startsWith(prefix) ? displayName.slice(prefix.length) : "";
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : undefined;
+}
+
+/**
  * Metadatos curados. Solo se usan para enriquecer la clasificación; la
  * existencia de la variante siempre viene de `varieties`.
  */

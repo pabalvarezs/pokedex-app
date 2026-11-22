@@ -140,6 +140,6 @@ No se crea una tabla de variantes porque:
 - Pokémon sin variantes: `PokemonDetail` no monta la sección; el componente muestra además un estado vacío defensivo.
 - Formas temporales: se marcan como `temporary` o `battle` y muestran su condición.
 
-## 7. Limitaciones conocidas
+## 7. Nombres de las Megaevoluciones
 
-- Las Megas con prefijo previo a `-mega` (`meowstic-male-mega`, `meowstic-female-mega`, `magearna-original-mega`, `tatsugiri-curly-mega`, `tatsugiri-droopy-mega` y `tatsugiri-stretchy-mega`) llegan a `megaForms` con el `baseName` de la especie y sin `variant`, porque la extracción de sufijo solo reconoce X/Y/Z. `MegaForms` las titula igual (`Mega Meowstic`, `Mega Magearna`, `Mega Tatsugiri`) aunque tengan IDs y tipos distintos. `variantFamily` ya calcula nombres correctos con `displayNameForVariant`; la deuda pendiente es pasar ese nombre a la sección `#mega-title` sin duplicar catálogos.
+Las Megas con prefijo previo a `-mega` (`meowstic-male-mega`, `meowstic-female-mega`, `magearna-original-mega`, `tatsugiri-curly-mega`, `tatsugiri-droopy-mega` y `tatsugiri-stretchy-mega`) necesitan una etiqueta además de X/Y/Z para no compartir título. `megaVariantLabel()` deriva esa etiqueta de `displayNameForVariant()`, el mismo catálogo que nombra `variantFamily`, y `getMegaForm()` la guarda en `megaForms[].variant`. Así `MegaForms` muestra títulos distintos sin mantener un segundo catálogo de nombres.

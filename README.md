@@ -192,6 +192,7 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 - Grid responsive de 2/3/4–5 columnas con tarjetas uniformes: artwork protagonista con `object-fit: contain`, nombre sin truncar (hasta dos líneas), badge de categoría, tipos, región, condición o descripción y permanencia. La tarjeta completa abre `/pokemon/:id`.
 - Paginación progresiva con «Mostrar más variantes» (`PAGE_SIZE = 10`). Cambiar de filtro o de búsqueda reinicia la página y la barra de estado indica «Mostrando X de Y formas».
 - Las variantes `mega` y `gmax` no se duplican: se ofrecen como accesos destacados a `#mega-title` y `#dynamax-title`, mientras sus fichas detalladas siguen en `MegaForms` y `DynamaxForms`.
+- Los nombres de las Megaevoluciones salen del mismo catálogo que `variantFamily` (`megaVariantLabel`, derivado de `displayNameForVariant`), así que formas con prefijo como Meowstic, Magearna o Tatsugiri conservan títulos distintos en `#mega-title`.
 - Los Pokémon paradoja se presentan en un bloque independiente, separados de las formas locales, con su era (Pasado/Futuro) y enlace a su ficha.
 - Estado vacío elegante cuando no hay variantes, cuando la búsqueda no encuentra coincidencias o cuando la familia solo contiene transformaciones delegadas.
 - Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.
@@ -400,6 +401,5 @@ frontend/
 - **Esquema con `db push`:** no hay historial de migraciones; es un proyecto de demostración.
 - **Favicon original:** el arte se dibujó desde cero (Poké Ball con paleta y estrella chilena) para no reutilizar fan art ni recursos de terceros. Pokémon y Poké Ball son marcas de Nintendo/Game Freak.
 - **Docker Compose levanta servidores de desarrollo:** para producción hay que construir los artefactos y servir el frontend con un servidor estático.
-- **Títulos duplicados en Megas con prefijo:** `MegaForms` deriva el título de `baseName` y solo distingue las variantes X/Y/Z. Formas como `meowstic-male/female-mega`, `magearna-original-mega` y `tatsugiri-curly/droopy/stretchy-mega` comparten título (`Mega Meowstic`, `Mega Magearna`, `Mega Tatsugiri`) aunque tengan IDs y tipos distintos. `variantFamily` sí las nombra correctamente; la deuda pendiente es reutilizar ese nombre en la sección de Megaevoluciones.
 - **Movimiento reducido:** todas las animaciones se desactivan con `prefers-reduced-motion`; las filas `<tr>` de las tablas no usan `layout` porque generarían anidamiento DOM inválido, así que esas listas se reordenan de forma instantánea.
 - **Validación de formularios:** los formularios del panel usan esquemas zod compartidos (`frontend/src/features/admin/lib/formSchemas.ts`) que reflejan las mismas reglas que el backend; los mensajes de error son anunciados por lectores de pantalla.

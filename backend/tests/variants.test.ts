@@ -6,6 +6,7 @@ import {
   getVariantCategory,
   variantSpriteUrl,
   variantArtworkUrl,
+  megaVariantLabel,
   VARIANT_CATEGORIES,
 } from "../src/services/variants";
 
@@ -208,6 +209,28 @@ describe("classifyVariant", () => {
   it("asigna 'Gigamax Pikachu' como displayName", () => {
     const result = classifyVariant("pikachu-gmax", "pikachu");
     expect(result.displayName).toBe("Gigamax Pikachu");
+  });
+});
+
+describe("megaVariantLabel", () => {
+  it("devuelve X, Y o Z para las variantes con sufijo", () => {
+    expect(megaVariantLabel("charizard-mega-x", "charizard")).toBe("X");
+    expect(megaVariantLabel("charizard-mega-y", "charizard")).toBe("Y");
+    expect(megaVariantLabel("absol-mega-z", "absol")).toBe("Z");
+  });
+
+  it("distingue Megas con prefijo que antes compartían título", () => {
+    expect(megaVariantLabel("meowstic-male-mega", "meowstic")).toBe("Macho");
+    expect(megaVariantLabel("meowstic-female-mega", "meowstic")).toBe("Hembra");
+    expect(megaVariantLabel("magearna-original-mega", "magearna")).toBe("Original");
+    expect(megaVariantLabel("tatsugiri-curly-mega", "tatsugiri")).toBe("Curly");
+    expect(megaVariantLabel("tatsugiri-droopy-mega", "tatsugiri")).toBe("Droopy");
+    expect(megaVariantLabel("tatsugiri-stretchy-mega", "tatsugiri")).toBe("Stretchy");
+  });
+
+  it("no devuelve etiqueta para la Mega simple", () => {
+    expect(megaVariantLabel("absol-mega", "absol")).toBeUndefined();
+    expect(megaVariantLabel("gengar-mega", "gengar")).toBeUndefined();
   });
 });
 

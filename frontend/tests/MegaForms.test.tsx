@@ -86,4 +86,34 @@ describe("MegaForms", () => {
     expect(screen.getByText("Mega Absol Z")).toBeTruthy();
     expect(screen.getByText("2 formas")).toBeTruthy();
   });
+
+  it("distingue Megas con prefijo que antes compartían título", () => {
+    renderForms([
+      {
+        id: 10300,
+        name: "tatsugiri-curly-mega",
+        baseName: "tatsugiri",
+        variant: "Curly",
+        types: ["dragon"],
+      },
+      {
+        id: 10301,
+        name: "tatsugiri-droopy-mega",
+        baseName: "tatsugiri",
+        variant: "Droopy",
+        types: ["dragon"],
+      },
+      {
+        id: 10302,
+        name: "tatsugiri-stretchy-mega",
+        baseName: "tatsugiri",
+        variant: "Stretchy",
+        types: ["dragon"],
+      },
+    ]);
+
+    expect(screen.getByText("Mega Tatsugiri Curly")).toBeTruthy();
+    expect(screen.getByText("Mega Tatsugiri Droopy")).toBeTruthy();
+    expect(screen.getByText("Mega Tatsugiri Stretchy")).toBeTruthy();
+  });
 });

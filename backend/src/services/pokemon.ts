@@ -3,6 +3,7 @@ import { gmaxMoveFor, type GmaxMove } from "./gmaxMoves";
 import { gmaxVariantLabel } from "./gmaxLabels";
 import {
   buildVariantFamily,
+  megaVariantLabel,
   type PokemonVariantFamily,
 } from "./variants";
 
@@ -106,7 +107,7 @@ export interface MegaForm {
   id: number;
   name: string;
   baseName: string;
-  variant?: "X" | "Y" | "Z";
+  variant?: string;
   types: string[];
   sprite?: string;
   artwork?: string;
@@ -654,11 +655,7 @@ async function getMegaForm(
     const { data } = await api.get<PokemonApiResponse>(
       `/pokemon/${encodeURIComponent(variety.name)}`
     );
-    const rawVariant = variety.name.match(/-mega-([xyz])$/)?.[1]?.toUpperCase();
-    const variant =
-      rawVariant === "X" || rawVariant === "Y" || rawVariant === "Z"
-        ? rawVariant
-        : undefined;
+    const variant = megaVariantLabel(variety.name, baseName);
     const form: MegaForm = {
       id: data.id,
       name: data.name,
