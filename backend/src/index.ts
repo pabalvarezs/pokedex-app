@@ -7,6 +7,7 @@ import adminRoutes from "./routes/admin";
 import dataCenterRoutes from "./routes/dataCenter";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 import { warmSuggestionIndex } from "./services/pokemon";
+import { warmDataCenter } from "./services/dataCenter";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -30,6 +31,7 @@ app.use(errorHandler);
 // Sin host explícito Node escucha en `::` (dual-stack), cubriendo IPv4 e IPv6.
 app.listen(PORT, () => {
   console.log(`Pokedex backend listening on http://localhost:${PORT}`);
-  // Deja listo el buscador predictivo antes de la primera consulta.
+  // Deja listo el buscador predictivo y precarga el Centro de Datos desde la BD.
   warmSuggestionIndex();
+  warmDataCenter();
 });

@@ -9,6 +9,9 @@ const router = Router();
 // administración protege tanto la lectura como la actualización del caché.
 router.use(requireAdmin);
 
+// Rutas específicas antes que `/:category` para que no sean capturadas por él.
+router.get("/pokemon/types", asyncHandler(dataCenterController.getPokemonTypes));
+router.get("/:category/status", asyncHandler(dataCenterController.getCategoryStatus));
 router.get("/:category", asyncHandler(dataCenterController.getCategory));
 router.post("/:category/refresh", asyncHandler(dataCenterController.refreshCategory));
 

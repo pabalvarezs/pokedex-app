@@ -95,6 +95,12 @@ export interface PokemonDataCenterFilters {
 }
 
 export interface DataCenterRefreshResponse {
-  generatedAt: string;
+  refreshing: boolean;
+  generatedAt: string | null;
   count: number;
+  failed: number;
+  lastError: string | null;
 }
+
+/** Mismo contrato que `SnapshotStatus` del backend. */
+export type DataCenterStatus = DataCenterRefreshResponse;

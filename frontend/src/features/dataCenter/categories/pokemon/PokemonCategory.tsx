@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "../../../../services/api";
@@ -47,18 +47,44 @@ export default function PokemonCategory() {
     }),
     [filters]
   );
-  const { data, isLoading, isFetching, isError, error, refetch, refresh } =
-    useDataCenterPokemon(queryFilters);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    status,
+    isPolling,
+    refresh,
+  } = useDataCenterPokemon(queryFilters);
+
+  const wasRefreshing = useRef(false);
+  useEffect(() => {
+    const refreshing = Boolean(status?.refreshing);
+    if (wasRefreshing.current && !refreshing) {
+      if (status?.lastError) {
+        toast.error("No se pudo actualizar el dataset", {
+          description: status.lastError,
+        });
+      } else if (status?.generatedAt) {
+        toast.success("Dataset actualizado", {
+          description: `${formatNumber(status.count)} Pokémon · ${formatDate(status.generatedAt)}`,
+        });
+      }
+    }
+    wasRefreshing.current = refreshing;
+  }, [status]);
 
   const handleRefresh = () => {
     refresh.mutate(undefined, {
-      onSuccess: (result) => {
-        toast.success("Dataset actualizado", {
-          description: `${formatNumber(result.count)} Pokémon · ${formatDate(result.generatedAt)}`,
+      onSuccess: () => {
+        toast.info("Actualización iniciada", {
+          description: "Puede tardar un minuto; los datos actuales siguen disponibles.",
         });
       },
       onError: (err) => {
-        toast.error(getApiErrorMessage(err, "No se pudo actualizar el dataset."));
+        toast.error(getApiErrorMessage(err, "No se pudo iniciar la actualización."));
       },
     });
   };
@@ -75,6 +101,7 @@ export default function PokemonCategory() {
   }
 
   const { meta, rankings, records, insights } = data;
+  const busy = refresh.isPending || isPolling || isFetching;
 
   return (
     <div className="space-y-5">
@@ -87,26 +114,33 @@ export default function PokemonCategory() {
             {meta.generation ? ` · generación ${meta.generation}` : ""}
             {meta.includeVariants ? " · con variantes" : " · solo forma por defecto"}
             {" · actualizado "}
-            {formatDate(meta.generatedAt)}
+            {formatDate(status?.generatedAt ?? meta.generatedAt)}
           </p>
+          {isPolling && (
+            <p className="mt-1 text-[11px] font-bold text-amber-700" role="status">
+              Actualizando en segundo plano… los datos actuales siguen disponibles.
+            </p>
+          )}
+          {!isPolling && status?.lastError && (
+            <p className="mt-1 text-[11px] font-bold text-red-700" role="alert">
+              Última actualización fallida: {status.lastError}
+            </p>
+          )}
         </div>
         <button
           type="button"
           onClick={handleRefresh}
-          disabled={refresh.isPending || isFetching}
+          disabled={busy}
           className={cn(
             "inline-flex min-h-[40px] items-center gap-2 rounded-control border border-line bg-white px-3 py-2 text-xs font-bold text-ink-700 shadow-sm transition hover:border-red-300 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400",
-            (refresh.isPending || isFetching) && "opacity-60"
+            busy && "opacity-60"
           )}
         >
           <RefreshCw
-            className={cn(
-              "h-4 w-4",
-              (refresh.isPending || isFetching) && "motion-safe:animate-spin"
-            )}
+            className={cn("h-4 w-4", busy && "motion-safe:animate-spin")}
             aria-hidden="true"
           />
-          {refresh.isPending ? "Actualizando…" : "Actualizar datos"}
+          {busy ? "Actualizando…" : "Actualizar datos"}
         </button>
       </header>
 

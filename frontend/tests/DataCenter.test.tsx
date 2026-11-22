@@ -42,6 +42,14 @@ vi.mock("../src/services/api", () => ({
   getApiErrorMessage: vi.fn((_error: unknown, fallback?: string) => fallback ?? "error"),
   getDataCenterPokemon: vi.fn(),
   refreshDataCenterPokemon: vi.fn(),
+  getDataCenterStatus: vi.fn(async () => ({
+    refreshing: false,
+    generatedAt: null,
+    count: 0,
+    failed: 0,
+    lastError: null,
+  })),
+  getDataCenterPokemonTypes: vi.fn(async () => ({})),
 }));
 
 class ResizeObserverStub {

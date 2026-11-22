@@ -913,6 +913,12 @@ async function getRawPokemon(key: number | string): Promise<PokemonApiResponse> 
   return request;
 }
 
+/** Tipos de un Pokémon desde la caché de la API, sin construir la ficha completa. */
+export async function getRawPokemonTypes(id: number): Promise<string[]> {
+  const raw = await getRawPokemon(id);
+  return raw.types.map((slot) => slot.type.name);
+}
+
 async function getSpeciesInfo(idOrName: number | string) {
   const cacheKey = String(idOrName).trim().toLowerCase();
   const cached = cacheGet(speciesCache, cacheKey);

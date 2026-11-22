@@ -2,6 +2,7 @@ import axios from "axios";
 import type {
   DataCenterPokemonResponse,
   DataCenterRefreshResponse,
+  DataCenterStatus,
   PokemonDataCenterFilters,
 } from "../features/dataCenter/lib/types";
 
@@ -475,4 +476,20 @@ export async function refreshDataCenterPokemon() {
     "/api/admin/data-center/pokemon/refresh"
   );
   return data;
+}
+
+export async function getDataCenterStatus() {
+  const { data } = await api.get<DataCenterStatus>(
+    "/api/admin/data-center/pokemon/status"
+  );
+  return data;
+}
+
+/** Tipos de varios Pokémon en una sola petición (panel de administración). */
+export async function getDataCenterPokemonTypes(ids: number[]) {
+  const { data } = await api.get<{ typesById: Record<string, string[]> }>(
+    "/api/admin/data-center/pokemon/types",
+    { params: { ids: ids.join(",") } }
+  );
+  return data.typesById;
 }

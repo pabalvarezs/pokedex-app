@@ -1,4 +1,15 @@
-import { api, mapWithConcurrency } from "./pokemon";
+import {
+  api,
+  getRawPokemonTypes,
+  mapWithConcurrency,
+} from "./pokemon";
+import {
+  readSnapshot,
+  readStatus,
+  setRefreshing,
+  writeSnapshot,
+  type SnapshotStatus,
+} from "./dataCenterRepository";
 import { buildPokemonAnalytics, isPokemonDataType } from "./dataCenterStats";
 import {
   STAT_KEYS,
@@ -9,13 +20,16 @@ import {
 } from "./dataCenterTypes";
 
 /**
- * Dataset del Centro de Datos. Se construye una sola vez desde PokéAPI y se
- * conserva en memoria 24 h. La primera visita paga la descarga; las siguientes
- * reutilizan el snapshot. Al expirar se sirve el snapshot anterior mientras se
- * reconstruye en segundo plano (stale-while-revalidate), así ningún usuario
- * espera por la actualización. Las peticiones concurrentes se deduplican.
+ * Dataset del Centro de Datos con dos niveles de caché:
+ * - L1 en memoria, para responder en ~1 ms;
+ * - L2 en PostgreSQL, para sobrevivir reinicios y compartirse entre réplicas.
+ *
+ * Al arrancar se precarga L1 desde L2 sin red. Si no hay snapshot, la primera
+ * visita paga la descarga desde PokéAPI. Al expirar se sirve el snapshot
+ * anterior mientras se reconstruye en segundo plano (stale-while-revalidate).
+ * Las peticiones concurrentes se deduplican.
  */
-const DATASET_TTL_MS = 24 * 60 * 60 * 1000;
+const DATASET_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DATA_CONCURRENCY = 10;
 
 interface RawStatSlot {
@@ -62,6 +76,8 @@ interface CacheEntry<T> {
 
 let datasetCache: CacheEntry<DataCenterDataset> | null = null;
 let datasetRequest: Promise<DataCenterDataset> | null = null;
+let hydrationPromise: Promise<void> | null = null;
+const refreshingCategories = new Set<string>();
 
 function idFromUrl(url?: string): number | undefined {
   const raw = url?.split("/").filter(Boolean).pop();
@@ -215,8 +231,9 @@ function buildDatasetOnce(): Promise<DataCenterDataset> {
   if (datasetRequest) return datasetRequest;
 
   datasetRequest = fetchDataset()
-    .then((value) => {
+    .then(async (value) => {
       datasetCache = { value, expiresAt: Date.now() + DATASET_TTL_MS };
+      await writeSnapshot("pokemon", value);
       return value;
     })
     .finally(() => {
@@ -224,6 +241,40 @@ function buildDatasetOnce(): Promise<DataCenterDataset> {
     });
 
   return datasetRequest;
+}
+
+/**
+ * Precarga L1 desde la base de datos al arrancar, sin peticiones a PokéAPI.
+ * El snapshot solo se construye cuando alguien lo pide o pulsa "Actualizar".
+ */
+export function warmDataCenter(): void {
+  if (hydrationPromise) return;
+
+  hydrationPromise = (async () => {
+    const status = await readStatus("pokemon");
+    // Un refresh interrumpido por un reinicio no puede quedar marcado como activo.
+    if (status?.refreshing) {
+      await setRefreshing("pokemon", false, status.lastError);
+    }
+
+    const snapshot = await readSnapshot("pokemon");
+    if (snapshot && !datasetCache && !datasetRequest) {
+      datasetCache = {
+        value: snapshot,
+        expiresAt: new Date(snapshot.generatedAt).getTime() + DATASET_TTL_MS,
+      };
+    }
+  })()
+    .catch(() => {
+      // Sin BD se mantiene el comportamiento anterior: solo caché en memoria.
+    })
+    .finally(() => {
+      hydrationPromise = null;
+    });
+}
+
+function peekDataset(category: DataCenterCategory): DataCenterDataset | null {
+  return category === "pokemon" ? datasetCache?.value ?? null : null;
 }
 
 export interface DatasetOptions {
@@ -250,7 +301,102 @@ export async function getPokemonDataset(
     return datasetCache.value;
   }
 
+  // Sin memoria: la BD evita repetir la descarga de ~1 minuto tras un reinicio.
+  if (!options.force && !datasetCache) {
+    const snapshot = await readSnapshot("pokemon");
+    if (snapshot) {
+      datasetCache = {
+        value: snapshot,
+        expiresAt: new Date(snapshot.generatedAt).getTime() + DATASET_TTL_MS,
+      };
+      if (datasetCache.expiresAt <= now) {
+        void buildDatasetOnce().catch(() => {});
+      }
+      return snapshot;
+    }
+  }
+
   return buildDatasetOnce();
+}
+
+export async function getCategoryStatus(
+  category: DataCenterCategory
+): Promise<SnapshotStatus> {
+  const dbStatus = await readStatus(category);
+  const memory = peekDataset(category);
+  return {
+    refreshing: refreshingCategories.has(category) || dbStatus?.refreshing === true,
+    generatedAt: memory?.generatedAt ?? dbStatus?.generatedAt ?? null,
+    count: memory?.count ?? dbStatus?.count ?? 0,
+    failed: memory?.failed ?? dbStatus?.failed ?? 0,
+    lastError: dbStatus?.lastError ?? null,
+  };
+}
+
+/**
+ * El refresh no bloquea la petición: marca el estado, reconstruye en segundo
+ * plano y persiste el resultado. El cliente consulta `/status` hasta que termina.
+ */
+export async function refreshCategoryData(
+  category: DataCenterCategory
+): Promise<SnapshotStatus> {
+  if (refreshingCategories.has(category)) return getCategoryStatus(category);
+
+  refreshingCategories.add(category);
+  await setRefreshing(category, true, null);
+
+  void buildDatasetOnce()
+    .then(async () => {
+      await setRefreshing(category, false, null);
+    })
+    .catch(async (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Error desconocido";
+      await setRefreshing(category, false, message);
+    })
+    .finally(() => {
+      refreshingCategories.delete(category);
+    });
+
+  return getCategoryStatus(category);
+}
+
+/** Tipos desde el snapshot en memoria; si aún no existe, desde la caché de la API. */
+export async function getPokemonTypesByIds(
+  ids: number[]
+): Promise<Record<string, string[]>> {
+  const typesById: Record<string, string[]> = {};
+  const missing: number[] = [];
+  const snapshot = peekDataset("pokemon");
+
+  if (snapshot) {
+    const entries = new Map(snapshot.entries.map((entry) => [entry.id, entry]));
+    for (const id of ids) {
+      const entry = entries.get(id);
+      if (entry) typesById[String(id)] = entry.types;
+      else missing.push(id);
+    }
+  } else {
+    missing.push(...ids);
+  }
+
+  if (missing.length > 0) {
+    const fetched = await mapWithConcurrency(
+      missing,
+      DATA_CONCURRENCY,
+      async (id) => {
+        try {
+          return { id, types: await getRawPokemonTypes(id) };
+        } catch {
+          return null;
+        }
+      }
+    );
+    for (const item of fetched) {
+      if (item) typesById[String(item.id)] = item.types;
+    }
+  }
+
+  return typesById;
 }
 
 /**
@@ -272,21 +418,13 @@ export const DATA_CATEGORY_HANDLERS: Record<DataCenterCategory, CategoryHandler>
     buildPokemonAnalytics(await getPokemonDataset(), query),
 };
 
-interface RefreshResult {
-  generatedAt: string;
-  count: number;
-}
-
-type CategoryRefresher = () => Promise<RefreshResult>;
+type CategoryRefresher = () => Promise<SnapshotStatus>;
 
 export const DATA_CATEGORY_REFRESHERS: Record<
   DataCenterCategory,
   CategoryRefresher
 > = {
-  pokemon: async () => {
-    const dataset = await getPokemonDataset({ force: true });
-    return { generatedAt: dataset.generatedAt, count: dataset.count };
-  },
+  pokemon: async () => refreshCategoryData("pokemon"),
 };
 
 export { isPokemonDataType };

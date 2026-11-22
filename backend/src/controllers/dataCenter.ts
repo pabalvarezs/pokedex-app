@@ -3,6 +3,8 @@ import {
   DATA_CATEGORY_HANDLERS,
   DATA_CATEGORY_REFRESHERS,
   DATA_CENTER_CATEGORIES,
+  getCategoryStatus as readCategoryStatus,
+  getPokemonTypesByIds,
   isDataCenterCategory,
   isPokemonDataType,
 } from "../services/dataCenter";
@@ -77,6 +79,16 @@ export async function getCategory(req: Request, res: Response) {
   res.json(await DATA_CATEGORY_HANDLERS[category](query));
 }
 
+export async function getCategoryStatus(req: Request, res: Response) {
+  const category = readCategory(req);
+  if (!category || !isDataCenterCategory(category)) {
+    rejectCategory(res);
+    return;
+  }
+
+  res.json(await readCategoryStatus(category));
+}
+
 export async function refreshCategory(req: Request, res: Response) {
   const category = readCategory(req);
   if (!category || !isDataCenterCategory(category)) {
@@ -84,5 +96,30 @@ export async function refreshCategory(req: Request, res: Response) {
     return;
   }
 
-  res.json(await DATA_CATEGORY_REFRESHERS[category]());
+  // La reconstrucción ocurre en segundo plano: el cliente consulta /status.
+  res.status(202).json(await DATA_CATEGORY_REFRESHERS[category]());
+}
+
+export async function getPokemonTypes(req: Request, res: Response) {
+  const raw = typeof req.query.ids === "string" ? req.query.ids : "";
+  if (!raw.trim()) {
+    res.status(400).json({ error: "Debes indicar al menos un ID" });
+    return;
+  }
+
+  const ids = Array.from(
+    new Set(
+      raw
+        .split(",")
+        .map((part) => Number(part.trim()))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    )
+  ).slice(0, 500);
+
+  if (ids.length === 0) {
+    res.status(400).json({ error: "IDs inválidos" });
+    return;
+  }
+
+  res.json({ typesById: await getPokemonTypesByIds(ids) });
 }
