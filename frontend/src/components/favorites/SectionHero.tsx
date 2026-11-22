@@ -75,7 +75,7 @@ export default function SectionHero({ count, stats }: Props) {
 
           <p className="mt-2 max-w-xl text-sm font-medium text-red-50 sm:text-base">
             Tu equipo de cracks, guardado en la base de datos.{" "}
-            <span className="whitespace-nowrap">Puro corazón chileno 🇨🇱.</span>
+            <span className="whitespace-nowrap">Puro corazón chileno.</span>
           </p>
         </div>
 

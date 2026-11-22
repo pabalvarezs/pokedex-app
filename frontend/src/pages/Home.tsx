@@ -416,7 +416,7 @@ export default function Home() {
           PokeChile
         </h1>
         <p className="mt-2 max-w-3xl text-body text-ink-500">
-          La Pokédex chilena: pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones 🇨🇱
+          La Pokédex chilena: pilla todos los Pokémon, revisa sus estadísticas y guárdalos en tus regalones.
         </p>
       </header>
 
