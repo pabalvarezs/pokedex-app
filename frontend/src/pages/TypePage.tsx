@@ -1,7 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { SearchX } from "lucide-react";
 import { listPokemonByType } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
+import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
+import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import { getTypeBadge } from "../utils/pokemon";
 
 export default function TypePage() {
@@ -16,11 +19,26 @@ export default function TypePage() {
     enabled: !!safeType,
   });
 
-  if (isLoading)
+  const showingSkeleton = useMinimumLoading(isLoading);
+
+  if (showingSkeleton)
     return (
-      <div className="text-center py-16">
-        <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-red-600 border-t-transparent mb-3 motion-reduce:animate-none"></div>
-        <p className="text-ink-700 font-medium">Cargando Pokémon del tipo...</p>
+      <div
+        className="mx-auto w-full max-w-6xl animate-fade-up py-6"
+        role="status"
+        aria-busy="true"
+        aria-label="Cargando Pokémon del tipo..."
+      >
+        <div className="mb-5">
+          <div className="skeleton h-9 w-2/3 rounded-control" />
+          <div className="skeleton mt-2 h-4 w-40 rounded-full" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <PokemonCardSkeleton key={index} />
+          ))}
+        </div>
+        <span className="sr-only">Cargando Pokémon del tipo…</span>
       </div>
     );
 
@@ -59,7 +77,12 @@ export default function TypePage() {
   if (!data?.pokemon?.length) {
     return (
       <div className="glass-surface glass-blur mx-auto mt-6 max-w-md animate-fade-up rounded-2xl border p-8 py-16 text-center shadow-sm">
-        <span className="mb-4 block text-5xl motion-safe:animate-pokemon-idle">🔍</span>
+        <span
+          aria-hidden="true"
+          className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-500 motion-safe:animate-pokemon-idle"
+        >
+          <SearchX className="h-6 w-6" />
+        </span>
         <h2 className="mb-2 text-xl font-bold text-ink-900">Tipo no encontrado</h2>
         <p className="mb-4 text-sm text-ink-500">
           No pillamos ningún Pokémon del tipo "<strong>{typeInfo.es}</strong>".
