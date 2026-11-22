@@ -1,4 +1,4 @@
-import { getBadgeTextColor, getTypeBadge } from "../utils/pokemon";
+import { getBadgeBgColor, getTypeBadge } from "../utils/pokemon";
 import TypeIcon from "./TypeIcon";
 
 export type TypeBadgeSize = "xs" | "sm" | "md";
@@ -24,8 +24,8 @@ const SIZES: Record<TypeBadgeSize, { chip: string; icon: string; orb: string }> 
 };
 
 /**
- * Insignia de tipo unificada: color oficial del tipo en degradado y símbolo
- * vectorial. Un único componente para tarjetas, filtros, favoritos y panel.
+ * Insignia de tipo unificada: fondo sólido oscuro por tipo, texto siempre
+ * blanco y símbolo vectorial. Un único componente para toda la app.
  */
 export default function TypeBadge({
   type,
@@ -42,9 +42,9 @@ export default function TypeBadge({
 
   const chipStyle = selected
     ? {
-        backgroundImage: `linear-gradient(135deg, ${info.badge} 0%, ${info.accent} 100%)`,
-        color: getBadgeTextColor(type),
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.32), 0 1px 2px rgba(15,23,42,0.10)",
+        backgroundColor: getBadgeBgColor(type),
+        color: "#ffffff",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22), 0 1px 2px rgba(15,23,42,0.12)",
       }
     : {
         backgroundColor: "rgba(255,255,255,0.88)",

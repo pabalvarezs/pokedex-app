@@ -38,32 +38,33 @@ export const POKEMON_TYPES: Record<string, TypeInfo> = {
 };
 
 /**
- * Color de texto legible sobre `badge`. Los tipos claros llevan texto oscuro
- * para que la insignia conserve contraste AA sin depender del sistema.
+ * Fondo sólido de la insignia: versión oscura del color del tipo, elegida
+ * para que el texto siempre blanco supere contraste AA incluso en text-[9px].
+ * Se mantiene la familia cromática del tipo para no perder la identidad.
  */
-const BADGE_TEXT: Record<string, string> = {
-  normal: "#1c1917",
-  fire: "#1c1917",
-  water: "#ffffff",
-  electric: "#1c1917",
-  grass: "#1c1917",
-  ice: "#1c1917",
-  fighting: "#ffffff",
-  poison: "#ffffff",
-  ground: "#1c1917",
-  flying: "#1c1917",
-  psychic: "#1c1917",
-  bug: "#1c1917",
-  rock: "#1c1917",
-  ghost: "#ffffff",
-  dragon: "#ffffff",
-  dark: "#ffffff",
-  steel: "#1c1917",
-  fairy: "#1c1917",
+const BADGE_BG: Record<string, string> = {
+  normal: "#57534E",
+  fire: "#9A3412",
+  water: "#1D4ED8",
+  electric: "#92400E",
+  grass: "#166534",
+  ice: "#155E75",
+  fighting: "#991B1B",
+  poison: "#6B21A8",
+  ground: "#92400E",
+  flying: "#3730A3",
+  psychic: "#9D174D",
+  bug: "#3F6212",
+  rock: "#44403C",
+  ghost: "#4C1D95",
+  dragon: "#3730A3",
+  dark: "#1C1917",
+  steel: "#334155",
+  fairy: "#9D174D",
 };
 
-export function getBadgeTextColor(type: string): string {
-  return BADGE_TEXT[type.toLowerCase()] ?? "#ffffff";
+export function getBadgeBgColor(type: string): string {
+  return BADGE_BG[type.toLowerCase()] ?? "#334155";
 }
 
 export const GENERATIONS: { id: number; name: string; region: string }[] = [

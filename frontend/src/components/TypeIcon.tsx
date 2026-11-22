@@ -33,20 +33,29 @@ const ICONS: Record<string, ReactNode> = {
       <path d="m9 5 3 2 3-2M9 19l3-2 3 2" />
     </>
   ),
-  fighting: <path d="M12 2 15 9l7 3-7 3-3 7-3-7-7-3 7-3 3-7Z" />,
+  fighting: (
+    <>
+      {/* Guante de boxeo: puño cerrado con pulgar. */}
+      <path d="M8 9V7a2 2 0 0 1 4 0v1h2V6a2 2 0 0 1 4 0v4c0 5-2.5 8-6 8-4 0-6-3-6-8V9a2 2 0 0 1 4 0" />
+      <path d="M6 11H4.5a2 2 0 0 0 0 4H6" />
+      <path d="M10 11v4M14 11v4" />
+    </>
+  ),
   poison: (
     <>
-      <path d="M12 2c3 4 6.5 7.5 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 9 6 12 2Z" />
-      <circle cx="10" cy="13" r="1.1" fill="currentColor" stroke="none" />
-      <circle cx="14" cy="13" r="1.1" fill="currentColor" stroke="none" />
-      <path d="M10 17c1.2 1 2.8 1 4 0" />
+      {/* Calavera: cráneo, ojos, nariz y dientes. */}
+      <path d="M12 2a8 8 0 0 0-8 8c0 3 1.5 5 3.5 6.2V19a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-2.8A7.7 7.7 0 0 0 20 10a8 8 0 0 0-8-8Z" />
+      <circle cx="9" cy="10" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="10" r="1.8" fill="currentColor" stroke="none" />
+      <path d="m12 12-1 2h2l-1-2ZM9.5 17.5v2M14.5 17.5v2" />
     </>
   ),
   ground: <path d="M2 20h20L14 7l-4 7-2-3-6 9Z" />,
   flying: (
     <>
-      <path d="M3 15c5-8 11-10 18-9-4 2-7 5-9 9-3-1-6-1-9 0Z" />
-      <path d="M6 19c3-4 6-6 10-7" />
+      {/* Ala con tres plumas, silueta reconocible a 12 px. */}
+      <path d="M3 8c5 0 10 3 13 8-4-1-7 0-10 2 1-4 0-7-3-10Z" />
+      <path d="M8 10c3 1 6 4 8 8M6 14c2 1 4 3 5 6" />
     </>
   ),
   psychic: (
@@ -85,8 +94,10 @@ const ICONS: Record<string, ReactNode> = {
   ),
   fairy: (
     <>
-      <path d="m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2Z" />
-      <circle cx="18.5" cy="5.5" r="1.2" fill="currentColor" stroke="none" />
+      {/* Varita mágica con estrella de cinco puntas y chispas. */}
+      <path d="m12 2 2.2 5.2L19.5 9l-5.3 2 2.3 5.6L12 13.7 7.5 16.6 9.8 11 4.5 9l5.3-1.8L12 2Z" />
+      <path d="m19 16 .7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z" />
+      <circle cx="5" cy="18" r="1" fill="currentColor" stroke="none" />
     </>
   ),
 };

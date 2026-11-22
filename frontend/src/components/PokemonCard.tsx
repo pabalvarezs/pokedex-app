@@ -75,7 +75,7 @@ export default function PokemonCard({ pokemon }: Props) {
   };
 
   const typeBadges = (pokemon.types ?? []).map((t) => (
-    <TypeBadge key={t} type={t} size="sm" />
+    <TypeBadge key={t} type={t} size="xs" showIcon className="shrink-0" />
   ));
 
   // Prefer official artwork, then default sprite
@@ -182,7 +182,7 @@ export default function PokemonCard({ pokemon }: Props) {
             </svg>
           </h3>
 
-          <div className="flex min-h-[22px] flex-wrap items-center justify-center gap-1.5">
+          <div className="flex min-h-[22px] flex-nowrap items-center justify-center gap-1 whitespace-nowrap">
             {typeBadges}
           </div>
         </div>
