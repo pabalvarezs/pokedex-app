@@ -1561,8 +1561,10 @@ export function buildVariantFamily(
   const currentTypes =
     input.typesById?.[input.currentId] ?? input.currentTypes;
 
+  // Se excluye la forma que se está viendo, no la base: al abrir una variante
+  // interesan las otras formas, incluida la especie por defecto.
   const variants = entries
-    .filter((variety) => variety.id !== baseId)
+    .filter((variety) => variety.id !== input.currentId)
     .map((variety): PokemonVariant => {
       const resolved = classifyVariant(variety.name, input.speciesName);
       const types =
@@ -1572,7 +1574,8 @@ export function buildVariantFamily(
       return {
         id: variety.id,
         name: variety.name,
-        displayName: resolved.displayName,
+        displayName:
+          variety.name === input.speciesName ? baseDisplay : resolved.displayName,
         category: resolved.categoryRef,
         description: resolved.description,
         ...(resolved.condition ? { condition: resolved.condition } : {}),
@@ -1583,8 +1586,8 @@ export function buildVariantFamily(
         kind: "record",
         navigable: true,
         order: resolved.order,
-        isDefault: false,
-        isCurrent: variety.id === input.currentId,
+        isDefault: variety.id === baseId,
+        isCurrent: false,
         sprite: variantSpriteUrl(variety.id),
         artwork: variantArtworkUrl(variety.id),
         ...(types?.length ? { types } : {}),

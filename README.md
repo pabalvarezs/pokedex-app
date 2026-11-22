@@ -198,6 +198,7 @@ El módulo `gmaxVariantLabel` se extrajo a `gmaxLabels.ts` para evitar un ciclo 
 - Los Pokémon paradoja se presentan en un bloque independiente, separados de las formas locales, con su era (Pasado/Futuro) y enlace a su ficha.
 - Estado vacío elegante cuando no hay variantes, cuando la búsqueda no encuentra coincidencias o cuando la familia solo contiene transformaciones delegadas.
 - Barra de navegación inversa cuando se está viendo una variante (no la especie base): enlace a `/pokemon/:baseId`.
+- El grid excluye la forma que se está viendo y ofrece las demás, incluida la base: en la ficha de Meowstic hembra (#10025) aparece Meowstic macho (#678) en vez de la propia hembra.
 - `PokemonDetail` solo monta la sección cuando `variantFamily` está presente; el componente además cubre el estado vacío de forma defensiva.
 
 **Sin tabla Prisma:** Los Pokémon no viven en PostgreSQL. El catálogo backend versionado (`variants.ts`) es la fuente de metadatos, siguiendo el patrón de `gmaxMoves.ts`.
