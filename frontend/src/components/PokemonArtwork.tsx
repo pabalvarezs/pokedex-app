@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface PokemonArtworkProps {
   id: number;
@@ -38,11 +38,18 @@ export default function PokemonArtwork({
 
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     setIndex(0);
     setLoaded(false);
   }, [sources]);
+
+  // Las imágenes en caché pueden terminar antes de que React enlace onLoad.
+  useEffect(() => {
+    const image = imageRef.current;
+    if (image?.complete && image.naturalWidth > 0) setLoaded(true);
+  }, [index, sources]);
 
   if (index >= sources.length) {
     return (
@@ -69,6 +76,7 @@ export default function PokemonArtwork({
 
   return (
     <img
+      ref={imageRef}
       key={sources[index]}
       src={sources[index]}
       alt={name}
