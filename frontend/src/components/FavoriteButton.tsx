@@ -45,12 +45,13 @@ export default function FavoriteButton({ pokemonId, name }: Props) {
 
   return (
     <button
+      type="button"
       onClick={() => toggle.mutate()}
       disabled={isLoading || toggle.isPending}
       className={`px-4 py-2 rounded-control text-sm font-bold transition flex items-center justify-center gap-2 border shadow-sm ${
         fav
           ? "bg-amber-400 text-amber-950 border-amber-500 hover:bg-amber-500"
-          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+          : "bg-white text-ink-700 border-line hover:bg-slate-50"
       }`}
     >
       <span>{fav ? "⭐ Quitar de regalones" : "☆ ¡Guardar en mis regalones!"}</span>

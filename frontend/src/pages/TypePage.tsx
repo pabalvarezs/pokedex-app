@@ -20,7 +20,7 @@ export default function TypePage() {
     return (
       <div className="text-center py-16">
         <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-red-600 border-t-transparent mb-3 motion-reduce:animate-none"></div>
-        <p className="text-gray-600 font-medium">Cargando Pokémon del tipo...</p>
+        <p className="text-ink-700 font-medium">Cargando Pokémon del tipo...</p>
       </div>
     );
 
@@ -30,10 +30,10 @@ export default function TypePage() {
         role="alert"
         className="glass-surface glass-blur mx-auto mt-6 max-w-md animate-fade-up rounded-2xl border p-8 py-16 text-center shadow-sm"
       >
-        <h2 className="mb-2 text-xl font-bold text-gray-800">
+        <h2 className="mb-2 text-xl font-bold text-ink-900">
           No pudimos cargar este tipo
         </h2>
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-ink-500">
           Hubo un problema al pedir los Pokémon de tipo "{typeInfo.es}".
         </p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -60,8 +60,8 @@ export default function TypePage() {
     return (
       <div className="glass-surface glass-blur mx-auto mt-6 max-w-md animate-fade-up rounded-2xl border p-8 py-16 text-center shadow-sm">
         <span className="mb-4 block text-5xl motion-safe:animate-pokemon-idle">🔍</span>
-        <h2 className="mb-2 text-xl font-bold text-gray-800">Tipo no encontrado</h2>
-        <p className="mb-4 text-sm text-gray-500">
+        <h2 className="mb-2 text-xl font-bold text-ink-900">Tipo no encontrado</h2>
+        <p className="mb-4 text-sm text-ink-500">
           No pillamos ningún Pokémon del tipo "<strong>{typeInfo.es}</strong>".
         </p>
         <button
@@ -82,10 +82,10 @@ export default function TypePage() {
   return (
     <div className="max-w-6xl mx-auto py-6">
       <div className="mb-5">
-        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+        <h1 className="text-display font-extrabold text-ink-900 tracking-tight">
           Pokémon de tipo {typeInfo.es}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-ink-500 mt-1">
           Se encontraron {sortedPokemon.length} Pokémon
         </p>
       </div>

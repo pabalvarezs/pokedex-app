@@ -147,6 +147,7 @@ export default function PokemonDetail() {
       {/* Botón Volver y Header superior */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 rounded-control border border-line bg-white px-4 py-2 text-sm font-bold text-ink-700 shadow-sm transition hover:border-red-200 hover:text-red-600"
         >
@@ -234,6 +235,7 @@ export default function PokemonDetail() {
             {/* Controles: Shiny y Grito */}
             <div className="mt-6 flex w-full flex-col gap-2 sm:flex-row">
               <button
+                type="button"
                 onClick={() => setShowShiny(!showShiny)}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-control border px-3 py-2.5 text-xs font-bold transition ${
                   showShiny
@@ -247,6 +249,7 @@ export default function PokemonDetail() {
 
               {data.cries?.latest && (
                 <button
+                  type="button"
                   onClick={() => playCry(data.cries?.latest)}
                   disabled={isPlayingCry}
                   title="Escuchar sonido / grito del Pokémon"
@@ -264,6 +267,7 @@ export default function PokemonDetail() {
                   Sprites del juego
                 </p>
                 <button
+                  type="button"
                   onClick={() => openSpriteModal()}
                   className="text-xs font-bold text-red-600 hover:underline"
                 >
@@ -274,6 +278,7 @@ export default function PokemonDetail() {
               <div className="flex flex-wrap justify-center gap-2">
                 {allSprites.slice(0, 4).map((sprite) => (
                   <button
+                    type="button"
                     key={sprite.key}
                     onClick={() => openSpriteModal(sprite)}
                     className="group rounded-control border border-line bg-slate-50 p-1 text-center transition hover:border-red-300 hover:bg-red-50"
