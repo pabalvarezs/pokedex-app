@@ -4,7 +4,7 @@ interface Props {
   type: string;
 }
 
-/** Variante sólida con emoji para las vitrinas de regalones. */
+/** Insignia grande con símbolo para las vitrinas de regalones. */
 export default function TypeBadge({ type }: Props) {
-  return <SharedTypeBadge type={type} variant="solid" showEmoji />;
+  return <SharedTypeBadge type={type} size="md" />;
 }

@@ -15,6 +15,7 @@ import {
   type MaxMove,
 } from "../utils/maxMoves";
 import { getTypeBadge, STAT_NAMES } from "../utils/pokemon";
+import SharedTypeBadge from "./TypeBadge";
 import PokemonArtwork from "./PokemonArtwork";
 import {
   FormSummary,
@@ -54,17 +55,6 @@ function formatHeight(height: number | undefined, approximate: boolean) {
   if (typeof height !== "number" || height <= 0) return "Desconocida";
   const meters = (height / 10).toFixed(1).replace(".", ",");
   return `${approximate ? "Más de " : ""}${meters} m`;
-}
-
-function TypeBadge({ type }: { type: string }) {
-  const badge = getTypeBadge(type);
-  return (
-    <span
-      className={`rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-    >
-      {badge.es}
-    </span>
-  );
 }
 
 function Chevron({ open }: { open: boolean }) {
@@ -463,7 +453,7 @@ function MaxMoveCard({
             <span className="truncate text-sm font-black text-ink-900">
               {move.name}
             </span>
-            <TypeBadge type={move.type} />
+            <SharedTypeBadge type={move.type} size="xs" />
           </span>
           <span
             className={`mt-1 block text-[9px] font-black uppercase tracking-wide ${
@@ -890,7 +880,7 @@ function GmaxDetail({
                 <h4 className="text-lg font-black tracking-tight text-ink-900">
                   {move.name}
                 </h4>
-                <TypeBadge type={move.type} />
+                <SharedTypeBadge type={move.type} size="xs" />
               </div>
               <p className="mt-1.5 text-[11px] font-semibold leading-snug text-ink-700">
                 {move.effect}

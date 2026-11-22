@@ -8,6 +8,7 @@ import {
 } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
+import TypeBadge from "../components/TypeBadge";
 import PokemonSearch from "../components/PokemonSearch";
 import { POKEMON_TYPES, GENERATIONS } from "../utils/pokemon";
 
@@ -556,20 +557,16 @@ export default function Home() {
               >
                 Todos
               </button>
-              {Object.entries(POKEMON_TYPES).map(([key, info]) => (
-                <button
-                  type="button"
+              {Object.keys(POKEMON_TYPES).map((key) => (
+                <TypeBadge
                   key={key}
+                  type={key}
+                  size="sm"
+                  interactive
+                  selected={isTypeSelected(key)}
                   onClick={() => toggleType(key)}
-                  aria-pressed={isTypeSelected(key)}
-                  className={`min-h-[40px] rounded-full border px-3 py-1.5 text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 ${
-                    isTypeSelected(key)
-                      ? `${info.bg} ${info.text} ${info.border} shadow-sm ring-2 ring-slate-400 ring-offset-1`
-                      : "border-line bg-white text-ink-700 hover:border-slate-400 hover:bg-slate-50"
-                  }`}
-                >
-                  {info.es}
-                </button>
+                  className="min-h-[40px]"
+                />
               ))}
             </div>
             <p className="mt-2 text-[11px] font-medium text-ink-500">
@@ -655,15 +652,13 @@ export default function Home() {
               if (!info) return null;
               const isExcluded = typeMode === "exclude";
               return (
-                <span
-                  key={key}
-                  className={`flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-bold ${
-                    isExcluded
-                      ? "border-line bg-white text-ink-700"
-                      : `${info.bg} ${info.text} border-transparent`
-                  }`}
-                >
-                  {isExcluded ? `Sin ${info.es}` : info.es}
+                <span key={key} className="inline-flex items-center gap-1">
+                  <TypeBadge
+                    type={key}
+                    size="sm"
+                    selected={!isExcluded}
+                    prefix={isExcluded ? "Sin" : undefined}
+                  />
                   <button
                     type="button"
                     onClick={() =>

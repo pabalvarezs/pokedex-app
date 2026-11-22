@@ -5,7 +5,7 @@ import type {
   PokemonVariant,
   ParadoxRelative,
 } from "../services/api";
-import { getTypeBadge } from "../utils/pokemon";
+import TypeBadge from "./TypeBadge";
 import PokemonArtwork from "./PokemonArtwork";
 
 interface Props {
@@ -833,17 +833,9 @@ function ParadoxCard({ relative }: { relative: ParadoxRelative }) {
         </h4>
 
         <div className="flex min-h-[20px] flex-wrap items-center gap-1">
-          {relative.types.map((type) => {
-            const badge = getTypeBadge(type);
-            return (
-              <span
-                key={type}
-                className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-              >
-                {badge.es}
-              </span>
-            );
-          })}
+          {relative.types.map((type) => (
+            <TypeBadge key={type} type={type} size="xs" />
+          ))}
         </div>
 
         {relative.description && (
@@ -970,17 +962,9 @@ function VariantCard({ variant }: { variant: PokemonVariant }) {
 
         <div className="flex min-h-[20px] flex-wrap items-center gap-1">
           {variant.types && variant.types.length > 0
-            ? variant.types.map((type) => {
-                const badge = getTypeBadge(type);
-                return (
-                  <span
-                    key={type}
-                    className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-                  >
-                    {badge.es}
-                  </span>
-                );
-              })
+            ? variant.types.map((type) => (
+                <TypeBadge key={type} type={type} size="xs" />
+              ))
             : null}
         </div>
 

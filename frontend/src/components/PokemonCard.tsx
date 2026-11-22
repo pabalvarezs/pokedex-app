@@ -4,7 +4,7 @@ import { Pokemon } from "../services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFavorite, addFavorite, removeFavorite } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import { getTypeBadge } from "../utils/pokemon";
+import TypeBadge from "./TypeBadge";
 
 interface Props {
   pokemon: Pokemon;
@@ -74,17 +74,9 @@ export default function PokemonCard({ pokemon }: Props) {
     }
   };
 
-  const typeBadges = (pokemon.types ?? []).map((t) => {
-    const badge = getTypeBadge(t);
-    return (
-      <span
-        key={t}
-        className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${badge.bg} ${badge.text} ${badge.border}`}
-      >
-        {badge.es}
-      </span>
-    );
-  });
+  const typeBadges = (pokemon.types ?? []).map((t) => (
+    <TypeBadge key={t} type={t} size="sm" />
+  ));
 
   // Prefer official artwork, then default sprite
   const artworkUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;

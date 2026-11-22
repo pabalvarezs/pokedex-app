@@ -37,6 +37,35 @@ export const POKEMON_TYPES: Record<string, TypeInfo> = {
   fairy: { es: "Hada", bg: "bg-pink-300", text: "text-neutral-900", border: "border-pink-400", badge: "#EE99AC", emoji: "✨", gradient: ["#FDF2F8", "#FBCFE8"], accent: "#BE185D" },
 };
 
+/**
+ * Color de texto legible sobre `badge`. Los tipos claros llevan texto oscuro
+ * para que la insignia conserve contraste AA sin depender del sistema.
+ */
+const BADGE_TEXT: Record<string, string> = {
+  normal: "#1c1917",
+  fire: "#1c1917",
+  water: "#ffffff",
+  electric: "#1c1917",
+  grass: "#1c1917",
+  ice: "#1c1917",
+  fighting: "#ffffff",
+  poison: "#ffffff",
+  ground: "#1c1917",
+  flying: "#1c1917",
+  psychic: "#1c1917",
+  bug: "#1c1917",
+  rock: "#1c1917",
+  ghost: "#ffffff",
+  dragon: "#ffffff",
+  dark: "#ffffff",
+  steel: "#1c1917",
+  fairy: "#1c1917",
+};
+
+export function getBadgeTextColor(type: string): string {
+  return BADGE_TEXT[type.toLowerCase()] ?? "#ffffff";
+}
+
 export const GENERATIONS: { id: number; name: string; region: string }[] = [
   { id: 1, name: "Gen 1", region: "Kanto" },
   { id: 2, name: "Gen 2", region: "Johto" },

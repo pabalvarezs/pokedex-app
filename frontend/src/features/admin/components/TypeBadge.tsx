@@ -5,7 +5,13 @@ interface Props {
   size?: "sm" | "md";
 }
 
-/** Variante compacta del badge compartido para las tablas del panel. */
+/** Insignia compacta para las tablas densas del panel (sin símbolo). */
 export default function TypeBadge({ type, size = "md" }: Props) {
-  return <SharedTypeBadge type={type} size={size} variant="soft" />;
+  return (
+    <SharedTypeBadge
+      type={type}
+      size={size === "sm" ? "xs" : "sm"}
+      showIcon={false}
+    />
+  );
 }

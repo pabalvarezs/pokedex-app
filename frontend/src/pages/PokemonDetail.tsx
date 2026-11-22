@@ -12,7 +12,8 @@ import DynamaxForms from "../components/DynamaxForms";
 import SpriteLightbox from "../components/SpriteLightbox";
 import type { SpriteItem } from "../components/SpriteLightbox";
 import VariantsAndForms from "../components/VariantsAndForms";
-import { getTypeBadge, STAT_NAMES, GENERATIONS } from "../utils/pokemon";
+import { STAT_NAMES, GENERATIONS } from "../utils/pokemon";
+import TypeBadge from "../components/TypeBadge";
 
 export default function PokemonDetail() {
   const { id, name } = useParams();
@@ -192,18 +193,15 @@ export default function PokemonDetail() {
 
             {/* Badges de Tipos */}
             <div className="flex flex-wrap gap-2 sm:justify-end sm:pb-1">
-              {(data.types ?? []).map((t) => {
-                const info = getTypeBadge(t);
-                return (
-                  <Link
-                    key={t}
-                    to={`/type/${t}`}
-                    className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 ${info.bg} ${info.text} ${info.border}`}
-                  >
-                    {info.es}
-                  </Link>
-                );
-              })}
+              {(data.types ?? []).map((t) => (
+                <Link
+                  key={t}
+                  to={`/type/${t}`}
+                  className="inline-flex rounded-full transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                >
+                  <TypeBadge type={t} size="md" />
+                </Link>
+              ))}
             </div>
           </div>
         </div>
