@@ -10,7 +10,7 @@ import {
 export { gmaxVariantLabel } from "./gmaxLabels";
 
 const POKEAPI = "https://pokeapi.co/api/v2";
-const api = axios.create({ baseURL: POKEAPI, timeout: 10000 });
+export const api = axios.create({ baseURL: POKEAPI, timeout: 10000 });
 
 export interface PokemonSummary {
   id: number;
@@ -218,7 +218,7 @@ function cacheSet<T>(cache: Map<string, CacheEntry<T>>, key: string, value: T) {
   cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
-async function mapWithConcurrency<T, R>(
+export async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<R>

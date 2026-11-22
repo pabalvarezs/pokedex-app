@@ -4,6 +4,7 @@ import pokemonRoutes from "./routes/pokemon";
 import favoriteRoutes from "./routes/favorites";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
+import dataCenterRoutes from "./routes/dataCenter";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 import { warmSuggestionIndex } from "./services/pokemon";
 
@@ -20,6 +21,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/pokemon", pokemonRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/admin/data-center", dataCenterRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);

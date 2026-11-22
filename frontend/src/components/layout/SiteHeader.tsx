@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   ChileBallIcon,
   CloseIcon,
+  DatabaseIcon,
   HomeIcon,
   KeyIcon,
   LogoutIcon,
@@ -56,6 +57,11 @@ export default function SiteHeader() {
   ];
   if (isAdmin) {
     links.push({ to: "/admin", label: "Admin", Icon: ShieldIcon });
+    links.push({
+      to: "/centro-datos",
+      label: "Centro de Datos",
+      Icon: DatabaseIcon,
+    });
   }
 
   const isActive = (path: string) => location.pathname === path;

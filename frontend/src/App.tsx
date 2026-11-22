@@ -19,6 +19,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const TypePage = lazy(() => import("./pages/TypePage"));
 const Admin = lazy(() => import("./pages/Admin"));
+const DataCenter = lazy(() => import("./pages/DataCenter"));
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/restablecer/:token" element={<ResetPassword />} />
                 <Route path="/type/:type" element={<TypePage />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/centro-datos" element={<DataCenter />} />
               </Routes>
             </Suspense>
           </RouteTransition>

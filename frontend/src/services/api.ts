@@ -1,4 +1,9 @@
 import axios from "axios";
+import type {
+  DataCenterPokemonResponse,
+  DataCenterRefreshResponse,
+  PokemonDataCenterFilters,
+} from "../features/dataCenter/lib/types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
@@ -446,4 +451,28 @@ export async function adminUpdateFavorite(id: number, input: Partial<AdminFavori
 
 export async function adminDeleteFavorite(id: number) {
   await api.delete(`/api/admin/favorites/${id}`);
+}
+
+// --- Centro de Datos (solo administradores) ---
+
+export async function getDataCenterPokemon(filters: PokemonDataCenterFilters) {
+  const { data } = await api.get<DataCenterPokemonResponse>(
+    "/api/admin/data-center/pokemon",
+    {
+      params: {
+        limit: filters.limit,
+        type: filters.type ?? undefined,
+        generation: filters.generation ?? undefined,
+        variants: filters.includeVariants,
+      },
+    }
+  );
+  return data;
+}
+
+export async function refreshDataCenterPokemon() {
+  const { data } = await api.post<DataCenterRefreshResponse>(
+    "/api/admin/data-center/pokemon/refresh"
+  );
+  return data;
 }
