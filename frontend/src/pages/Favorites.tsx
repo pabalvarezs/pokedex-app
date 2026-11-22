@@ -355,7 +355,7 @@ export default function Favorites() {
               />
             ) : (
               <div
-                className={`favorites-grid-enter mt-5 grid gap-4 ${gridClass(
+                className={`favorites-grid-enter mt-5 grid animate-fade-up gap-4 ${gridClass(
                   shownFavorites.length
                 )}`}
               >

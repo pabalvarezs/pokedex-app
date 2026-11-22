@@ -63,7 +63,7 @@ export default function Admin() {
 /** Se monta solo con sesión de admin: así no dispara queries admin a otros usuarios. */
 function AdminDashboard() {
   const { user } = useAuth();
-  const { stats, isLoading: statsLoading } = useAdminStats();
+  const { stats, isLoading: statsLoading, isError: statsError } = useAdminStats();
   const [searchParams, setSearchParams] = useSearchParams();
   const reduceMotion = useReducedMotionSafe();
 
@@ -128,6 +128,15 @@ function AdminDashboard() {
           </p>
         </div>
       </header>
+
+      {statsError && (
+        <div
+          role="alert"
+          className="glass-surface mb-5 rounded-card border border-red-200 bg-red-50/80 p-3 text-xs font-semibold text-red-700"
+        >
+          No pudimos actualizar el resumen. Espera un momento o recarga la página.
+        </div>
+      )}
 
       <section
         aria-label="Resumen del panel"

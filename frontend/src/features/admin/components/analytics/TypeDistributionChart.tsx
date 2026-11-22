@@ -44,6 +44,8 @@ export default function TypeDistributionChart({ data, loading = false }: Props) 
                 stroke="#ffffff"
                 strokeWidth={2}
                 isAnimationActive={!reduceMotion}
+                animationDuration={600}
+                animationEasing="ease-out"
               >
                 {data.map((slice) => (
                   <Cell key={slice.key} fill={slice.color} />
@@ -54,6 +56,7 @@ export default function TypeDistributionChart({ data, loading = false }: Props) 
                   `${String(value)} apariciones`,
                   String(name),
                 ]}
+                wrapperStyle={{ transition: "opacity 150ms ease-out" }}
                 contentStyle={{
                   borderRadius: 12,
                   border: "1px solid #e2e8f0",

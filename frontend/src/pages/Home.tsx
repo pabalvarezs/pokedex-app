@@ -827,7 +827,7 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="pokemon-grid">
+            <div className="pokemon-grid animate-fade-up">
               {sortedPokemon.map((p) => (
                 <PokemonCard key={p.id} pokemon={p} />
               ))}

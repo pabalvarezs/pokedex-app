@@ -55,6 +55,7 @@ export default function TrainersOverTimeChart({ data, range }: Props) {
           <Tooltip
             labelFormatter={(label) => formatDayLabel(String(label))}
             formatter={(value) => [`${String(value)} entrenadores`, "Acumulado"]}
+            wrapperStyle={{ transition: "opacity 150ms ease-out" }}
             contentStyle={{
               borderRadius: 12,
               border: "1px solid #e2e8f0",
@@ -71,6 +72,8 @@ export default function TrainersOverTimeChart({ data, range }: Props) {
             dot={false}
             activeDot={{ r: 4 }}
             isAnimationActive={!reduceMotion}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>
