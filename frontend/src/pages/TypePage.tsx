@@ -33,7 +33,7 @@ export default function TypePage() {
           <div className="skeleton h-9 w-2/3 rounded-control" />
           <div className="skeleton mt-2 h-4 w-40 rounded-full" />
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="pokemon-grid">
           {Array.from({ length: 10 }).map((_, index) => (
             <PokemonCardSkeleton key={index} />
           ))}
@@ -113,7 +113,7 @@ export default function TypePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="pokemon-grid">
         {sortedPokemon.map((p) => (
           <PokemonCard key={p.id} pokemon={p} />
         ))}
