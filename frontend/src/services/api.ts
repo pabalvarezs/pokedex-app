@@ -39,7 +39,7 @@ export interface MegaForm {
   id: number;
   name: string;
   baseName: string;
-  variant?: "X" | "Y";
+  variant?: "X" | "Y" | "Z";
   types: string[];
   sprite?: string;
   artwork?: string;

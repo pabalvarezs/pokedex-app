@@ -190,6 +190,16 @@ describe("pickMegaVarieties", () => {
     ).toEqual(["gengar-mega"]);
   });
 
+  it("conserva la variante Z junto a la Mega normal", () => {
+    expect(
+      pickMegaVarieties([
+        { name: "absol" },
+        { name: "absol-mega" },
+        { name: "absol-mega-z" },
+      ]).map((variety) => variety.name)
+    ).toEqual(["absol-mega", "absol-mega-z"]);
+  });
+
   it("tolera listas vacías o indefinidas", () => {
     expect(pickMegaVarieties([])).toEqual([]);
     expect(pickMegaVarieties(undefined)).toEqual([]);

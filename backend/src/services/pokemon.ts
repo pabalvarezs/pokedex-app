@@ -106,7 +106,7 @@ export interface MegaForm {
   id: number;
   name: string;
   baseName: string;
-  variant?: "X" | "Y";
+  variant?: "X" | "Y" | "Z";
   types: string[];
   sprite?: string;
   artwork?: string;
@@ -639,7 +639,7 @@ export function pickMegaVarieties<T extends { name: string }>(
   varieties: T[] | undefined
 ): T[] {
   return (varieties ?? []).filter((variety) =>
-    /-mega(?:-[xy])?$/.test(variety.name)
+    /-mega(?:-[xyz])?$/.test(variety.name)
   );
 }
 
@@ -654,12 +654,16 @@ async function getMegaForm(
     const { data } = await api.get<PokemonApiResponse>(
       `/pokemon/${encodeURIComponent(variety.name)}`
     );
-    const variant = variety.name.match(/-mega-([xy])$/)?.[1]?.toUpperCase();
+    const rawVariant = variety.name.match(/-mega-([xyz])$/)?.[1]?.toUpperCase();
+    const variant =
+      rawVariant === "X" || rawVariant === "Y" || rawVariant === "Z"
+        ? rawVariant
+        : undefined;
     const form: MegaForm = {
       id: data.id,
       name: data.name,
       baseName,
-      ...(variant === "X" || variant === "Y" ? { variant } : {}),
+      ...(variant ? { variant } : {}),
       types: data.types.map((t) => t.type.name),
       sprite: data.sprites?.front_default,
       artwork: data.sprites?.other?.["official-artwork"]?.front_default,

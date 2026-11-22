@@ -62,4 +62,28 @@ describe("MegaForms", () => {
 
     expect(container.textContent).toBe("");
   });
+
+  it("muestra tanto la Mega normal como la Mega Z", () => {
+    renderForms([
+      {
+        id: 10057,
+        name: "absol-mega",
+        baseName: "absol",
+        types: ["dark"],
+        artwork: "https://example.com/absol-mega.png",
+      },
+      {
+        id: 10307,
+        name: "absol-mega-z",
+        baseName: "absol",
+        variant: "Z",
+        types: ["dark", "fairy"],
+        artwork: "https://example.com/absol-mega-z.png",
+      },
+    ]);
+
+    expect(screen.getByText("Mega Absol")).toBeTruthy();
+    expect(screen.getByText("Mega Absol Z")).toBeTruthy();
+    expect(screen.getByText("2 formas")).toBeTruthy();
+  });
 });
