@@ -130,7 +130,7 @@ export default function SectionHero({ count, stats }: Props) {
                   </span>
                 </span>
                 {stat.badges && stat.badges.length > 0 && (
-                  <div className="mt-1.5 flex flex-nowrap items-center gap-1.5 overflow-hidden">
+                  <div className="mt-1.5 flex flex-col items-start gap-1.5 sm:flex-row sm:items-center">
                     {stat.badges.map((type) => (
                       <TypeBadge key={type} type={type} size="xs" showIcon className="shrink-0" />
                     ))}
