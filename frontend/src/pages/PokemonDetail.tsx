@@ -4,6 +4,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPokemon, searchPokemon } from "../services/api";
 import FavoriteButton from "../components/FavoriteButton";
+import PokemonDetailSkeleton from "../components/PokemonDetailSkeleton";
+import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import EvolutionChain from "../components/EvolutionChain";
 import MegaForms from "../components/MegaForms";
 import DynamaxForms from "../components/DynamaxForms";
@@ -29,6 +31,10 @@ export default function PokemonDetail() {
     enabled: !!id || !!name,
   });
 
+  // Un mínimo de 650 ms evita el parpadeo en respuestas muy rápidas; si la
+  // petición tarda más, el skeleton desaparece en cuanto llegan los datos.
+  const showingSkeleton = useMinimumLoading(isLoading);
+
   const playCry = (url?: string) => {
     if (!url) return;
     try {
@@ -42,15 +48,7 @@ export default function PokemonDetail() {
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="mx-auto max-w-ficha py-20 text-center">
-        <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-red-600 border-t-transparent"></div>
-        <p className="text-lg font-semibold text-ink-700">
-          Buscando la ficha completa de este Pokémon al tiro...
-        </p>
-      </div>
-    );
+  if (showingSkeleton) return <PokemonDetailSkeleton />;
 
   if (isError || !data)
     return (
