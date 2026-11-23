@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
@@ -102,13 +104,28 @@ export default function Login() {
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
               Contraseña:
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-red-600 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-lg"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" aria-hidden="true" />
+                ) : (
+                  <Eye className="w-5 h-5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
             <div className="text-right mt-1.5">
               <Link
                 to="/recuperar"
