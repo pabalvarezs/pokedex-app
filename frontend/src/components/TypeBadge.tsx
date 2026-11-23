@@ -17,10 +17,10 @@ interface Props {
   prefix?: string;
 }
 
-const SIZES: Record<TypeBadgeSize, { chip: string; icon: string; orb: string }> = {
-  xs: { chip: "gap-1 px-1.5 py-0.5 text-[9px]", icon: "h-3 w-3", orb: "h-4 w-4" },
-  sm: { chip: "gap-1.5 px-2 py-1 text-[10px]", icon: "h-3.5 w-3.5", orb: "h-5 w-5" },
-  md: { chip: "gap-1.5 px-2.5 py-1.5 text-[11px]", icon: "h-4 w-4", orb: "h-6 w-6" },
+const SIZES: Record<TypeBadgeSize, { chip: string; icon: string }> = {
+  xs: { chip: "gap-1 px-1.5 py-0.5 text-[9px]", icon: "h-4 w-4" },
+  sm: { chip: "gap-1.5 px-2 py-1 text-[10px]", icon: "h-5 w-5" },
+  md: { chip: "gap-1.5 px-2.5 py-1.5 text-[11px]", icon: "h-6 w-6" },
 };
 
 /**
@@ -52,20 +52,9 @@ export default function TypeBadge({
         boxShadow: `inset 0 0 0 1px ${info.accent}66`,
       };
 
-  const orbStyle = selected
-    ? { backgroundColor: "rgba(255,255,255,0.22)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.32)" }
-    : { backgroundColor: `${info.accent}1f` };
-
   const content = (
     <>
-      {showIcon && (
-        <span
-          className={`${dimensions.orb} grid shrink-0 place-items-center rounded-full`}
-          style={orbStyle}
-        >
-          <TypeIcon type={type} className={dimensions.icon} />
-        </span>
-      )}
+      {showIcon && <TypeIcon type={type} className={`${dimensions.icon} shrink-0`} />}
       <span className="leading-none">
         {prefix ? `${prefix} ${info.es}` : info.es}
       </span>
