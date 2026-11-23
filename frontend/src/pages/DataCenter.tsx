@@ -1,8 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, m } from "framer-motion";
-import { Database, ShieldAlert } from "lucide-react";
-import { ChileBallIcon } from "../components/layout/icons";
+import { ChartColumnIncreasing, Database, ShieldAlert } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LayoutMotionProvider from "../context/LayoutMotionProvider";
 import EmptyState from "../features/admin/components/EmptyState";
@@ -88,7 +87,7 @@ function DataCenterDashboard() {
     <div data-data-center className="relative isolate mx-auto max-w-6xl py-2 sm:py-4">
       <header className="mb-5 flex items-center gap-2.5">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control border-2 border-red-600 bg-white motion-safe:animate-pop">
-          <ChileBallIcon center="red" className="h-7 w-7" />
+          <ChartColumnIncreasing className="h-7 w-7" aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-black text-gray-800 sm:text-2xl">
