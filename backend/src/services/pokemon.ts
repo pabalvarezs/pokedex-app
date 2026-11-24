@@ -72,6 +72,8 @@ export interface Pokemon {
   stats?: { name: string; base_stat: number }[];
   abilities?: { name: string; slug: string; is_hidden: boolean }[];
   moves?: string[];
+  /** Slugs ingleses de PokéAPI, en el mismo orden que `moves` (campo aditivo). */
+  moveSlugs?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
@@ -1156,6 +1158,8 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     ),
   ]);
 
+  const moveSlugs = (data.moves ?? []).slice(0, 24).map((m) => m.move.name);
+
   const megaForms = await getMegaForms(
     evolutionChain,
     data.name,
@@ -1213,6 +1217,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     stats: data.stats?.map((s) => ({ name: s.stat.name, base_stat: s.base_stat })) ?? [],
     abilities,
     moves,
+    moveSlugs,
     cries: data.cries,
     description: speciesInfo.description,
     evolutionChain: resolvedEvolution.chain,

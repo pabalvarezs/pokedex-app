@@ -182,6 +182,8 @@ export interface Pokemon {
   stats?: PokemonStat[];
   abilities?: PokemonAbility[];
   moves?: string[];
+  /** Slugs ingleses de PokéAPI, en el mismo orden que `moves`. */
+  moveSlugs?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
