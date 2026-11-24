@@ -3,6 +3,7 @@ import { gmaxMoveFor, type GmaxMove } from "./gmaxMoves";
 import { gmaxVariantLabel } from "./gmaxLabels";
 import {
   buildVariantFamily,
+  classifyVariant,
   megaVariantLabel,
   type PokemonVariantFamily,
 } from "./variants";
@@ -131,7 +132,7 @@ export interface GmaxForm {
   gmaxMove?: GmaxMove;
 }
 
-interface SpeciesVariety {
+export interface SpeciesVariety {
   name: string;
   url: string;
   isDefault?: boolean;
@@ -657,6 +658,115 @@ export function resolveEvolutionChainForForm(
   };
 }
 
+/** Variedades de cada especie de la cadena, indexadas por ID de especie. */
+export type EvolutionVarieties = Record<number, SpeciesVariety[]>;
+
+/**
+ * Elige la variedad regional de una especie. Prefiere la coincidencia exacta
+ * (`growlithe-hisui`) y admite sufijos compuestos (`darmanitan-galar-standard`
+ * o `raticate-totem-alola`), descartando modos de combate si hay forma base.
+ */
+function findRegionalVariety(
+  varieties: SpeciesVariety[],
+  speciesName: string,
+  regionKey: string
+): SpeciesVariety | undefined {
+  const prefix = `${speciesName}-`;
+  const candidates = varieties.filter((variety) => variety.name.startsWith(prefix));
+  const exact = candidates.find((variety) => variety.name === `${prefix}${regionKey}`);
+  if (exact) return exact;
+
+  const regional = candidates.filter((variety) =>
+    new RegExp(`(^|-)${regionKey}(-|$)`).test(variety.name.slice(prefix.length))
+  );
+  return (
+    regional.find((variety) => !/(totem|zen|gmax|mega)/.test(variety.name)) ??
+    regional[0]
+  );
+}
+
+/**
+ * Sustituye por su variedad regional los miembros de la cadena que no son la
+ * forma actual. No muta la cadena original porque está en caché.
+ */
+export function resolveRegionalEvolutionMembers(
+  chain: EvolutionStage[],
+  currentId: number | undefined,
+  regionKey: string,
+  varietiesBySpecies: EvolutionVarieties
+): EvolutionStage[] {
+  return chain.map((stage) => ({
+    ...stage,
+    members: stage.members.map((member) => {
+      if (member.id === currentId) return member;
+
+      const variety = findRegionalVariety(
+        varietiesBySpecies[member.id] ?? [],
+        member.name,
+        regionKey
+      );
+      const rawId = variety?.url.split("/").filter(Boolean).pop();
+      const id = rawId ? Number(rawId) : undefined;
+      if (!variety || id === undefined || !Number.isInteger(id) || id <= 0) {
+        return member;
+      }
+      return { ...member, id, name: variety.name };
+    }),
+  }));
+}
+
+type VarietiesLoader = (speciesId: number) => Promise<SpeciesVariety[]>;
+
+/**
+ * Cadena completa de una forma concreta: resuelve su especie y, cuando la
+ * forma pertenece a una región, también las demás etapas. PokéAPI modela la
+ * evolución por especie, así que las variedades de las preevoluciones se
+ * toman de `pokemon-species.varieties`.
+ */
+export async function resolveEvolutionChainForDetail(
+  chain: EvolutionStage[],
+  speciesId: number | undefined,
+  speciesName: string,
+  currentName: string,
+  varieties: SpeciesVariety[],
+  loadVarieties: VarietiesLoader = async (id) =>
+    (await getSpeciesInfo(id)).varieties ?? []
+): Promise<{ chain: EvolutionStage[]; currentId: number | undefined }> {
+  const resolved = resolveEvolutionChainForForm(
+    chain,
+    speciesId,
+    speciesName,
+    currentName,
+    varieties
+  );
+  if (resolved.currentId === undefined) return resolved;
+
+  const region = classifyVariant(currentName, speciesName).region;
+  if (!region) return resolved;
+
+  const others = resolved.chain
+    .flatMap((stage) => stage.members)
+    .filter((member) => member.id !== resolved.currentId && member.id > 0);
+  if (others.length === 0) return resolved;
+
+  const found = await mapWithConcurrency(others, 8, async (member) => ({
+    id: member.id,
+    varieties: await loadVarieties(member.id),
+  }));
+  const varietiesBySpecies: EvolutionVarieties = {};
+  for (const entry of found) varietiesBySpecies[entry.id] = entry.varieties;
+
+  return {
+    chain: resolveRegionalEvolutionMembers(
+      resolved.chain,
+      resolved.currentId,
+      region.toLowerCase(),
+      varietiesBySpecies
+    ),
+    currentId: resolved.currentId,
+  };
+}
+
 async function getEvolutionChain(url: string): Promise<EvolutionStage[]> {
   const chainId = url.split("/").filter(Boolean).pop();
   if (!chainId) return [];
@@ -1066,7 +1176,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
   for (const form of gmaxForms) typesById[form.id] = form.types;
 
   const speciesName = data.species?.name ?? data.name;
-  const resolvedEvolution = resolveEvolutionChainForForm(
+  const resolvedEvolution = await resolveEvolutionChainForDetail(
     evolutionChain,
     speciesId,
     speciesName,
