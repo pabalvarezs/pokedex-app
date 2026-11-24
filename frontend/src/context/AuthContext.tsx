@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
 import { loginUser, logoutUser } from "../services/api";
 
 export type UserRole = "admin" | "trainer";
@@ -53,8 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    const name = user?.name;
     logoutUser();
     setUser(null);
+    toast.success(name ? `Chaito ${name}` : "Chaito", { duration: 1500 });
   };
 
   return (

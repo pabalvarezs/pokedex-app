@@ -1,12 +1,12 @@
 import { getBadgeBgColor, getTypeBadge } from "../utils/pokemon";
 import TypeIcon from "./TypeIcon";
 
-export type TypeBadgeSize = "xs" | "sm" | "md";
+export type TypeBadgeSize = "xs" | "sm" | "md" | "lg";
 
 interface Props {
   type: string;
   size?: TypeBadgeSize;
-  /** El icono SVG se muestra en sm/md; en xs se omite por densidad. */
+  /** La insignia WebP se muestra en sm/md; en xs se omite por densidad. */
   showIcon?: boolean;
   /** Renderiza un botón con `aria-pressed` (para los filtros). */
   interactive?: boolean;
@@ -17,15 +17,16 @@ interface Props {
   prefix?: string;
 }
 
-const SIZES: Record<TypeBadgeSize, { chip: string; icon: string; orb: string }> = {
-  xs: { chip: "gap-1 px-1.5 py-0.5 text-[9px]", icon: "h-3 w-3", orb: "h-4 w-4" },
-  sm: { chip: "gap-1.5 px-2 py-1 text-[10px]", icon: "h-3.5 w-3.5", orb: "h-5 w-5" },
-  md: { chip: "gap-1.5 px-2.5 py-1.5 text-[11px]", icon: "h-4 w-4", orb: "h-6 w-6" },
+const SIZES: Record<TypeBadgeSize, { chip: string; icon: string }> = {
+  xs: { chip: "gap-1 px-1.5 py-0.5 text-[9px]", icon: "h-4 w-4" },
+  sm: { chip: "gap-1.5 px-2 py-1 text-[10px]", icon: "h-5 w-5" },
+  md: { chip: "gap-1.5 px-2.5 py-1.5 text-[11px]", icon: "h-6 w-6" },
+  lg: { chip: "gap-2 px-3 py-1.5 text-sm", icon: "h-8 w-8" },
 };
 
 /**
- * Insignia de tipo unificada: fondo sólido oscuro por tipo, texto siempre
- * blanco y símbolo vectorial. Un único componente para toda la app.
+ * Insignia de tipo unificada: fondo con el color del tipo, imagen WebP y
+ * nombre en blanco. Un único componente para toda la app.
  */
 export default function TypeBadge({
   type,
@@ -45,6 +46,7 @@ export default function TypeBadge({
         backgroundColor: getBadgeBgColor(type),
         color: "#ffffff",
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22), 0 1px 2px rgba(15,23,42,0.12)",
+        textShadow: "0 1px 1px rgba(15,23,42,0.35)",
       }
     : {
         backgroundColor: "rgba(255,255,255,0.88)",
@@ -52,20 +54,9 @@ export default function TypeBadge({
         boxShadow: `inset 0 0 0 1px ${info.accent}66`,
       };
 
-  const orbStyle = selected
-    ? { backgroundColor: "rgba(255,255,255,0.22)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.32)" }
-    : { backgroundColor: `${info.accent}1f` };
-
   const content = (
     <>
-      {showIcon && (
-        <span
-          className={`${dimensions.orb} grid shrink-0 place-items-center rounded-full`}
-          style={orbStyle}
-        >
-          <TypeIcon type={type} className={dimensions.icon} />
-        </span>
-      )}
+      {showIcon && <TypeIcon type={type} className={`${dimensions.icon} shrink-0`} />}
       <span className="leading-none">
         {prefix ? `${prefix} ${info.es}` : info.es}
       </span>

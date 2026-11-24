@@ -1,4 +1,10 @@
 import axios from "axios";
+import type {
+  DataCenterPokemonResponse,
+  DataCenterRefreshResponse,
+  DataCenterStatus,
+  PokemonDataCenterFilters,
+} from "../features/dataCenter/lib/types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
@@ -22,6 +28,8 @@ export interface PokemonStat {
 
 export interface PokemonAbility {
   name: string;
+  /** Slug inglés de PokéAPI; se usa para buscar la descripción del popover. */
+  slug?: string;
   is_hidden: boolean;
 }
 
@@ -174,6 +182,8 @@ export interface Pokemon {
   stats?: PokemonStat[];
   abilities?: PokemonAbility[];
   moves?: string[];
+  /** Slugs ingleses de PokéAPI, en el mismo orden que `moves`. */
+  moveSlugs?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
   evolutionChain?: EvolutionStage[];
@@ -446,4 +456,44 @@ export async function adminUpdateFavorite(id: number, input: Partial<AdminFavori
 
 export async function adminDeleteFavorite(id: number) {
   await api.delete(`/api/admin/favorites/${id}`);
+}
+
+// --- Centro de Datos (solo administradores) ---
+
+export async function getDataCenterPokemon(filters: PokemonDataCenterFilters) {
+  const { data } = await api.get<DataCenterPokemonResponse>(
+    "/api/admin/data-center/pokemon",
+    {
+      params: {
+        limit: filters.limit,
+        type: filters.type ?? undefined,
+        generation: filters.generation ?? undefined,
+        variants: filters.includeVariants,
+      },
+    }
+  );
+  return data;
+}
+
+export async function refreshDataCenterPokemon() {
+  const { data } = await api.post<DataCenterRefreshResponse>(
+    "/api/admin/data-center/pokemon/refresh"
+  );
+  return data;
+}
+
+export async function getDataCenterStatus() {
+  const { data } = await api.get<DataCenterStatus>(
+    "/api/admin/data-center/pokemon/status"
+  );
+  return data;
+}
+
+/** Tipos de varios Pokémon en una sola petición (panel de administración). */
+export async function getDataCenterPokemonTypes(ids: number[]) {
+  const { data } = await api.get<{ typesById: Record<string, string[]> }>(
+    "/api/admin/data-center/pokemon/types",
+    { params: { ids: ids.join(",") } }
+  );
+  return data.typesById;
 }

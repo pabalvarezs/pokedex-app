@@ -17,54 +17,33 @@ export interface TypeInfo {
 // Tokens de color por tipo: única fuente de verdad para chips, degradés,
 // halos y acentos de toda la app. Los 18 tipos tienen emoji propio.
 export const POKEMON_TYPES: Record<string, TypeInfo> = {
-  normal: { es: "Normal", bg: "bg-neutral-400", text: "text-white", border: "border-neutral-500", badge: "#A8A878", emoji: "🔘", gradient: ["#F8FAFC", "#D8DEE7"], accent: "#78716C" },
-  fire: { es: "Fuego", bg: "bg-red-500", text: "text-white", border: "border-red-600", badge: "#F08030", emoji: "🔥", gradient: ["#FFF1E6", "#FDBA74"], accent: "#EA580C", onAccent: "#1c1917" },
-  water: { es: "Agua", bg: "bg-blue-500", text: "text-white", border: "border-blue-600", badge: "#6890F0", emoji: "💧", gradient: ["#EAF3FF", "#93C5FD"], accent: "#2563EB" },
-  electric: { es: "Eléctrico", bg: "bg-yellow-400", text: "text-neutral-900", border: "border-yellow-500", badge: "#F8D030", emoji: "⚡", gradient: ["#FFFBEB", "#FDE68A"], accent: "#D97706", onAccent: "#1c1917" },
-  grass: { es: "Planta", bg: "bg-emerald-500", text: "text-white", border: "border-emerald-600", badge: "#78C850", emoji: "🍃", gradient: ["#ECFDF3", "#86EFAC"], accent: "#16A34A", onAccent: "#052e16" },
-  ice: { es: "Hielo", bg: "bg-cyan-300", text: "text-neutral-900", border: "border-cyan-400", badge: "#98D8D8", emoji: "❄️", gradient: ["#ECFEFF", "#A5F3FC"], accent: "#0891B2", onAccent: "#0c1a1f" },
-  fighting: { es: "Lucha", bg: "bg-orange-700", text: "text-white", border: "border-orange-800", badge: "#C03028", emoji: "🥊", gradient: ["#FEF2F2", "#FCA5A5"], accent: "#B91C1C" },
-  poison: { es: "Veneno", bg: "bg-purple-600", text: "text-white", border: "border-purple-700", badge: "#A040A0", emoji: "☠️", gradient: ["#FAF5FF", "#D8B4FE"], accent: "#7E22CE" },
-  ground: { es: "Tierra", bg: "bg-amber-600", text: "text-white", border: "border-amber-700", badge: "#E0C068", emoji: "⛰️", gradient: ["#FFFBEB", "#FCD34D"], accent: "#B45309" },
-  flying: { es: "Volador", bg: "bg-indigo-400", text: "text-white", border: "border-indigo-500", badge: "#A890F0", emoji: "🕊️", gradient: ["#EEF2FF", "#C7D2FE"], accent: "#4F46E5" },
-  psychic: { es: "Psíquico", bg: "bg-pink-500", text: "text-white", border: "border-pink-600", badge: "#F85888", emoji: "🔮", gradient: ["#FDF2F8", "#F9A8D4"], accent: "#DB2777" },
-  bug: { es: "Bicho", bg: "bg-lime-500", text: "text-white", border: "border-lime-600", badge: "#A8B820", emoji: "🐛", gradient: ["#F7FEE7", "#D9F99D"], accent: "#4D7C0F" },
-  rock: { es: "Roca", bg: "bg-stone-500", text: "text-white", border: "border-stone-600", badge: "#B8A038", emoji: "🪨", gradient: ["#FAFAF9", "#D6D3D1"], accent: "#57534E" },
-  ghost: { es: "Fantasma", bg: "bg-violet-800", text: "text-white", border: "border-violet-900", badge: "#705898", emoji: "👻", gradient: ["#F5F3FF", "#C4B5FD"], accent: "#5B21B6" },
-  dragon: { es: "Dragón", bg: "bg-indigo-700", text: "text-white", border: "border-indigo-800", badge: "#7038F8", emoji: "🐉", gradient: ["#EEF2FF", "#A5B4FC"], accent: "#4338CA" },
-  dark: { es: "Siniestro", bg: "bg-neutral-800", text: "text-white", border: "border-neutral-900", badge: "#705848", emoji: "🌙", gradient: ["#F5F5F4", "#A8A29E"], accent: "#292524" },
-  steel: { es: "Acero", bg: "bg-slate-400", text: "text-white", border: "border-slate-500", badge: "#B8B8D0", emoji: "⚙️", gradient: ["#F8FAFC", "#CBD5E1"], accent: "#475569" },
-  fairy: { es: "Hada", bg: "bg-pink-300", text: "text-neutral-900", border: "border-pink-400", badge: "#EE99AC", emoji: "✨", gradient: ["#FDF2F8", "#FBCFE8"], accent: "#BE185D" },
+  normal: { es: "Normal", bg: "bg-neutral-400", text: "text-white", border: "border-neutral-500", badge: "#929BA2", emoji: "🔘", gradient: ["#F1F2F2", "#D2D4D5"], accent: "#737677" },
+  fire: { es: "Fuego", bg: "bg-orange-400", text: "text-white", border: "border-orange-500", badge: "#FF9E52", emoji: "🔥", gradient: ["#FFF3E6", "#FFD7B0"], accent: "#A16932" },
+  water: { es: "Agua", bg: "bg-sky-500", text: "text-white", border: "border-sky-600", badge: "#4D92D6", emoji: "💧", gradient: ["#E8F3FA", "#B7D8F0"], accent: "#447BA1" },
+  electric: { es: "Eléctrico", bg: "bg-yellow-400", text: "text-white", border: "border-yellow-500", badge: "#F5D23D", emoji: "⚡", gradient: ["#FEFAE7", "#FBEEB3"], accent: "#85762E" },
+  grass: { es: "Planta", bg: "bg-green-500", text: "text-white", border: "border-green-600", badge: "#61BA52", emoji: "🍃", gradient: ["#E8F6E9", "#B6E2BA"], accent: "#418446" },
+  ice: { es: "Hielo", bg: "bg-teal-300", text: "text-white", border: "border-teal-400", badge: "#75D0C1", emoji: "❄️", gradient: ["#EDF9F8", "#C6ECE7"], accent: "#4D7F78" },
+  fighting: { es: "Lucha", bg: "bg-rose-500", text: "text-white", border: "border-rose-600", badge: "#D04069", emoji: "🥊", gradient: ["#FAE4E8", "#EEAAB6"], accent: "#D23F59" },
+  poison: { es: "Veneno", bg: "bg-purple-500", text: "text-white", border: "border-purple-600", badge: "#A866C7", emoji: "☠️", gradient: ["#F5E9F8", "#DEB9E9"], accent: "#A258B7" },
+  ground: { es: "Tierra", bg: "bg-orange-500", text: "text-white", border: "border-orange-600", badge: "#D97946", emoji: "⛰️", gradient: ["#F9EEE7", "#EDC9B2"], accent: "#A46741" },
+  flying: { es: "Volador", bg: "bg-indigo-400", text: "text-white", border: "border-indigo-500", badge: "#A5BEED", emoji: "🕊️", gradient: ["#F1F4FC", "#D2DDF4"], accent: "#667697" },
+  psychic: { es: "Psíquico", bg: "bg-rose-400", text: "text-white", border: "border-rose-500", badge: "#F76E75", emoji: "🔮", gradient: ["#FEEEEE", "#FDC9C9"], accent: "#AF5E5E" },
+  bug: { es: "Bicho", bg: "bg-lime-500", text: "text-white", border: "border-lime-600", badge: "#92C229", emoji: "🐛", gradient: ["#F1F7E1", "#D3E4A0"], accent: "#667F1C" },
+  rock: { es: "Roca", bg: "bg-amber-400", text: "text-white", border: "border-amber-500", badge: "#C9BA8D", emoji: "🪨", gradient: ["#F8F6EF", "#E9E3CD"], accent: "#7E7658" },
+  ghost: { es: "Fantasma", bg: "bg-indigo-500", text: "text-white", border: "border-indigo-600", badge: "#5569B1", emoji: "👻", gradient: ["#E9EBF6", "#B9BEE3"], accent: "#646EC1" },
+  dragon: { es: "Dragón", bg: "bg-blue-600", text: "text-white", border: "border-blue-700", badge: "#017EBD", emoji: "🐉", gradient: ["#DCECF6", "#8DC1E3"], accent: "#0275C0" },
+  dark: { es: "Siniestro", bg: "bg-slate-600", text: "text-white", border: "border-slate-700", badge: "#5A5366", emoji: "🌙", gradient: ["#E9E9EC", "#B9B9C0"], accent: "#636374" },
+  steel: { es: "Acero", bg: "bg-teal-500", text: "text-white", border: "border-teal-600", badge: "#528A9D", emoji: "⚙️", gradient: ["#E7F1F2", "#B2D1D6"], accent: "#467E88" },
+  fairy: { es: "Hada", bg: "bg-fuchsia-400", text: "text-white", border: "border-fuchsia-500", badge: "#ED91E6", emoji: "✨", gradient: ["#FDF1FB", "#F8D2F3"], accent: "#9A6493" },
 };
 
 /**
- * Fondo sólido de la insignia: versión oscura del color del tipo, elegida
- * para que el texto siempre blanco supere contraste AA incluso en text-[9px].
- * Se mantiene la familia cromática del tipo para no perder la identidad.
+ * Fondo de la insignia: el color predominante exacto del WebP del tipo, para
+ * que el círculo de la imagen se integre y solo se vean su glifo y el nombre
+ * en blanco. Usa `badge` como única fuente de verdad del color del tipo.
  */
-const BADGE_BG: Record<string, string> = {
-  normal: "#57534E",
-  fire: "#9A3412",
-  water: "#1D4ED8",
-  electric: "#92400E",
-  grass: "#166534",
-  ice: "#155E75",
-  fighting: "#991B1B",
-  poison: "#6B21A8",
-  ground: "#92400E",
-  flying: "#3730A3",
-  psychic: "#9D174D",
-  bug: "#3F6212",
-  rock: "#44403C",
-  ghost: "#4C1D95",
-  dragon: "#3730A3",
-  dark: "#1C1917",
-  steel: "#334155",
-  fairy: "#9D174D",
-};
-
 export function getBadgeBgColor(type: string): string {
-  return BADGE_BG[type.toLowerCase()] ?? "#334155";
+  return getTypeBadge(type).badge;
 }
 
 /** Rangos de la Pokédex nacional para derivar la generación sin otra request. */

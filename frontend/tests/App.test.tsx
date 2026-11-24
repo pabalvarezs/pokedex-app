@@ -37,6 +37,16 @@ vi.mock("../src/services/api", () => ({
   adminUpdateFavorite: vi.fn(),
   adminDeleteFavorite: vi.fn(),
   getApiErrorMessage: vi.fn(() => "error"),
+  getDataCenterPokemon: vi.fn(),
+  refreshDataCenterPokemon: vi.fn(),
+  getDataCenterStatus: vi.fn(async () => ({
+    refreshing: false,
+    generatedAt: null,
+    count: 0,
+    failed: 0,
+    lastError: null,
+  })),
+  getDataCenterPokemonTypes: vi.fn(async () => ({})),
 }));
 
 function renderApp(initialEntries: string[] = ["/"]) {

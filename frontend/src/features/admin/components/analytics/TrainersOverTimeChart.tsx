@@ -9,7 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import type { DayCount, RangeDays } from "../../hooks/useAdminAnalytics";
-import { formatDayLabel } from "../../lib/dates";
+import { formatDayLabel, formatDayShortLabel } from "../../lib/dates";
 import ChartCard from "./ChartCard";
 
 interface Props {
@@ -40,9 +40,10 @@ export default function TrainersOverTimeChart({ data, range }: Props) {
           <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis
             dataKey="key"
-            tickFormatter={(value: string) => formatDayLabel(value)}
+            tickFormatter={(value: string) => formatDayShortLabel(value)}
             tick={{ fontSize: 10, fill: "#64748b" }}
-            interval={range === 7 ? 0 : range === 30 ? 4 : 14}
+            interval="preserveStartEnd"
+            minTickGap={8}
             tickLine={false}
             axisLine={false}
           />

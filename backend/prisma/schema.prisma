@@ -49,3 +49,20 @@ model Favorite {
   @@unique([userId, pokemonId])
   @@map("favorites")
 }
+
+/// Snapshot de una categoría del Centro de Datos. Una fila por categoría: el
+/// dataset completo se guarda en `payload` y se precarga en memoria al arrancar.
+model DataCenterSnapshot {
+  id          Int      @id @default(autoincrement())
+  category    String   @unique
+  generatedAt DateTime
+  payload     Json
+  count       Int
+  failed      Int      @default(0)
+  refreshing  Boolean  @default(false)
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("data_center_snapshots")
+}

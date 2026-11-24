@@ -14,6 +14,8 @@ import type { SpriteItem } from "../components/SpriteLightbox";
 import VariantsAndForms from "../components/VariantsAndForms";
 import { STAT_NAMES, GENERATIONS } from "../utils/pokemon";
 import TypeBadge from "../components/TypeBadge";
+import AbilityChip from "../components/AbilityChip";
+import MoveChip from "../components/MoveChip";
 
 export default function PokemonDetail() {
   const { id, name } = useParams();
@@ -393,21 +395,12 @@ export default function PokemonDetail() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {data.abilities.map((a) => (
-                    <div
+                    <AbilityChip
                       key={a.name}
-                      className={`flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-bold capitalize ${
-                        a.is_hidden
-                          ? "bg-purple-50 text-purple-800 border-purple-200"
-                          : "bg-gray-100 text-gray-800 border-gray-200"
-                      }`}
-                    >
-                      <span>{a.name}</span>
-                      {a.is_hidden && (
-                        <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded font-black">
-                          Escondía
-                        </span>
-                      )}
-                    </div>
+                      name={a.name}
+                      slug={a.slug}
+                      isHidden={a.is_hidden}
+                    />
                   ))}
                 </div>
               </div>
@@ -420,13 +413,12 @@ export default function PokemonDetail() {
                   Movimientos destacados
                 </h3>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 scrollbar-thin">
-                  {data.moves.map((m) => (
-                    <span
-                      key={m}
-                      className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold capitalize text-ink-700 transition hover:bg-slate-200"
-                    >
-                      {m}
-                    </span>
+                  {data.moves.map((m, index) => (
+                    <MoveChip
+                      key={`${m}-${index}`}
+                      name={m}
+                      slug={data.moveSlugs?.[index]}
+                    />
                   ))}
                 </div>
               </div>

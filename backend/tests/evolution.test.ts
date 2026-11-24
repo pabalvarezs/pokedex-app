@@ -4,8 +4,11 @@ import {
   formatEvolutionCondition,
   pickMegaVarieties,
   pickMegasForCurrentForm,
+  resolveEvolutionChainForDetail,
   resolveEvolutionChainForForm,
   type EvolutionChainLink,
+  type EvolutionStage,
+  type SpeciesVariety,
 } from "../src/services/pokemon";
 
 function node(
@@ -345,5 +348,208 @@ describe("resolveEvolutionChainForForm", () => {
 
     expect(result.currentId).toBe(678);
     expect(result.chain).toBe(meowsticChain);
+  });
+});
+
+describe("resolveEvolutionChainForDetail", () => {
+  const variety = (name: string, id: number): SpeciesVariety => ({
+    name,
+    url: `https://pokeapi.co/api/v2/pokemon/${id}/`,
+  });
+  const loaderFrom = (map: Record<number, SpeciesVariety[]>) =>
+    async (speciesId: number): Promise<SpeciesVariety[]> => map[speciesId] ?? [];
+
+  it("muestra la preevolución de Hisui al ver Arcanine de Hisui (#10230)", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 58, name: "growlithe" }] },
+      { members: [{ id: 59, name: "arcanine", condition: "Usar Piedra Fuego" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      59,
+      "arcanine",
+      "arcanine-hisui",
+      [variety("arcanine", 59), variety("arcanine-hisui", 10230)],
+      loaderFrom({
+        58: [variety("growlithe", 58), variety("growlithe-hisui", 10229)],
+      })
+    );
+
+    expect(result.currentId).toBe(10230);
+    expect(result.chain[0].members[0]).toEqual({
+      id: 10229,
+      name: "growlithe-hisui",
+    });
+    expect(result.chain[1].members[0]).toEqual({
+      id: 10230,
+      name: "arcanine-hisui",
+      condition: "Usar Piedra Fuego",
+    });
+    expect(chain[0].members[0]).toEqual({ id: 58, name: "growlithe" });
+  });
+
+  it("resuelve todas las etapas de una cadena de Alola", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 74, name: "geodude" }] },
+      { members: [{ id: 75, name: "graveler" }] },
+      { members: [{ id: 76, name: "golem" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      76,
+      "golem",
+      "golem-alola",
+      [variety("golem", 76), variety("golem-alola", 10111)],
+      loaderFrom({
+        74: [variety("geodude", 74), variety("geodude-alola", 10109)],
+        75: [variety("graveler", 75), variety("graveler-alola", 10110)],
+      })
+    );
+
+    expect(result.chain.map((stage) => stage.members[0].id)).toEqual([
+      10109, 10110, 10111,
+    ]);
+    expect(result.chain.map((stage) => stage.members[0].name)).toEqual([
+      "geodude-alola",
+      "graveler-alola",
+      "golem-alola",
+    ]);
+  });
+
+  it("propaga la región a todas las ramas de una cadena de Galar", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 79, name: "slowpoke" }] },
+      {
+        members: [
+          { id: 80, name: "slowbro", condition: "Usar Piedra Helio" },
+          { id: 199, name: "slowking", condition: "Usar Piedra Helio" },
+        ],
+      },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      80,
+      "slowbro",
+      "slowbro-galar",
+      [variety("slowbro", 80), variety("slowbro-galar", 10165)],
+      loaderFrom({
+        79: [variety("slowpoke", 79), variety("slowpoke-galar", 10164)],
+        199: [variety("slowking", 199), variety("slowking-galar", 10172)],
+      })
+    );
+
+    expect(result.currentId).toBe(10165);
+    expect(result.chain[0].members[0]).toEqual({
+      id: 10164,
+      name: "slowpoke-galar",
+    });
+    expect(result.chain[1].members.map((member) => member.id)).toEqual([
+      10165, 10172,
+    ]);
+    expect(result.chain[1].members[1].name).toBe("slowking-galar");
+  });
+
+  it("resuelve sufijos compuestos y prefiere la forma base de Galar", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 554, name: "darumaka" }] },
+      { members: [{ id: 555, name: "darmanitan" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      555,
+      "darmanitan",
+      "darmanitan-galar-standard",
+      [
+        variety("darmanitan-standard", 555),
+        variety("darmanitan-galar-standard", 10177),
+        variety("darmanitan-galar-zen", 10178),
+      ],
+      loaderFrom({
+        554: [variety("darumaka", 554), variety("darumaka-galar", 10176)],
+      })
+    );
+
+    expect(result.currentId).toBe(10177);
+    expect(result.chain[0].members[0]).toEqual({
+      id: 10176,
+      name: "darumaka-galar",
+    });
+  });
+
+  it("prefiere la coincidencia exacta sobre la forma totémica", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 19, name: "rattata" }] },
+      { members: [{ id: 20, name: "raticate" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      20,
+      "raticate",
+      "raticate-totem-alola",
+      [
+        variety("raticate", 20),
+        variety("raticate-alola", 10092),
+        variety("raticate-totem-alola", 10093),
+      ],
+      loaderFrom({
+        19: [variety("rattata", 19), variety("rattata-alola", 10091)],
+      })
+    );
+
+    expect(result.currentId).toBe(10093);
+    expect(result.chain[0].members[0]).toEqual({
+      id: 10091,
+      name: "rattata-alola",
+    });
+  });
+
+  it("no consulta variedades ajenas si la forma no es regional", async () => {
+    let calls = 0;
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 677, name: "espurr" }] },
+      { members: [{ id: 678, name: "meowstic" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      678,
+      "meowstic",
+      "meowstic-female",
+      [variety("meowstic-male", 678), variety("meowstic-female", 10025)],
+      async () => {
+        calls += 1;
+        return [];
+      }
+    );
+
+    expect(calls).toBe(0);
+    expect(result.currentId).toBe(10025);
+    expect(result.chain[0].members[0]).toEqual({ id: 677, name: "espurr" });
+  });
+
+  it("deja la otra etapa por defecto si no tiene variedad de la región", async () => {
+    const chain: EvolutionStage[] = [
+      { members: [{ id: 52, name: "meowth" }] },
+      { members: [{ id: 53, name: "persian" }] },
+    ];
+
+    const result = await resolveEvolutionChainForDetail(
+      chain,
+      53,
+      "persian",
+      "persian-alola",
+      [variety("persian", 53), variety("persian-alola", 10108)],
+      loaderFrom({
+        52: [variety("meowth", 52), variety("meowth-galar", 10161)],
+      })
+    );
+
+    expect(result.currentId).toBe(10108);
+    expect(result.chain[0].members[0]).toEqual({ id: 52, name: "meowth" });
   });
 });

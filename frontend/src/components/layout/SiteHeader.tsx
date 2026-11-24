@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import {
   ChileBallIcon,
   CloseIcon,
+  DatabaseIcon,
   HomeIcon,
   KeyIcon,
   LogoutIcon,
@@ -50,12 +52,27 @@ export default function SiteHeader() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [menuOpen]);
 
+  // Confirma el cierre de sesión antes de ejecutarlo (escritorio y móvil).
+  const handleLogoutClick = () => {
+    toast("Estai seguro?", {
+      duration: 8000,
+      action: { label: "Sí, salir", onClick: logout },
+      // Sonner exige un onClick para renderizar el botón de cancelar; el toast se cierra solo.
+      cancel: { label: "Cancelar", onClick: () => {} },
+    });
+  };
+
   const links: NavLink[] = [
     { to: "/", label: "Portá", Icon: HomeIcon },
     { to: "/favorites", label: "Mis Regalones", Icon: StarIcon },
   ];
   if (isAdmin) {
     links.push({ to: "/admin", label: "Admin", Icon: ShieldIcon });
+    links.push({
+      to: "/centro-datos",
+      label: "Centro de Datos",
+      Icon: DatabaseIcon,
+    });
   }
 
   const isActive = (path: string) => location.pathname === path;
@@ -128,7 +145,7 @@ export default function SiteHeader() {
                 </span>
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={handleLogoutClick}
                   title="Cerrar sesión"
                   className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-control border border-white/25 bg-red-950/40 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-950/60 ${FOCUS_RING}`}
                 >
@@ -196,7 +213,7 @@ export default function SiteHeader() {
                 </span>
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={handleLogoutClick}
                   className={`flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border border-white/25 bg-red-950/40 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-950/60 ${FOCUS_RING}`}
                 >
                   <LogoutIcon className="h-4 w-4 shrink-0" />

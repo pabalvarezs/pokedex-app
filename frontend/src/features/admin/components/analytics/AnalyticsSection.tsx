@@ -123,7 +123,7 @@ export default function AnalyticsSection() {
                   data={analytics.typeDistribution}
                   loading={analytics.typesLoading}
                 />
-                <div className="lg:col-span-2">
+                <div className="min-w-0 lg:col-span-2">
                   <ActivityFeed items={analytics.activity} />
                 </div>
               </div>
