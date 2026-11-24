@@ -1,7 +1,7 @@
 import { getBadgeBgColor, getTypeBadge } from "../utils/pokemon";
 import TypeIcon from "./TypeIcon";
 
-export type TypeBadgeSize = "xs" | "sm" | "md";
+export type TypeBadgeSize = "xs" | "sm" | "md" | "lg";
 
 interface Props {
   type: string;
@@ -21,6 +21,7 @@ const SIZES: Record<TypeBadgeSize, { chip: string; icon: string }> = {
   xs: { chip: "gap-1 px-1.5 py-0.5 text-[9px]", icon: "h-4 w-4" },
   sm: { chip: "gap-1.5 px-2 py-1 text-[10px]", icon: "h-5 w-5" },
   md: { chip: "gap-1.5 px-2.5 py-1.5 text-[11px]", icon: "h-6 w-6" },
+  lg: { chip: "gap-2 px-3 py-1.5 text-sm", icon: "h-8 w-8" },
 };
 
 /**

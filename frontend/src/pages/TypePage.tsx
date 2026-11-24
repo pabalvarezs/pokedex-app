@@ -4,6 +4,7 @@ import { SearchX } from "lucide-react";
 import { listPokemonByType } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
 import PokemonCardSkeleton from "../components/PokemonCardSkeleton";
+import TypeBadge from "../components/TypeBadge";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import { getTypeBadge } from "../utils/pokemon";
 
@@ -30,7 +31,13 @@ export default function TypePage() {
         aria-label="Cargando Pokémon del tipo..."
       >
         <div className="mb-5">
-          <div className="skeleton h-9 w-2/3 rounded-control" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="skeleton h-9 w-52 rounded-control sm:w-64" />
+            <div className="skeleton flex h-9 w-32 items-center gap-1.5 rounded-full px-2">
+              <span className="h-6 w-6 shrink-0 rounded-full bg-white/60" />
+              <span className="h-2.5 w-12 rounded-full bg-white/60" />
+            </div>
+          </div>
           <div className="skeleton mt-2 h-4 w-40 rounded-full" />
         </div>
         <div className="pokemon-grid">
@@ -106,7 +113,8 @@ export default function TypePage() {
     <div className="max-w-6xl mx-auto py-6">
       <div className="mb-5">
         <h1 className="text-display font-extrabold text-ink-900 tracking-tight">
-          Pokémon de tipo {typeInfo.es}
+          Pokémon de tipo{" "}
+          <TypeBadge type={safeType} size="lg" className="align-middle" />
         </h1>
         <p className="text-sm text-ink-500 mt-1">
           Se encontraron {sortedPokemon.length} Pokémon
