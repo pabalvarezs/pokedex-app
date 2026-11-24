@@ -80,6 +80,14 @@ export function formatDayLabel(value: string | Date): string {
   return `${day}-${month}-${year}`;
 }
 
+/** Etiqueta compacta dd-MM para ejes de gráficos angostos (p. ej. móviles). */
+export function formatDayShortLabel(value: string | Date): string {
+  const key = toDayKey(value);
+  if (!key) return "—";
+  const [, month, day] = key.split("-");
+  return `${day}-${month}`;
+}
+
 /**
  * Texto relativo en español de Chile (p. ej. "hace 2 h").
  * Devuelve la fecha absoluta cuando la diferencia es mayor a 30 días.

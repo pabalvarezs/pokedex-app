@@ -64,7 +64,7 @@ export default function FavoritesPerTrainerChart({ data, onOpenAll }: Props) {
             <YAxis
               type="category"
               dataKey="name"
-              width={104}
+              width="auto"
               tick={{ fontSize: 10, fill: "#64748b" }}
               tickFormatter={(value: string) =>
                 value.length > 14 ? `${value.slice(0, 13)}…` : value
