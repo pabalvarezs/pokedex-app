@@ -95,29 +95,42 @@ export default function AbilityChip({ name, slug, isHidden }: Props) {
               initial={{ opacity: 0, scale: 0.94, y: "-100%" }}
               animate={{ opacity: 1, scale: 1, y: "-100%", transition: motionTransitions.enter }}
               exit={{ opacity: 0, scale: 0.96, y: "-100%", transition: motionTransitions.exit }}
-              className="pointer-events-none z-50 rounded-control border border-line bg-surface p-3 text-left shadow-lift"
+              className="pointer-events-none z-50 overflow-hidden rounded-control border border-line bg-white text-left shadow-lift"
             >
-              <p className="mb-1 text-xs font-extrabold capitalize text-ink-900">{name}</p>
-              <p className="text-[11px] font-medium leading-relaxed text-ink-700">
-                {description ?? "Descripción no disponible."}
-              </p>
-              {outOfBattle.length > 0 && (
-                <div className="mt-2 border-t border-line pt-2">
-                  <p className="mb-1 text-[9px] font-black uppercase tracking-wide text-purple-700">
-                    Fuera de combate
-                  </p>
-                  <ul className="space-y-1">
-                    {outOfBattle.map((effect) => (
-                      <li key={effect} className="text-[10px] font-medium leading-snug text-ink-700">
-                        • {effect}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <p className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-ink-500">
-                Fuente: WikiDex
-              </p>
+              <div
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${
+                  isHidden ? "bg-accent-recovery" : "bg-accent-trainers"
+                }`}
+              >
+                <p className="text-xs font-extrabold capitalize text-white">{name}</p>
+                {isHidden && (
+                  <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-black uppercase text-white">
+                    Oculta
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2 px-3 py-2.5">
+                <p className="text-[11px] font-medium leading-relaxed text-ink-900">
+                  {description ?? "Descripción no disponible."}
+                </p>
+                {outOfBattle.length > 0 && (
+                  <div className="rounded-lg border border-purple-100 bg-purple-50/70 p-2">
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-wide text-purple-700">
+                      Fuera de combate
+                    </p>
+                    <ul className="space-y-1">
+                      {outOfBattle.map((effect) => (
+                        <li key={effect} className="text-[10px] font-medium leading-snug text-ink-900">
+                          • {effect}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-ink-500">
+                  Fuente: WikiDex
+                </p>
+              </div>
             </m.div>
           )}
         </AnimatePresence>,
