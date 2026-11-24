@@ -47,11 +47,12 @@ export default function AnimatedList<T>({
       {items.map((item, index) => {
         const key = getKey(item);
         if (reduceMotion || index >= maxAnimated) {
-          return <div key={key}>{children(item)}</div>;
+          return <div key={key} className="min-w-0">{children(item)}</div>;
         }
         return (
           <m.div
             key={key}
+            className="min-w-0"
             layout="position"
             variants={itemVariants}
             initial="hidden"
