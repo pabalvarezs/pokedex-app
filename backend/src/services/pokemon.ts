@@ -70,7 +70,7 @@ export interface Pokemon {
   weight?: number;
   base_experience?: number;
   stats?: { name: string; base_stat: number }[];
-  abilities?: { name: string; is_hidden: boolean }[];
+  abilities?: { name: string; slug: string; is_hidden: boolean }[];
   moves?: string[];
   cries?: { latest?: string; legacy?: string };
   description?: string;
@@ -1147,6 +1147,7 @@ async function fetchPokemonDetail(key: number | string): Promise<Pokemon> {
     Promise.all(
       (data.abilities ?? []).map(async (a) => ({
         name: await translateAbility(a.ability.name),
+        slug: a.ability.name,
         is_hidden: a.is_hidden,
       }))
     ),

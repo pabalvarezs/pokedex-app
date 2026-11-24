@@ -14,6 +14,7 @@ import type { SpriteItem } from "../components/SpriteLightbox";
 import VariantsAndForms from "../components/VariantsAndForms";
 import { STAT_NAMES, GENERATIONS } from "../utils/pokemon";
 import TypeBadge from "../components/TypeBadge";
+import AbilityChip from "../components/AbilityChip";
 
 export default function PokemonDetail() {
   const { id, name } = useParams();
@@ -393,21 +394,12 @@ export default function PokemonDetail() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {data.abilities.map((a) => (
-                    <div
+                    <AbilityChip
                       key={a.name}
-                      className={`flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-bold capitalize ${
-                        a.is_hidden
-                          ? "bg-purple-50 text-purple-800 border-purple-200"
-                          : "bg-gray-100 text-gray-800 border-gray-200"
-                      }`}
-                    >
-                      <span>{a.name}</span>
-                      {a.is_hidden && (
-                        <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded font-black">
-                          Escondía
-                        </span>
-                      )}
-                    </div>
+                      name={a.name}
+                      slug={a.slug}
+                      isHidden={a.is_hidden}
+                    />
                   ))}
                 </div>
               </div>

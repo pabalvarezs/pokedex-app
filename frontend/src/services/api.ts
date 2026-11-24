@@ -28,6 +28,8 @@ export interface PokemonStat {
 
 export interface PokemonAbility {
   name: string;
+  /** Slug inglés de PokéAPI; se usa para buscar la descripción del popover. */
+  slug?: string;
   is_hidden: boolean;
 }
 
