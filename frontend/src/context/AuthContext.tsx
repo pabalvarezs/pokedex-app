@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const name = user?.name;
     logoutUser();
     setUser(null);
-    toast.success(name ? `Chaito ${name}` : "Chaito");
+    toast.success(name ? `Chaito ${name}` : "Chaito", { duration: 1500 });
   };
 
   return (
