@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { motionTransitions } from "../lib/motion";
@@ -10,6 +10,8 @@ interface Props {
   popover: ReactNode;
   /** Clases del chip, definidas por quien lo usa. */
   chipClassName: string;
+  /** Estilo inline del chip (por ejemplo, el color del tipo). */
+  chipStyle?: CSSProperties;
   /** Ancho deseado del panel; se limita al viewport en móvil. */
   width?: number;
 }
@@ -21,7 +23,7 @@ const VIEWPORT_MARGIN = 16;
  * el botón con el teclado (Escape lo cierra). El portal evita que el
  * `overflow-hidden` de la tarjeta de la ficha recorte el contenido.
  */
-export default function Popover({ children, popover, chipClassName, width = 288 }: Props) {
+export default function Popover({ children, popover, chipClassName, chipStyle, width = 288 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -70,6 +72,7 @@ export default function Popover({ children, popover, chipClassName, width = 288 
         onBlur={() => setIsOpen(false)}
         onKeyDown={handleKeyDown}
         className={chipClassName}
+        style={chipStyle}
       >
         {children}
       </button>
