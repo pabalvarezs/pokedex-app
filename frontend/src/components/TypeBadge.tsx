@@ -6,7 +6,7 @@ export type TypeBadgeSize = "xs" | "sm" | "md";
 interface Props {
   type: string;
   size?: TypeBadgeSize;
-  /** El icono SVG se muestra en sm/md; en xs se omite por densidad. */
+  /** La insignia WebP se muestra en sm/md; en xs se omite por densidad. */
   showIcon?: boolean;
   /** Renderiza un botón con `aria-pressed` (para los filtros). */
   interactive?: boolean;
@@ -24,8 +24,8 @@ const SIZES: Record<TypeBadgeSize, { chip: string; icon: string }> = {
 };
 
 /**
- * Insignia de tipo unificada: fondo sólido oscuro por tipo, texto siempre
- * blanco y símbolo vectorial. Un único componente para toda la app.
+ * Insignia de tipo unificada: fondo con el color del tipo, imagen WebP y
+ * nombre en blanco. Un único componente para toda la app.
  */
 export default function TypeBadge({
   type,
@@ -45,6 +45,7 @@ export default function TypeBadge({
         backgroundColor: getBadgeBgColor(type),
         color: "#ffffff",
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22), 0 1px 2px rgba(15,23,42,0.12)",
+        textShadow: "0 1px 1px rgba(15,23,42,0.35)",
       }
     : {
         backgroundColor: "rgba(255,255,255,0.88)",
