@@ -62,6 +62,7 @@ const MATRIX: TypeMatrixResponse = {
       generation: 1,
       damageClass: "Especial",
       moveCount: 47,
+      moveSlugs: ["flamethrower", "fire-blast", "overheat"],
       pokemonCount: 109,
       strongTo: ["grass"],
       weakTo: ["water"],
@@ -75,6 +76,7 @@ const MATRIX: TypeMatrixResponse = {
       generation: 1,
       damageClass: "Especial",
       moveCount: 40,
+      moveSlugs: ["razor-leaf", "solar-beam"],
       pokemonCount: 100,
       strongTo: ["water"],
       weakTo: ["fire"],
@@ -88,6 +90,7 @@ const MATRIX: TypeMatrixResponse = {
       generation: 1,
       damageClass: "Especial",
       moveCount: 35,
+      moveSlugs: ["surf", "hydro-pump"],
       pokemonCount: 90,
       strongTo: ["fire"],
       weakTo: ["grass"],
@@ -169,5 +172,43 @@ describe("Centro de Datos: matriz de tipos", () => {
     expect(await screen.findByRole("dialog", { name: "Detalle de tipo Fuego" })).toBeTruthy();
     expect(screen.getByText("Fuerte contra")).toBeTruthy();
     expect(screen.getByText("109")).toBeTruthy();
+  });
+
+  it("muestra las tarjetas de tipo encima de la matriz", async () => {
+    renderApp();
+
+    expect(
+      await screen.findByRole("heading", { name: "Tipos elementales" }, { timeout: 5000 })
+    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Fuego" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver movimientos de Fuego" })).toBeTruthy();
+    expect(screen.getAllByText("Especial").length).toBeGreaterThan(0);
+  });
+
+  it("abre el popover con todos los movimientos del tipo", async () => {
+    renderApp();
+    const button = await screen.findByRole(
+      "button",
+      { name: "Ver movimientos de Fuego" },
+      { timeout: 5000 }
+    );
+
+    fireEvent.mouseEnter(button);
+
+    expect(
+      await screen.findByRole("dialog", { name: "Movimientos de tipo Fuego" })
+    ).toBeTruthy();
+    expect(screen.getByText("Lanzallamas")).toBeTruthy();
+    expect(screen.getByText("Llamarada")).toBeTruthy();
+  });
+
+  it("muestra skeletons de tarjetas y matriz mientras carga", () => {
+    vi.mocked(getDataCenterTypeMatrix).mockImplementation(
+      () => new Promise(() => {})
+    );
+    renderApp();
+
+    expect(screen.getByLabelText("Cargando tipos")).toBeTruthy();
+    expect(screen.getByLabelText("Cargando matriz de efectividad")).toBeTruthy();
   });
 });
