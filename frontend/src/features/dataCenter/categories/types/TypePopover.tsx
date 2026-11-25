@@ -1,21 +1,11 @@
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { m } from "framer-motion";
 import TypeIcon from "../../../../components/TypeIcon";
 import { cn } from "../../../admin/lib/cn";
-import { fadeUp } from "../../../../lib/motion";
 import { formatNumber } from "../../lib/format";
 import type { TypeMatrixType } from "../../lib/types";
+import FloatingPanel, { type PopoverAnchor } from "./FloatingPanel";
 import { multiplierInfo } from "./lib/typeMatrix";
 
-export interface PopoverAnchor {
-  rect: { top: number; bottom: number; left: number; width: number };
-  kind: "type" | "cell";
-  typeSlug?: string;
-  attackerSlug?: string;
-  defenderSlug?: string;
-  value?: number;
-}
+export type { PopoverAnchor } from "./FloatingPanel";
 
 interface Props {
   anchor: PopoverAnchor;
@@ -64,56 +54,19 @@ function RelationRow({
 
 /** Popover flotante: abre el detalle del tipo o del cruce de dos tipos. */
 export default function TypePopover({ anchor, types, onEnter, onLeave }: Props) {
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onLeave();
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onLeave]);
-
   const names = new Map(types.map((type) => [type.slug, type.name]));
   const type = types.find((item) => item.slug === anchor.typeSlug);
   const attacker = types.find((item) => item.slug === anchor.attackerSlug);
   const defender = types.find((item) => item.slug === anchor.defenderSlug);
   const info = multiplierInfo(anchor.value ?? 1);
 
-  const width = 304;
-  const left = Math.min(
-    Math.max(8, anchor.rect.left + anchor.rect.width / 2 - width / 2),
-    Math.max(8, window.innerWidth - width - 8)
-  );
-  // Se reserva el alto estimado para que el panel quepa siempre en el viewport.
-  // El positioning vive en un wrapper: Framer Motion controla el transform del
-  // panel animado y sobrescribiría cualquier transform que pusiéramos ahí.
-  const estimatedHeight = anchor.kind === "type" ? 400 : 220;
-  const spaceAbove = anchor.rect.top - 18;
-  const spaceBelow = window.innerHeight - anchor.rect.bottom - 18;
-  const preferAbove = spaceAbove >= estimatedHeight || spaceAbove > spaceBelow;
-
-  let top = preferAbove
-    ? anchor.rect.top - 10 - estimatedHeight
-    : anchor.rect.bottom + 10;
-  if (top < 8) {
-    const below = anchor.rect.bottom + 10;
-    top = below + estimatedHeight <= window.innerHeight - 8 ? below : 8;
-  }
-  top = Math.min(top, Math.max(8, window.innerHeight - 8 - estimatedHeight));
-
-  return createPortal(
-    <div
-      className="pointer-events-none fixed z-50"
-      style={{ left, width, top }}
-    >
-    <m.div
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-      role="dialog"
-      aria-label={anchor.kind === "type" ? `Detalle de tipo ${type?.name ?? ""}` : "Detalle de efectividad"}
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      className="glass-surface glass-blur pointer-events-auto w-full rounded-card border border-line p-4 shadow-card"
+  return (
+    <FloatingPanel
+      anchor={anchor}
+      label={anchor.kind === "type" ? `Detalle de tipo ${type?.name ?? ""}` : "Detalle de efectividad"}
+      estimatedHeight={anchor.kind === "type" ? 400 : 220}
+      onEnter={onEnter}
+      onLeave={onLeave}
     >
       {anchor.kind === "type" && type ? (
         <div className="space-y-3">
@@ -176,8 +129,6 @@ export default function TypePopover({ anchor, types, onEnter, onLeave }: Props) 
           </div>
         </div>
       )}
-    </m.div>
-    </div>,
-    document.body
+    </FloatingPanel>
   );
 }

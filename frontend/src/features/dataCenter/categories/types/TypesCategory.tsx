@@ -3,13 +3,17 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "../../../../services/api";
 import { cn } from "../../../admin/lib/cn";
-import {
-  DataCenterError,
-  DataCenterSkeleton,
-} from "../../components/DataCenterState";
+import { DataCenterError } from "../../components/DataCenterState";
 import { useDataCenterTypeMatrix } from "../../hooks/useDataCenterTypeMatrix";
 import { formatDate, formatNumber } from "../../lib/format";
+import TypeCards from "./TypeCards";
 import TypeMatrix from "./TypeMatrix";
+import {
+  TypeCardsSkeleton,
+  TypeMatrixHeaderSkeleton,
+  TypeMatrixSkeleton,
+  TypesHeaderSkeleton,
+} from "./TypesSkeletons";
 import { multiplierInfo } from "./lib/typeMatrix";
 
 const LEGEND = [2, 1, 0.5, 0];
@@ -58,7 +62,16 @@ export default function TypesCategory() {
     });
   };
 
-  if (isLoading) return <DataCenterSkeleton />;
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <TypesHeaderSkeleton />
+        <TypeCardsSkeleton />
+        <TypeMatrixHeaderSkeleton />
+        <TypeMatrixSkeleton />
+      </div>
+    );
+  }
 
   if (isError || !data) {
     return (
@@ -72,30 +85,23 @@ export default function TypesCategory() {
   const busy = refresh.isPending || isPolling || isFetching;
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-red-600 text-white shadow-soft">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <h2 className="text-lg font-black text-ink-900">
-              Matriz de efectividad
-            </h2>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-ink-500">
-            {formatNumber(data.meta.count, 0)} tipos · reglas vigentes desde la sexta
-            generación
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+            Catálogo elemental
+          </span>
+          <h2 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
+            <span
+              className="h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
+              aria-hidden="true"
+            />
+            Tipos elementales
+          </h2>
+          <p className="mt-1 max-w-2xl text-body text-ink-500">
+            Generación en que apareció, movimientos y clase de daño de los 18 tipos.
           </p>
-          <p className="mt-1 text-[11px] text-ink-500">
-            Filas: tipo del movimiento · columnas: tipo del Pokémon objetivo. Toca una
-            casilla o un tipo para ver el detalle.
-          </p>
-          {isPolling && (
-            <p className="mt-1 text-[11px] font-bold text-amber-700" role="status">
-              Actualizando en segundo plano…
-            </p>
-          )}
         </div>
         <button
           type="button"
@@ -116,6 +122,30 @@ export default function TypesCategory() {
           </span>
         </button>
       </header>
+
+      <TypeCards types={data.types} />
+
+      <section aria-label="Matriz de efectividad" className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-red-600 text-white shadow-soft">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <h2 className="text-lg font-black text-ink-900">Matriz de efectividad</h2>
+        </div>
+        <p className="text-xs font-semibold text-ink-500">
+          {formatNumber(data.meta.count, 0)} tipos · reglas vigentes desde la sexta
+          generación
+        </p>
+        <p className="text-[11px] text-ink-500">
+          Filas: tipo del movimiento · columnas: tipo del Pokémon objetivo. Toca una
+          casilla o un tipo para ver el detalle.
+        </p>
+        {isPolling && (
+          <p className="text-[11px] font-bold text-amber-700" role="status">
+            Actualizando en segundo plano…
+          </p>
+        )}
+      </section>
 
       <ul
         aria-label="Leyenda de la matriz"

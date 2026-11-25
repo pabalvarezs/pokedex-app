@@ -116,6 +116,7 @@ export interface TypeMatrixType {
   generation: number;
   damageClass: string;
   moveCount: number;
+  moveSlugs: string[];
   pokemonCount: number;
   strongTo: string[];
   weakTo: string[];
