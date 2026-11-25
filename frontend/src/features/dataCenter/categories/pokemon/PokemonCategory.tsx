@@ -107,8 +107,18 @@ export default function PokemonCategory() {
     <div className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-ink-900">Rankings de Pokémon</h2>
-          <p className="text-xs font-semibold text-ink-500">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+            Estadísticas internas
+          </span>
+          <h2 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
+            <span
+              className="h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
+              aria-hidden="true"
+            />
+            Rankings de Pokémon
+          </h2>
+          <p className="mt-1 max-w-2xl text-body text-ink-500">
             {formatNumber(meta.filtered)} de {formatNumber(meta.total)} Pokémon
             {meta.type ? ` · tipo ${meta.type}` : ""}
             {meta.generation ? ` · generación ${meta.generation}` : ""}
