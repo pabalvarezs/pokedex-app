@@ -173,6 +173,8 @@ export interface TypeMatrixType {
   generation: number;
   damageClass: string;
   moveCount: number;
+  /** Slugs de PokéAPI; el frontend los resuelve con su catálogo en español. */
+  moveSlugs: string[];
   pokemonCount: number;
   /** Slugs de los tipos contra los que este tipo hace más/menos daño. */
   strongTo: string[];

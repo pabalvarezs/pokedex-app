@@ -68,6 +68,12 @@ function idFromUrl(url?: string): number | undefined {
   return Number.isInteger(id) && id > 0 ? id : undefined;
 }
 
+function moveSlug(value: unknown): string | undefined {
+  return isRecord(value) && typeof value.name === "string"
+    ? value.name
+    : undefined;
+}
+
 function slugs(refs: RawRef[] | undefined): string[] {
   return (refs ?? [])
     .map((ref) => ref.name?.toLowerCase())
@@ -85,16 +91,23 @@ function buildType(raw: RawTypeDetail, slug: string): TypeMatrixType {
   const relations = raw.damage_relations ?? {};
   const damageClass = raw.move_damage_class?.name?.toLowerCase();
   const generation = idFromUrl(raw.generation?.url) ?? 1;
+  const moveSlugs = (raw.moves ?? [])
+    .map((entry) => (isRecord(entry) ? moveSlug(entry) : undefined))
+    .filter((entry): entry is string => entry !== undefined)
+    .sort((a, b) => a.localeCompare(b));
 
   return {
     id: raw.id ?? 0,
     slug,
     name: spanishName(raw, slug),
     generation,
+    // Algunos tipos (p. ej. Hada) no tienen clase fija: sus movimientos
+    // pueden ser físicos o especiales.
     damageClass: damageClass
       ? DAMAGE_CLASSES_ES[damageClass] ?? damageClass
-      : "—",
-    moveCount: Array.isArray(raw.moves) ? raw.moves.length : 0,
+      : "Mixta",
+    moveCount: moveSlugs.length,
+    moveSlugs,
     pokemonCount: Array.isArray(raw.pokemon) ? raw.pokemon.length : 0,
     strongTo: slugs(relations.double_damage_to),
     weakTo: slugs(relations.double_damage_from),
