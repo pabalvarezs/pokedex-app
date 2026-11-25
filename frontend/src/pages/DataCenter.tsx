@@ -2,7 +2,6 @@ import { Suspense, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { Database, ShieldAlert } from "lucide-react";
-import { ChileBallIcon } from "../components/layout/icons";
 import { useAuth } from "../context/AuthContext";
 import LayoutMotionProvider from "../context/LayoutMotionProvider";
 import EmptyState from "../features/admin/components/EmptyState";
@@ -87,7 +86,7 @@ function DataCenterDashboard() {
   return (
     <div data-data-center className="relative isolate mx-auto max-w-6xl py-2 sm:py-4">
       <header className="glass-surface glass-blur relative mb-6 animate-fade-up overflow-hidden rounded-card border border-line p-4 shadow-card sm:p-7">
-        {/* Brillos pastel de marca: decoración detrás del vidrio, sin texto. */}
+        {/* Brillos pastel decorativos detrás del vidrio, sin texto. */}
         <span
           aria-hidden="true"
           className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-red-200/70 via-amber-100/60 to-transparent blur-2xl"
@@ -96,7 +95,7 @@ function DataCenterDashboard() {
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-gradient-to-tr from-amber-100/60 via-red-100/50 to-transparent blur-2xl"
         />
-        {/* En móvil la ilustración va encima: el título de marca usa todo el ancho. */}
+        {/* En móvil la ilustración va encima: el título usa todo el ancho. */}
         <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
           <span className="grid h-20 w-20 shrink-0 place-items-center rounded-card border-2 border-red-600 bg-white shadow-ambient motion-safe:animate-pop sm:h-24 sm:w-24">
             <img
@@ -107,26 +106,17 @@ function DataCenterDashboard() {
             />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white shadow-sm">
-                <ChileBallIcon className="h-3.5 w-3.5 shrink-0" />
-                PokeChile
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
-                Estadísticas internas
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+              Estadísticas internas
+            </span>
             <h1 className="mt-2 flex min-w-0 items-center gap-3 text-display font-extrabold text-ink-900">
               <span
                 className="h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
                 aria-hidden="true"
               />
-              PokeChile
-            </h1>
-            <h2 className="mt-1 text-section font-extrabold tracking-tight text-red-700">
               Centro de Datos
-            </h2>
+            </h1>
             <p className="mt-2 max-w-2xl break-words text-body text-ink-500">
               Hola, {user?.name}. Estadísticas internas de la PokéAPI.
             </p>
