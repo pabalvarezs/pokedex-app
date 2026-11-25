@@ -159,3 +159,102 @@ export interface DataCenterQuery {
   generation: number | null;
   includeVariants: boolean;
 }
+
+/** Categorías de catálogo: recursos de PokéAPI aún no mostrados en la web. */
+export const CATALOG_CATEGORIES = ["items", "berries"] as const;
+
+/** Fila de la matriz de efectividad (reglas vigentes desde la 6ª generación). */
+export interface TypeMatrixType {
+  id: number;
+  /** Slug de PokéAPI, p. ej. `fire`. */
+  slug: string;
+  /** Nombre en español, p. ej. `Fuego`. */
+  name: string;
+  generation: number;
+  damageClass: string;
+  moveCount: number;
+  pokemonCount: number;
+  /** Slugs de los tipos contra los que este tipo hace más/menos daño. */
+  strongTo: string[];
+  weakTo: string[];
+  resists: string[];
+  immuneTo: string[];
+}
+
+export interface TypeMatrixResponse {
+  meta: {
+    source: string;
+    generatedAt: string;
+    /** Reglas aplicadas: las vigentes desde la sexta generación. */
+    generation: 6;
+    count: number;
+  };
+  /** Ordenado alfabéticamente por nombre en español, como WikiDex. */
+  types: TypeMatrixType[];
+  /** `matrix[atacante][defensor]` → 2 | 1 | 0.5 | 0. */
+  matrix: number[][];
+}
+
+export type CatalogCategory = (typeof CATALOG_CATEGORIES)[number];
+
+/** Parámetros comunes del controlador; Pokémon ignora `q`, `group` y `offset`. */
+export interface CatalogQuery {
+  q: string;
+  group: string | null;
+  limit: number;
+  offset: number;
+}
+
+export type DataCenterRequestQuery = DataCenterQuery & CatalogQuery;
+
+/** Fila del índice de un catálogo (viene del listado de PokéAPI). */
+export interface CatalogEntry {
+  id: number;
+  /** Slug de PokéAPI, p. ej. `fire-stone`. */
+  name: string;
+  /** Etiqueta legible; se prefiere la versión española cuando existe. */
+  label: string;
+  /** Recurso de origen dentro de la categoría (p. ej. `item`, `berry`). */
+  group: string;
+  sprite?: string;
+}
+
+export interface CatalogGroupCount {
+  id: string;
+  count: number;
+}
+
+export interface CatalogIndexResponse {
+  meta: {
+    category: CatalogCategory;
+    source: string;
+    generatedAt: string;
+    total: number;
+    filtered: number;
+    limit: number;
+    offset: number;
+  };
+  groups: CatalogGroupCount[];
+  items: CatalogEntry[];
+}
+
+/** Un dato del detalle, ya formateado para la interfaz. */
+export interface CatalogAttribute {
+  key: string;
+  label: string;
+  value: string;
+  /** Los nombres de tipo se pintan con la insignia del tipo en el frontend. */
+  isTypeName?: boolean;
+}
+
+export interface CatalogDetailResponse {
+  category: CatalogCategory;
+  id: number;
+  name: string;
+  label: string;
+  group: string;
+  sprite?: string;
+  /** Efecto o descripción en español, cuando PokéAPI lo entrega. */
+  summary?: string;
+  attributes: CatalogAttribute[];
+}
