@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import App from "../src/App";
@@ -62,7 +62,7 @@ const MATRIX: TypeMatrixResponse = {
       generation: 1,
       damageClass: "Especial",
       moveCount: 47,
-      moveSlugs: ["flamethrower", "fire-blast", "overheat"],
+      moveSlugs: ["flamethrower", "fire-blast", "overheat", "sunny-day"],
       pokemonCount: 109,
       strongTo: ["grass"],
       weakTo: ["water"],
@@ -200,6 +200,31 @@ describe("Centro de Datos: matriz de tipos", () => {
     ).toBeTruthy();
     expect(screen.getByText("Lanzallamas")).toBeTruthy();
     expect(screen.getByText("Llamarada")).toBeTruthy();
+  });
+
+  it("ordena los movimientos por potencia y deja los sin potencia al final", async () => {
+    renderApp();
+    const button = await screen.findByRole(
+      "button",
+      { name: "Ver movimientos de Fuego" },
+      { timeout: 5000 }
+    );
+
+    fireEvent.mouseEnter(button);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Movimientos de tipo Fuego",
+    });
+    const names = within(dialog)
+      .getAllByRole("listitem")
+      .map((item) => item.firstElementChild?.textContent ?? "");
+    expect(names).toEqual([
+      "Supercalor/Sofoco",
+      "Llamarada",
+      "Lanzallamas",
+      "Día Soleado",
+    ]);
+    expect(dialog.textContent).toContain("130");
   });
 
   it("muestra skeletons de tarjetas y matriz mientras carga", () => {

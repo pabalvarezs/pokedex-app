@@ -44,9 +44,11 @@ export default function FloatingPanel({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onLeave]);
 
+  // En pantallas estrechas el panel se reduce para no salirse del viewport.
+  const panelWidth = Math.min(width, Math.max(0, window.innerWidth - 16));
   const left = Math.min(
-    Math.max(8, anchor.rect.left + anchor.rect.width / 2 - width / 2),
-    Math.max(8, window.innerWidth - width - 8)
+    Math.max(8, anchor.rect.left + anchor.rect.width / 2 - panelWidth / 2),
+    Math.max(8, window.innerWidth - panelWidth - 8)
   );
   const spaceAbove = anchor.rect.top - 18;
   const spaceBelow = window.innerHeight - anchor.rect.bottom - 18;
@@ -62,7 +64,7 @@ export default function FloatingPanel({
   top = Math.min(top, Math.max(8, window.innerHeight - 8 - estimatedHeight));
 
   return createPortal(
-    <div className="pointer-events-none fixed z-50" style={{ left, width, top }}>
+    <div className="pointer-events-none fixed z-50" style={{ left, width: panelWidth, top }}>
       <m.div
         variants={fadeUp}
         initial="hidden"
