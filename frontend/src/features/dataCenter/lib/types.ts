@@ -104,3 +104,86 @@ export interface DataCenterRefreshResponse {
 
 /** Mismo contrato que `SnapshotStatus` del backend. */
 export type DataCenterStatus = DataCenterRefreshResponse;
+
+/** Espejo de `CATALOG_CATEGORIES` del backend. */
+export const CATALOG_CATEGORIES = ["items", "berries"] as const;
+
+/** Espejo de `TypeMatrixResponse` del backend. */
+export interface TypeMatrixType {
+  id: number;
+  slug: string;
+  name: string;
+  generation: number;
+  damageClass: string;
+  moveCount: number;
+  pokemonCount: number;
+  strongTo: string[];
+  weakTo: string[];
+  resists: string[];
+  immuneTo: string[];
+}
+
+export interface TypeMatrixResponse {
+  meta: {
+    source: string;
+    generatedAt: string;
+    generation: 6;
+    count: number;
+  };
+  types: TypeMatrixType[];
+  matrix: number[][];
+}
+
+export type CatalogCategory = (typeof CATALOG_CATEGORIES)[number];
+
+export interface CatalogQuery {
+  q: string;
+  group: string | null;
+  limit: number;
+  offset: number;
+}
+
+export interface CatalogEntry {
+  id: number;
+  name: string;
+  label: string;
+  group: string;
+  sprite?: string;
+}
+
+export interface CatalogGroupCount {
+  id: string;
+  count: number;
+}
+
+export interface CatalogIndexResponse {
+  meta: {
+    category: CatalogCategory;
+    source: string;
+    generatedAt: string;
+    total: number;
+    filtered: number;
+    limit: number;
+    offset: number;
+  };
+  groups: CatalogGroupCount[];
+  items: CatalogEntry[];
+}
+
+export interface CatalogAttribute {
+  key: string;
+  label: string;
+  value: string;
+  isTypeName?: boolean;
+}
+
+export interface CatalogDetailResponse {
+  category: CatalogCategory;
+  id: number;
+  name: string;
+  label: string;
+  group: string;
+  sprite?: string;
+  summary?: string;
+  attributes: CatalogAttribute[];
+}

@@ -48,7 +48,7 @@ export default function DataCenterTabs({ value, onChange, panelId }: Props) {
     <div
       role="tablist"
       aria-label="Categorías del Centro de Datos"
-      className="glass-surface glass-blur mb-5 flex w-full snap-x gap-1.5 overflow-x-auto rounded-card border border-line p-1 shadow-soft sm:w-fit sm:overflow-visible"
+      className="glass-surface glass-blur mx-auto mb-5 flex w-full max-w-full snap-x gap-1.5 overflow-x-auto rounded-card border border-line p-1 shadow-soft sm:w-fit"
     >
       {DATA_CENTER_CATEGORIES.map((category) => {
         const active = value === category.id;

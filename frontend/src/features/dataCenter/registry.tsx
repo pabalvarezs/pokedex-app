@@ -1,8 +1,14 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
-import { Database, type LucideIcon } from "lucide-react";
+import { Database, Sparkles, type LucideIcon } from "lucide-react";
+import { DATA_CENTER_CATALOGS } from "./lib/catalogs";
+import { CATALOG_CATEGORIES } from "./lib/types";
 
 const PokemonCategory = lazy(
   () => import("./categories/pokemon/PokemonCategory")
+);
+const TypesCategory = lazy(() => import("./categories/types/TypesCategory"));
+const CatalogCategory = lazy(
+  () => import("./categories/catalog/CatalogCategory")
 );
 
 export interface DataCenterCategoryMeta {
@@ -15,10 +21,21 @@ export interface DataCenterCategoryMeta {
 }
 
 /**
- * Registro único de categorías. La página solo recorre este arreglo: agregar
- * Objetos, Bayas o Movimientos consiste en crear el módulo de la categoría y
- * añadir una entrada aquí (y su handler en el backend).
+ * Registro único de categorías. La página solo recorre este arreglo: Tipos tiene
+ * su propia vista de matriz y Objetos/Bayas comparten el catálogo genérico.
  */
+/** Un único componente lazy para todos los catálogos: la pestaña se identifica por `id`. */
+const catalogEntries: DataCenterCategoryMeta[] = CATALOG_CATEGORIES.map((id) => {
+  const meta = DATA_CENTER_CATALOGS[id];
+  return {
+    id,
+    label: meta.label,
+    shortLabel: meta.shortLabel,
+    icon: meta.icon,
+    Component: CatalogCategory,
+  };
+});
+
 export const DATA_CENTER_CATEGORIES: DataCenterCategoryMeta[] = [
   {
     id: "pokemon",
@@ -27,6 +44,14 @@ export const DATA_CENTER_CATEGORIES: DataCenterCategoryMeta[] = [
     icon: Database,
     Component: PokemonCategory,
   },
+  {
+    id: "types",
+    label: "Tipos",
+    shortLabel: "Tipos",
+    icon: Sparkles,
+    Component: TypesCategory,
+  },
+  ...catalogEntries,
 ];
 
 export const DEFAULT_DATA_CENTER_CATEGORY = DATA_CENTER_CATEGORIES[0].id;

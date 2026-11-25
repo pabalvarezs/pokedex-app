@@ -1,9 +1,14 @@
 import axios from "axios";
 import type {
+  CatalogCategory,
+  CatalogDetailResponse,
+  CatalogIndexResponse,
+  CatalogQuery,
   DataCenterPokemonResponse,
   DataCenterRefreshResponse,
   DataCenterStatus,
   PokemonDataCenterFilters,
+  TypeMatrixResponse,
 } from "../features/dataCenter/lib/types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
@@ -496,4 +501,72 @@ export async function getDataCenterPokemonTypes(ids: number[]) {
     { params: { ids: ids.join(",") } }
   );
   return data.typesById;
+}
+
+// --- Centro de Datos: matriz de tipos (solo administradores) ---
+
+export async function getDataCenterTypeMatrix() {
+  const { data } = await api.get<TypeMatrixResponse>(
+    "/api/admin/data-center/types"
+  );
+  return data;
+}
+
+export async function getDataCenterTypeMatrixStatus() {
+  const { data } = await api.get<DataCenterStatus>(
+    "/api/admin/data-center/types/status"
+  );
+  return data;
+}
+
+export async function refreshDataCenterTypeMatrix() {
+  const { data } = await api.post<DataCenterRefreshResponse>(
+    "/api/admin/data-center/types/refresh"
+  );
+  return data;
+}
+
+// --- Centro de Datos: catálogos complementarios (solo administradores) ---
+
+export async function getDataCenterCatalog(
+  category: CatalogCategory,
+  query: CatalogQuery
+) {
+  const { data } = await api.get<CatalogIndexResponse>(
+    `/api/admin/data-center/${category}`,
+    {
+      params: {
+        q: query.q || undefined,
+        group: query.group ?? undefined,
+        limit: query.limit,
+        offset: query.offset,
+      },
+    }
+  );
+  return data;
+}
+
+export async function getDataCenterCatalogItem(
+  category: CatalogCategory,
+  group: string,
+  id: number
+) {
+  const { data } = await api.get<CatalogDetailResponse>(
+    `/api/admin/data-center/${category}/items/${encodeURIComponent(group)}/${id}`
+  );
+  return data;
+}
+
+export async function getDataCenterCatalogStatus(category: CatalogCategory) {
+  const { data } = await api.get<DataCenterStatus>(
+    `/api/admin/data-center/${category}/status`
+  );
+  return data;
+}
+
+export async function refreshDataCenterCatalog(category: CatalogCategory) {
+  const { data } = await api.post<DataCenterRefreshResponse>(
+    `/api/admin/data-center/${category}/refresh`
+  );
+  return data;
 }
