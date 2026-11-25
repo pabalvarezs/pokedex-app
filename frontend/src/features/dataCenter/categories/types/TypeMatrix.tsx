@@ -61,6 +61,14 @@ export default function TypeMatrix({ data }: Props) {
         : "text-ink-700 hover:bg-red-50"
     );
 
+  // Las cabeceras de columna rotulan en diagonal: el icono sigue arriba y el
+  // nombre completo se lee inclinado, sin importar lo largo que sea.
+  const columnHeaderCell = (active: boolean) =>
+    cn(
+      "focus-accent relative block h-full w-full rounded-lg transition duration-150 outline-none",
+      active ? "bg-red-600 text-white shadow-soft" : "text-ink-700 hover:bg-red-50"
+    );
+
   return (
     <>
       <div className="glass-surface overflow-auto rounded-card border border-line shadow-card">
@@ -73,7 +81,7 @@ export default function TypeMatrix({ data }: Props) {
             <tr>
               <th
                 scope="col"
-                className="sticky left-0 top-0 z-30 w-[66px] min-w-[66px] border-b border-r border-line bg-white/95 p-1 text-[9px] font-extrabold uppercase leading-tight tracking-wide text-ink-500 backdrop-blur sm:w-[104px] sm:min-w-[104px] sm:text-[10px]"
+                className="sticky left-0 top-0 z-30 w-[66px] min-w-[66px] border-b border-r border-line bg-white/95 p-1 text-center text-[9px] font-extrabold uppercase leading-tight tracking-wide text-ink-500 backdrop-blur sm:w-[104px] sm:min-w-[104px] sm:text-[10px]"
               >
                 Ataque ↓
                 <span className="mt-0.5 block font-medium normal-case tracking-normal">
@@ -84,12 +92,12 @@ export default function TypeMatrix({ data }: Props) {
                 <th
                   key={defender.slug}
                   scope="col"
-                  className="sticky top-0 z-20 w-9 min-w-9 border-b border-line bg-white/95 p-0.5 backdrop-blur sm:w-11 sm:min-w-11"
+                  className="sticky top-0 z-20 h-[82px] w-9 min-w-9 border-b border-line bg-white/95 p-0.5 backdrop-blur sm:h-[96px] sm:w-11 sm:min-w-11"
                 >
                   <button
                     type="button"
                     aria-label={`Tipo defensor ${defender.name}`}
-                    className={headerCell(null, col)}
+                    className={columnHeaderCell(col === activeCol)}
                     onMouseEnter={(event) =>
                       open(event, { kind: "type", typeSlug: defender.slug })
                     }
@@ -102,8 +110,11 @@ export default function TypeMatrix({ data }: Props) {
                       setPinnedCol((previous) => (previous === col ? null : col))
                     }
                   >
-                    <TypeIcon type={defender.slug} className="h-6 w-6 sm:h-7 sm:w-7" />
-                    <span className="hidden text-[9px] font-black sm:block">
+                    <TypeIcon
+                      type={defender.slug}
+                      className="absolute left-1/2 top-1 h-6 w-6 -translate-x-1/2 sm:top-1.5 sm:h-7 sm:w-7"
+                    />
+                    <span className="absolute left-1/2 top-[52px] -translate-x-1/2 -translate-y-1/2 -rotate-[55deg] whitespace-nowrap text-[9px] font-black leading-none sm:top-[60px] sm:text-[10px]">
                       {defender.name}
                     </span>
                   </button>
