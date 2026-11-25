@@ -2,7 +2,7 @@ import { lazy, Suspense, type CSSProperties } from "react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, m } from "framer-motion";
-import { Clock, KeyRound, ShieldAlert, Star, Users } from "lucide-react";
+import { Clock, KeyRound, ShieldAlert, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import LayoutMotionProvider from "../context/LayoutMotionProvider";
 import { useReducedMotionSafe } from "../hooks/useReducedMotionSafe";
@@ -11,7 +11,6 @@ import UsersAdmin from "../components/admin/UsersAdmin";
 import FavoritesAdmin from "../components/admin/FavoritesAdmin";
 import PasswordResetsAdmin from "../components/admin/PasswordResetsAdmin";
 import PokemonArtwork from "../components/PokemonArtwork";
-import { ChileBallIcon } from "../components/layout/icons";
 import { Skeleton } from "../features/admin/components/Skeleton";
 import AdminTabs, {
   getAdminTabMeta,
@@ -116,18 +115,20 @@ function AdminDashboard() {
     >
       <PokeballWatermark />
 
-      <header className="mb-5 flex items-center gap-2.5">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control border-2 border-red-600 bg-white motion-safe:animate-pop">
-          <ChileBallIcon center="red" className="h-7 w-7" />
+      <header className="mb-5">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+          Administración
         </span>
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-black text-gray-800 sm:text-2xl">
-            Panel de admin
-          </h1>
-          <p className="truncate text-xs text-gray-500">
-            Hola, {user?.name}. Administra los entrenadores y sus regalones.
-          </p>
-        </div>
+        <h1 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-red-600 text-white shadow-soft">
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          Panel de admin
+        </h1>
+        <p className="mt-1 max-w-2xl text-body text-ink-500">
+          Hola, {user?.name}. Administra los entrenadores y sus regalones.
+        </p>
       </header>
 
       {statsError && (
