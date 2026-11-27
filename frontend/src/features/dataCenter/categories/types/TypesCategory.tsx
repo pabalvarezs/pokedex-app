@@ -67,8 +67,11 @@ export default function TypesCategory() {
       <div className="space-y-5">
         <TypesHeaderSkeleton />
         <TypeCardsSkeleton />
-        <TypeMatrixHeaderSkeleton />
-        <TypeMatrixSkeleton />
+        {/* El espacio extra se aplica al bloque de la matriz, igual que en el estado cargado. */}
+        <div className="!mt-16 space-y-5">
+          <TypeMatrixHeaderSkeleton />
+          <TypeMatrixSkeleton />
+        </div>
       </div>
     );
   }
@@ -125,62 +128,66 @@ export default function TypesCategory() {
 
       <TypeCards types={data.types} />
 
-      <section aria-label="Matriz de efectividad" className="space-y-1">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
-            Efectividad de tipos
-          </span>
-          <h2 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
-            <span
-              className="h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
-              aria-hidden="true"
-            />
-            Matriz de efectividad
-          </h2>
-        </div>
-        <p className="mt-1 max-w-2xl text-body text-ink-500">
-          {formatNumber(data.meta.count, 0)} tipos · reglas vigentes desde la sexta
-          generación. Filas: tipo del movimiento · columnas: tipo del Pokémon objetivo.
-          Toca una casilla para ver el detalle.
-        </p>
-        {isPolling && (
-          <p className="text-[11px] font-bold text-amber-700" role="status">
-            Actualizando en segundo plano…
-          </p>
-        )}
-      </section>
-
-      <ul
-        aria-label="Leyenda de la matriz"
-        className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1"
-      >
-        {LEGEND.map((value) => {
-          const info = multiplierInfo(value);
-          return (
-            <li
-              key={value}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-white/70 py-1 pl-1 pr-2.5 text-[10px] font-bold text-ink-600"
-            >
+      {/* Agrupamos la matriz para separarla 3 espacios de las tarjetas.
+          !mt-16 es necesario porque space-y-5 del root gana por specificidad. */}
+      <div className="!mt-16 space-y-5">
+        <section aria-label="Matriz de efectividad" className="space-y-1">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+              Efectividad de tipos
+            </span>
+            <h2 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
               <span
-                className={cn(
-                  "grid h-6 w-6 place-items-center rounded-full text-[10px] font-black",
-                  info.chip
-                )}
+                className="h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
+                aria-hidden="true"
+              />
+              Matriz de efectividad
+            </h2>
+          </div>
+          <p className="mt-1 max-w-2xl text-body text-ink-500">
+            {formatNumber(data.meta.count, 0)} tipos · reglas vigentes desde la sexta
+            generación. Filas: tipo del movimiento · columnas: tipo del Pokémon objetivo.
+            Toca una casilla para ver el detalle.
+          </p>
+          {isPolling && (
+            <p className="text-[11px] font-bold text-amber-700" role="status">
+              Actualizando en segundo plano…
+            </p>
+          )}
+        </section>
+
+        <ul
+          aria-label="Leyenda de la matriz"
+          className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1"
+        >
+          {LEGEND.map((value) => {
+            const info = multiplierInfo(value);
+            return (
+              <li
+                key={value}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-white/70 py-1 pl-1 pr-2.5 text-[10px] font-bold text-ink-600"
               >
-                {info.symbol}
-              </span>
-              {info.description.split(":")[0]}
-            </li>
-          );
-        })}
-      </ul>
+                <span
+                  className={cn(
+                    "grid h-6 w-6 place-items-center rounded-full text-[10px] font-black",
+                    info.chip
+                  )}
+                >
+                  {info.symbol}
+                </span>
+                {info.description.split(":")[0]}
+              </li>
+            );
+          })}
+        </ul>
 
-      <TypeMatrix data={data} />
+        <TypeMatrix data={data} />
 
-      <p className="text-center text-[10px] font-semibold text-ink-500">
-        Datos de PokéAPI · actualizado {formatDate(status?.generatedAt ?? data.meta.generatedAt)}
-      </p>
+        <p className="text-center text-[10px] font-semibold text-ink-500">
+          Datos de PokéAPI · actualizado {formatDate(status?.generatedAt ?? data.meta.generatedAt)}
+        </p>
+      </div>
     </div>
   );
 }
