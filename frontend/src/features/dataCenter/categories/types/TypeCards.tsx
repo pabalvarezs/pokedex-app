@@ -136,16 +136,22 @@ export default function TypeCards({ types }: Props) {
                         <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
                           {ROMAN[type.generation - 1] ?? type.generation}
                         </p>
-                        <p className="truncate text-[7px] font-bold uppercase leading-tight tracking-tight text-ink-500 sm:text-[8px]">
-                          Generación
+                        <p
+                          title="Generación"
+                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                        >
+                          Gen.
                         </p>
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
                           {formatNumber(type.pokemonCount, 0)}
                         </p>
-                        <p className="truncate text-[7px] font-bold uppercase leading-tight tracking-tight text-ink-500 sm:text-[8px]">
-                          Pokémon
+                        <p
+                          title="Pokémon"
+                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                        >
+                          Poké
                         </p>
                       </div>
                       <button
@@ -164,8 +170,11 @@ export default function TypeCards({ types }: Props) {
                         <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
                           {formatNumber(type.moveCount, 0)}
                         </p>
-                        <p className="truncate text-[7px] font-bold uppercase leading-tight tracking-tight text-ink-500 sm:text-[8px]">
-                          Ataques
+                        <p
+                          title="Ataques"
+                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                        >
+                          Ataq.
                         </p>
                       </button>
                     </div>
