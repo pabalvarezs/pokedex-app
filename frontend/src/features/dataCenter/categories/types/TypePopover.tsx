@@ -1,6 +1,5 @@
 import TypeIcon from "../../../../components/TypeIcon";
 import { cn } from "../../../admin/lib/cn";
-import { formatNumber } from "../../lib/format";
 import type { TypeMatrixType } from "../../lib/types";
 import FloatingPanel, { type PopoverAnchor } from "./FloatingPanel";
 import { multiplierInfo } from "./lib/typeMatrix";
@@ -52,53 +51,29 @@ function RelationRow({
   );
 }
 
-/** Popover flotante: abre el detalle del tipo o del cruce de dos tipos. */
+/** Popover flotante: relaciones del tipo o detalle del cruce de dos tipos. */
 export default function TypePopover({ anchor, types, onEnter, onLeave }: Props) {
   const names = new Map(types.map((type) => [type.slug, type.name]));
   const type = types.find((item) => item.slug === anchor.typeSlug);
   const attacker = types.find((item) => item.slug === anchor.attackerSlug);
   const defender = types.find((item) => item.slug === anchor.defenderSlug);
   const info = multiplierInfo(anchor.value ?? 1);
+  const isTypePopover = anchor.kind === "type";
 
   return (
     <FloatingPanel
       anchor={anchor}
-      label={anchor.kind === "type" ? `Detalle de tipo ${type?.name ?? ""}` : "Detalle de efectividad"}
-      estimatedHeight={anchor.kind === "type" ? 400 : 220}
+      label={isTypePopover ? `Efectividad de ${type?.name ?? ""}` : "Detalle de efectividad"}
+      estimatedHeight={isTypePopover ? 240 : 220}
       onEnter={onEnter}
       onLeave={onLeave}
     >
-      {anchor.kind === "type" && type ? (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <TypeIcon type={type.slug} className="h-12 w-12 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-base font-black text-ink-900">{type.name}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-ink-500">
-                Generación {type.generation} · clase {type.damageClass}
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-control bg-white/70 p-2 text-center">
-              <p className="text-sm font-black tabular-nums text-ink-900">
-                {formatNumber(type.moveCount, 0)}
-              </p>
-              <p className="text-[9px] font-bold uppercase text-ink-500">Movimientos</p>
-            </div>
-            <div className="rounded-control bg-white/70 p-2 text-center">
-              <p className="text-sm font-black tabular-nums text-ink-900">
-                {formatNumber(type.pokemonCount, 0)}
-              </p>
-              <p className="text-[9px] font-bold uppercase text-ink-500">Pokémon</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <RelationRow label="Fuerte contra" slugs={type.strongTo} names={names} empty="Ningún tipo" />
-            <RelationRow label="Débil ante" slugs={type.weakTo} names={names} empty="Ningún tipo" />
-            <RelationRow label="Resiste" slugs={type.resists} names={names} empty="Ningún tipo" />
-            <RelationRow label="Inmune a" slugs={type.immuneTo} names={names} empty="Ningún tipo" />
-          </div>
+      {isTypePopover ? (
+        <div className="space-y-2">
+          <RelationRow label="Fuerte contra" slugs={type?.strongTo ?? []} names={names} empty="Ningún tipo" />
+          <RelationRow label="Débil ante" slugs={type?.weakTo ?? []} names={names} empty="Ningún tipo" />
+          <RelationRow label="Resiste" slugs={type?.resists ?? []} names={names} empty="Ningún tipo" />
+          <RelationRow label="Inmune a" slugs={type?.immuneTo ?? []} names={names} empty="Ningún tipo" />
         </div>
       ) : (
         <div className="space-y-3">

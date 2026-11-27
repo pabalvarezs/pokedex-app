@@ -159,7 +159,7 @@ describe("Centro de Datos: matriz de tipos", () => {
     expect(screen.getByText("Súper eficaz: el daño se duplica.")).toBeTruthy();
   });
 
-  it("abre el detalle del tipo al pasar por una cabecera", async () => {
+  it("abre el detalle del tipo con solo sus relaciones al pasar por una cabecera", async () => {
     renderApp();
     const header = await screen.findByRole(
       "button",
@@ -169,9 +169,56 @@ describe("Centro de Datos: matriz de tipos", () => {
 
     fireEvent.mouseEnter(header);
 
-    expect(await screen.findByRole("dialog", { name: "Detalle de tipo Fuego" })).toBeTruthy();
-    expect(screen.getByText("Fuerte contra")).toBeTruthy();
-    expect(screen.getByText("109")).toBeTruthy();
+    const dialog = await screen.findByRole("dialog", { name: "Efectividad de Fuego" });
+    const detail = within(dialog);
+    expect(detail.getByText("Fuerte contra")).toBeTruthy();
+    expect(detail.getByText("Débil ante")).toBeTruthy();
+    expect(detail.getByText("Resiste")).toBeTruthy();
+    expect(detail.getByText("Inmune a")).toBeTruthy();
+    expect(detail.getByText("Planta")).toBeTruthy();
+    expect(detail.getByText("Agua")).toBeTruthy();
+    expect(detail.getByText("Fuego")).toBeTruthy();
+    expect(detail.getByText("Ningún tipo")).toBeTruthy();
+    expect(detail.queryByText("Movimientos")).toBeNull();
+    expect(detail.queryByText("Pokémon")).toBeNull();
+    expect(detail.queryByText(/Generación/)).toBeNull();
+    expect(detail.queryByText("109")).toBeNull();
+  });
+
+  it("mantiene el popover de tipo dentro del viewport en varios anchos", async () => {
+    const originalWidth = window.innerWidth;
+    const estimatedHeight = 240;
+
+    try {
+      for (const width of [320, 375, 768, 1440]) {
+        window.innerWidth = width;
+        renderApp();
+        try {
+          const header = await screen.findByRole(
+            "button",
+            { name: "Tipo de ataque Fuego" },
+            { timeout: 5000 }
+          );
+          fireEvent.mouseEnter(header);
+          const dialog = await screen.findByRole("dialog", {
+            name: "Efectividad de Fuego",
+          });
+          const wrapper = dialog.parentElement as HTMLElement;
+          const left = Number.parseFloat(wrapper.style.left);
+          const panelWidth = Number.parseFloat(wrapper.style.width);
+          const top = Number.parseFloat(wrapper.style.top);
+
+          expect(left).toBeGreaterThanOrEqual(8);
+          expect(left + panelWidth).toBeLessThanOrEqual(width - 8);
+          expect(top).toBeGreaterThanOrEqual(8);
+          expect(top + estimatedHeight).toBeLessThanOrEqual(window.innerHeight - 8);
+        } finally {
+          cleanup();
+        }
+      }
+    } finally {
+      window.innerWidth = originalWidth;
+    }
   });
 
   it("muestra las tarjetas de tipo encima de la matriz", async () => {
