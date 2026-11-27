@@ -35,24 +35,33 @@ export function TypeMatrixHeaderSkeleton() {
   );
 }
 
-/** Skeleton de las tarjetas, con la misma rejilla que el contenido real. */
+/** Skeleton de las Poké Balls, con la misma rejilla y forma que el contenido real. */
 export function TypeCardsSkeleton() {
   return (
     <section aria-busy="true" aria-label="Cargando tipos" className="space-y-3">
-      <ul className="grid grid-cols-2 justify-items-center gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 lg:grid-cols-4">
         {Array.from({ length: 8 }, (_, index) => (
-          <li key={index} className="w-full max-w-[210px]">
-            <div className="glass-surface overflow-hidden rounded-card border border-line shadow-soft">
-              <Skeleton className="h-16 rounded-none" />
-              <div className="relative -mt-8 flex flex-col items-center px-3 pb-2">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <Skeleton className="mt-2 h-3 w-20" />
-                <Skeleton className="mt-1 h-2 w-10" />
-              </div>
-              <div className="grid grid-cols-3 gap-2 border-t border-line-soft py-2">
-                {Array.from({ length: 3 }, (_, slot) => (
-                  <Skeleton key={slot} className="mx-auto h-6 w-12" />
-                ))}
+          <li key={index} className="w-full">
+            <div className="relative mx-auto aspect-square w-full max-w-[150px] rounded-full sm:max-w-[180px]">
+              <div className="absolute inset-0 rounded-full bg-ink-900 p-[5px] shadow-soft sm:p-[6px]">
+                <div className="relative h-full w-full overflow-hidden rounded-full bg-white">
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-slate-300" />
+                  <div className="absolute inset-x-0 top-1/2 h-[9%] -translate-y-1/2 bg-ink-900">
+                    <span
+                      aria-hidden="true"
+                      className="absolute right-[6px] top-1/2 h-2 w-4 -translate-y-1/2 rounded-full bg-white/40"
+                    />
+                  </div>
+                  <Skeleton className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-ink-900 sm:h-[58px] sm:w-[58px]" />
+                  <div className="absolute inset-x-[6%] bottom-[5%] grid grid-cols-3 items-end gap-0.5">
+                    {Array.from({ length: 3 }, (_, slot) => (
+                      <div key={slot} className="flex min-w-0 flex-col items-center gap-1">
+                        <Skeleton className="h-2 w-6" />
+                        <Skeleton className="h-1.5 w-8 max-w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </li>
