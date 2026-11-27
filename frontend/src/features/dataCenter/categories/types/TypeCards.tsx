@@ -126,32 +126,32 @@ export default function TypeCards({ types }: Props) {
                     </div>
 
                     {/* Botón central blanco: el icono del tipo es el protagonista. */}
-                    <span className="absolute left-1/2 top-1/2 z-10 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-ink-900 bg-white shadow-soft sm:h-[58px] sm:w-[58px]">
-                      <TypeIcon type={type.slug} className="h-8 w-8 sm:h-10 sm:w-10" />
+                    <span className="absolute left-1/2 top-1/2 z-10 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-ink-900 bg-white shadow-soft sm:h-12 sm:w-12">
+                      <TypeIcon type={type.slug} className="h-7 w-7 sm:h-9 sm:w-9" />
                     </span>
 
                     {/* Mitad blanca: generación, Pokémon y ataques (abre el popover). */}
-                    <div className="absolute inset-x-[6%] bottom-[5%] grid grid-cols-3 items-end gap-0.5 text-center">
+                    <div className="absolute inset-x-[8%] bottom-[12%] grid grid-cols-3 items-end gap-0.5 text-center">
                       <div className="min-w-0">
-                        <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
+                        <p className="truncate text-[12px] font-black tabular-nums leading-tight text-ink-900 sm:text-[15px]">
                           {ROMAN[type.generation - 1] ?? type.generation}
                         </p>
                         <p
                           title="Generación"
-                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                          className="text-[9px] font-bold uppercase leading-tight text-ink-500 sm:text-[11px]"
                         >
-                          Gen.
+                          GEN
                         </p>
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
+                        <p className="truncate text-[12px] font-black tabular-nums leading-tight text-ink-900 sm:text-[15px]">
                           {formatNumber(type.pokemonCount, 0)}
                         </p>
                         <p
                           title="Pokémon"
-                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                          className="text-[9px] font-bold uppercase leading-tight text-ink-500 sm:text-[11px]"
                         >
-                          Poké
+                          POK
                         </p>
                       </div>
                       <button
@@ -167,14 +167,14 @@ export default function TypeCards({ types }: Props) {
                           "transition-opacity duration-150 hover:opacity-70 motion-reduce:transition-none"
                         )}
                       >
-                        <p className="truncate text-[10px] font-black tabular-nums leading-tight text-ink-900 sm:text-xs">
+                        <p className="truncate text-[12px] font-black tabular-nums leading-tight text-ink-900 sm:text-[15px]">
                           {formatNumber(type.moveCount, 0)}
                         </p>
                         <p
                           title="Ataques"
-                          className="text-[8px] font-bold uppercase leading-tight text-ink-500 sm:text-[9px]"
+                          className="text-[9px] font-bold uppercase leading-tight text-ink-500 sm:text-[11px]"
                         >
-                          Ataq.
+                          ATA
                         </p>
                       </button>
                     </div>
