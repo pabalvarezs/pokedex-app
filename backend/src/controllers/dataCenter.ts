@@ -10,10 +10,16 @@ import {
   isDataCenterCategory,
   isPokemonDataType,
 } from "../services/dataCenter";
-import type { DataCenterRequestQuery } from "../services/dataCenterTypes";
+import type {
+  DataCenterRequestQuery,
+  FilterMode,
+} from "../services/dataCenterTypes";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
+/** 18 tipos y 9 generaciones: no se acepta más de un catálogo completo por eje. */
+const MAX_TYPES = 18;
+const MAX_GENERATIONS = 9;
 
 interface ParseError {
   error: string;
@@ -29,6 +35,21 @@ function rejectCategory(res: Response): void {
     error: "Categoría del Centro de Datos no encontrada",
     categories: DATA_CENTER_CATEGORIES,
   });
+}
+
+/** Acepta tanto `types=fire,water` como `types[]=fire&types[]=water`. */
+function readValues(value: Request["query"][string]): string[] {
+  if (typeof value === "string") return value.split(",");
+  if (Array.isArray(value)) {
+    return value.flatMap((item) =>
+      typeof item === "string" ? item.split(",") : []
+    );
+  }
+  return [];
+}
+
+function readMode(value: Request["query"][string]): FilterMode {
+  return value === "exclude" ? "exclude" : "include";
 }
 
 function parseQuery(
@@ -52,6 +73,10 @@ function parseQuery(
   // usan `q` y `group`, así que no se validan contra el dominio de Pokémon.
   let type: string | null = null;
   let generation: number | null = null;
+  let types: string[] | undefined;
+  let generations: number[] | undefined;
+  let typeMode: FilterMode = "include";
+  let genMode: FilterMode = "include";
   if (category === "pokemon") {
     const rawType =
       typeof query.type === "string" ? query.type.trim().toLowerCase() : "";
@@ -69,12 +94,53 @@ function parseQuery(
       }
       generation = parsed;
     }
+
+    const rawTypes = readValues(query.types)
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    for (const item of rawTypes) {
+      if (!isPokemonDataType(item)) {
+        return { error: `Tipo de Pokémon inválido: ${item}` };
+      }
+    }
+    const uniqueTypes = Array.from(new Set(rawTypes)).slice(0, MAX_TYPES);
+    if (uniqueTypes.length > 0) types = uniqueTypes;
+
+    const parsedGenerations: number[] = [];
+    for (const item of readValues(query.generations)) {
+      const trimmed = item.trim();
+      if (!trimmed) continue;
+      const parsed = Number(trimmed);
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 9) {
+        return { error: "Generación inválida (debe ser 1 a 9)" };
+      }
+      parsedGenerations.push(parsed);
+    }
+    const uniqueGenerations = Array.from(new Set(parsedGenerations)).slice(
+      0,
+      MAX_GENERATIONS
+    );
+    if (uniqueGenerations.length > 0) generations = uniqueGenerations;
+
+    typeMode = readMode(query.typeMode);
+    genMode = readMode(query.genMode);
   }
 
   const includeVariants =
     query.variants === "true" || query.variants === "1";
 
-  return { limit, offset, q, group, type, generation, includeVariants };
+  return {
+    limit,
+    offset,
+    q,
+    group,
+    type,
+    generation,
+    includeVariants,
+    ...(types ? { types } : {}),
+    ...(generations ? { generations } : {}),
+    ...(category === "pokemon" ? { typeMode, genMode } : {}),
+  };
 }
 
 export async function getCategory(req: Request, res: Response) {

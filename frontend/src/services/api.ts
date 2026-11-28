@@ -473,6 +473,16 @@ export async function getDataCenterPokemon(filters: PokemonDataCenterFilters) {
         limit: filters.limit,
         type: filters.type ?? undefined,
         generation: filters.generation ?? undefined,
+        types:
+          filters.types && filters.types.length > 0
+            ? filters.types.join(",")
+            : undefined,
+        generations:
+          filters.generations && filters.generations.length > 0
+            ? filters.generations.join(",")
+            : undefined,
+        typeMode: filters.typeMode ?? undefined,
+        genMode: filters.genMode ?? undefined,
         variants: filters.includeVariants,
       },
     }

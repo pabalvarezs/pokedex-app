@@ -2,15 +2,21 @@ import { useState } from "react";
 import TypeBadge from "../../../../components/TypeBadge";
 import { GENERATIONS, getTypeBadge, POKEMON_TYPES } from "../../../../utils/pokemon";
 import { cn } from "../../../admin/lib/cn";
-import type { PokemonDataCenterFilters } from "../../lib/types";
+import type { FilterMode, PokemonDataCenterFilters } from "../../lib/types";
 
 const TOP_OPTIONS = [5, 10, 20, 50];
+const ALL_TYPE_KEYS = Object.keys(POKEMON_TYPES);
+const ALL_GEN_IDS = GENERATIONS.map((g) => g.id);
 
-const INITIAL_FILTERS: PokemonDataCenterFilters = {
+export const INITIAL_FILTERS: PokemonDataCenterFilters = {
   limit: 10,
   type: null,
   generation: null,
   includeVariants: false,
+  types: [],
+  generations: [],
+  typeMode: "include",
+  genMode: "include",
 };
 
 interface Props {
@@ -40,37 +46,131 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-/** Filtros del Centro de Datos con el mismo diseño y chassis que la home. */
+/**
+ * Filtros del Centro de Datos con el mismo diseño y la misma semántica que la
+ * portada: unión dentro de cada eje (tipos / generaciones) e intersección entre
+ * ejes. "Todos" cambia el eje a exclusión con la lista vacía.
+ */
 export default function PokemonFilters({ filters, onChange, disabled }: Props) {
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [showGenFilter, setShowGenFilter] = useState(false);
 
-  const typeLabel = filters.type ? getTypeBadge(filters.type).es : "";
-  const generation = GENERATIONS.find((g) => g.id === filters.generation);
+  const selectedTypes = filters.types ?? [];
+  const selectedGens = filters.generations ?? [];
+  const typeMode: FilterMode = filters.typeMode ?? "include";
+  const genMode: FilterMode = filters.genMode ?? "include";
 
-  const hasFilters =
-    filters.type !== null ||
-    filters.generation !== null ||
+  const allTypesSelected =
+    typeMode === "include"
+      ? selectedTypes.length === ALL_TYPE_KEYS.length
+      : selectedTypes.length === 0;
+  const allGensSelected =
+    genMode === "include"
+      ? selectedGens.length === ALL_GEN_IDS.length
+      : selectedGens.length === 0;
+  const hasTypeSelection = selectedTypes.length > 0 || typeMode === "exclude";
+  const hasGenSelection = selectedGens.length > 0 || genMode === "exclude";
+
+  const typeFilterLabel =
+    typeMode === "exclude"
+      ? selectedTypes.length === 0
+        ? "todos"
+        : `${selectedTypes.length} excluido${selectedTypes.length === 1 ? "" : "s"}`
+      : selectedTypes.length > 0
+        ? `${selectedTypes.length} seleccionado${selectedTypes.length === 1 ? "" : "s"}`
+        : "";
+  const genFilterLabel =
+    genMode === "exclude"
+      ? selectedGens.length === 0
+        ? "todas"
+        : `${selectedGens.length} excluida${selectedGens.length === 1 ? "" : "s"}`
+      : selectedGens.length > 0
+        ? `${selectedGens.length} seleccionada${selectedGens.length === 1 ? "" : "s"}`
+        : "";
+
+  const activeFilterCount = (() => {
+    let count = 0;
+    if (typeMode === "exclude" || allTypesSelected) count += 1;
+    else count += selectedTypes.length;
+    if (genMode === "exclude" || allGensSelected) count += 1;
+    else count += selectedGens.length;
+    if (filters.includeVariants) count += 1;
+    if (filters.limit !== INITIAL_FILTERS.limit) count += 1;
+    return count;
+  })();
+  const canClearFilters =
+    hasTypeSelection ||
+    hasGenSelection ||
     filters.includeVariants ||
     filters.limit !== INITIAL_FILTERS.limit;
-  const activeFilterCount =
-    (filters.type !== null ? 1 : 0) +
-    (filters.generation !== null ? 1 : 0) +
-    (filters.includeVariants ? 1 : 0) +
-    (filters.limit !== INITIAL_FILTERS.limit ? 1 : 0);
 
-  const clearFilters = () => onChange(INITIAL_FILTERS);
+  const clearFilters = () => {
+    setShowTypeFilter(false);
+    setShowGenFilter(false);
+    onChange(INITIAL_FILTERS);
+  };
+
+  const isTypeSelected = (key: string) =>
+    typeMode === "include"
+      ? selectedTypes.includes(key)
+      : !selectedTypes.includes(key);
+  const isGenSelected = (id: number) =>
+    genMode === "include"
+      ? selectedGens.includes(id)
+      : !selectedGens.includes(id);
+
+  const toggleAllTypes = () => {
+    onChange({
+      ...filters,
+      typeMode: allTypesSelected ? "include" : "exclude",
+      types: [],
+    });
+  };
+  const toggleType = (key: string) => {
+    // Si se tenían los 18 marcados uno a uno, quitar uno pasa a exclusión.
+    if (typeMode === "include" && selectedTypes.length === ALL_TYPE_KEYS.length) {
+      onChange({ ...filters, typeMode: "exclude", types: [key] });
+      return;
+    }
+    onChange({
+      ...filters,
+      types: selectedTypes.includes(key)
+        ? selectedTypes.filter((t) => t !== key)
+        : [...selectedTypes, key],
+    });
+  };
+  const toggleAllGens = () => {
+    onChange({
+      ...filters,
+      genMode: allGensSelected ? "include" : "exclude",
+      generations: [],
+    });
+  };
+  const toggleGen = (id: number) => {
+    if (genMode === "include" && selectedGens.length === ALL_GEN_IDS.length) {
+      onChange({ ...filters, genMode: "exclude", generations: [id] });
+      return;
+    }
+    onChange({
+      ...filters,
+      generations: selectedGens.includes(id)
+        ? selectedGens.filter((g) => g !== id)
+        : [...selectedGens, id],
+    });
+  };
 
   /**
    * Clases de los botones de sección y de los chips "Todos", copiadas de la
-   * home: el estado activo se resalta en rojo; el inactivo queda neutro.
+   * home: el panel abierto y el filtro activo se resaltan en rojo.
    */
-  const sectionButton = (active: boolean) =>
+  const sectionButton = (open: boolean, active: boolean) =>
     cn(
       "inline-flex min-h-[44px] items-center rounded-control border px-3.5 py-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 disabled:opacity-50",
-      active
+      open
         ? "border-red-600 bg-red-600 text-white shadow-sm"
-        : "border-line bg-slate-50 text-ink-700 hover:border-slate-300 hover:bg-slate-100"
+        : active
+          ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+          : "border-line bg-slate-50 text-ink-700 hover:border-slate-300 hover:bg-slate-100"
     );
 
   const allChip = (selected: boolean) =>
@@ -107,7 +207,17 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
     </button>
   );
 
-  const darkChip = "flex items-center gap-1 rounded-full border border-transparent bg-red-600 px-3 py-1 text-[11px] font-bold text-white";
+  const darkChip =
+    "flex items-center gap-1 rounded-full border border-transparent bg-red-600 px-3 py-1 text-[11px] font-bold text-white";
+  const lightChip =
+    "flex items-center gap-1 rounded-full border border-line bg-white px-3 py-1 text-[11px] font-bold text-ink-700";
+
+  const selectedTypeChips =
+    typeMode === "include" && !allTypesSelected
+      ? selectedTypes
+      : typeMode === "exclude"
+        ? selectedTypes
+        : [];
 
   return (
     <section
@@ -126,10 +236,10 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
             onClick={() => setShowTypeFilter(!showTypeFilter)}
             aria-expanded={showTypeFilter}
             aria-controls="dc-type-filter-panel"
-            className={sectionButton(showTypeFilter)}
+            className={sectionButton(showTypeFilter, hasTypeSelection)}
           >
             <span aria-hidden="true" className="mr-1.5">🎨</span>
-            Tipo{typeLabel ? ` ${typeLabel}` : ""}
+            Tipo {typeFilterLabel}
             <Chevron open={showTypeFilter} />
           </button>
           <button
@@ -138,10 +248,10 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
             onClick={() => setShowGenFilter(!showGenFilter)}
             aria-expanded={showGenFilter}
             aria-controls="dc-gen-filter-panel"
-            className={sectionButton(showGenFilter)}
+            className={sectionButton(showGenFilter, hasGenSelection)}
           >
             <span aria-hidden="true" className="mr-1.5">🌍</span>
-            Generación{generation ? ` ${generation.id}` : ""}
+            Generación {genFilterLabel}
             <Chevron open={showGenFilter} />
           </button>
         </div>
@@ -177,12 +287,12 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
             onClick={() =>
               onChange({ ...filters, includeVariants: !filters.includeVariants })
             }
-            className={sectionButton(filters.includeVariants)}
+            className={sectionButton(filters.includeVariants, false)}
           >
             Incluir variantes
           </button>
 
-          {hasFilters && (
+          {canClearFilters && (
             <button
               type="button"
               onClick={clearFilters}
@@ -208,14 +318,14 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
             id="dc-type-filter-heading"
             className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-500"
           >
-            Elige un tipo:
+            {typeMode === "exclude" ? "Saca un tipo pa' excluirlo:" : "Elige un tipo:"}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              aria-pressed={filters.type === null}
-              onClick={() => onChange({ ...filters, type: null })}
-              className={allChip(filters.type === null)}
+              onClick={toggleAllTypes}
+              aria-pressed={allTypesSelected}
+              className={allChip(allTypesSelected)}
             >
               Todos
             </button>
@@ -225,14 +335,15 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
                 type={key}
                 size="sm"
                 interactive
-                selected={filters.type === key}
-                onClick={() =>
-                  onChange({ ...filters, type: filters.type === key ? null : key })
-                }
+                selected={isTypeSelected(key)}
+                onClick={() => toggleType(key)}
                 className="min-h-[40px]"
               />
             ))}
           </div>
+          <p className="mt-2 text-[11px] font-medium text-ink-500">
+            Los tipos y generaciones se combinan entre sí. El top se aplica al final, po.
+          </p>
         </fieldset>
       )}
 
@@ -248,14 +359,14 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
             id="dc-gen-filter-heading"
             className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-500"
           >
-            Elige una generación:
+            {genMode === "exclude" ? "Saca una generación pa' excluirla:" : "Elige una generación:"}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              aria-pressed={filters.generation === null}
-              onClick={() => onChange({ ...filters, generation: null })}
-              className={allChip(filters.generation === null)}
+              onClick={toggleAllGens}
+              aria-pressed={allGensSelected}
+              className={allChip(allGensSelected)}
             >
               Todos
             </button>
@@ -263,14 +374,9 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
               <button
                 type="button"
                 key={g.id}
-                aria-pressed={filters.generation === g.id}
-                onClick={() =>
-                  onChange({
-                    ...filters,
-                    generation: filters.generation === g.id ? null : g.id,
-                  })
-                }
-                className={generationChip(filters.generation === g.id)}
+                aria-pressed={isGenSelected(g.id)}
+                onClick={() => toggleGen(g.id)}
+                className={generationChip(isGenSelected(g.id))}
               >
                 {g.name} · {g.region}
               </button>
@@ -280,7 +386,7 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
       )}
 
       {/* Resumen de filtros activos */}
-      {hasFilters && (
+      {canClearFilters && (
         <div
           role="group"
           aria-label="Filtros activos"
@@ -289,26 +395,90 @@ export default function PokemonFilters({ filters, onChange, disabled }: Props) {
           <span className="self-center text-xs font-bold text-ink-500">
             Filtros activos ({activeFilterCount}):
           </span>
-          {filters.type !== null && (
-            <span className="inline-flex items-center gap-1">
-              <TypeBadge type={filters.type} size="sm" />
-              {removeChipButton(
-                `Quitar el filtro de tipo ${getTypeBadge(filters.type).es}`,
-                () => onChange({ ...filters, type: null }),
-                false
-              )}
-            </span>
-          )}
-          {generation && (
+          {(typeMode === "exclude" || allTypesSelected) && (
             <span className={darkChip}>
-              {generation.name} · {generation.region}
+              Todos los tipos
               {removeChipButton(
-                `Quitar el filtro de generación ${generation.id}`,
-                () => onChange({ ...filters, generation: null }),
+                "Quitar el filtro de todos los tipos",
+                () => onChange({ ...filters, typeMode: "include", types: [] }),
                 true
               )}
             </span>
           )}
+          {selectedTypeChips.map((key) => {
+            const isExcluded = typeMode === "exclude";
+            return (
+              <span key={key} className="inline-flex items-center gap-1">
+                <TypeBadge
+                  type={key}
+                  size="sm"
+                  selected={!isExcluded}
+                  prefix={isExcluded ? "Sin" : undefined}
+                />
+                {removeChipButton(
+                  isExcluded
+                    ? `Volver a incluir el tipo ${getTypeBadge(key).es}`
+                    : `Quitar el filtro de tipo ${getTypeBadge(key).es}`,
+                  () =>
+                    onChange({
+                      ...filters,
+                      types: selectedTypes.filter((t) => t !== key),
+                    }),
+                  false
+                )}
+              </span>
+            );
+          })}
+          {(genMode === "exclude" || allGensSelected) && (
+            <span className={darkChip}>
+              Todas las generaciones
+              {removeChipButton(
+                "Quitar el filtro de todas las generaciones",
+                () => onChange({ ...filters, genMode: "include", generations: [] }),
+                true
+              )}
+            </span>
+          )}
+          {genMode === "include" &&
+            selectedGens.length > 0 &&
+            !allGensSelected &&
+            selectedGens.map((id) => {
+              const g = GENERATIONS.find((item) => item.id === id);
+              if (!g) return null;
+              return (
+                <span key={id} className={darkChip}>
+                  {g.name} · {g.region}
+                  {removeChipButton(
+                    `Quitar el filtro de ${g.name} · ${g.region}`,
+                    () =>
+                      onChange({
+                        ...filters,
+                        generations: selectedGens.filter((x) => x !== id),
+                      }),
+                    true
+                  )}
+                </span>
+              );
+            })}
+          {genMode === "exclude" &&
+            selectedGens.map((id) => {
+              const g = GENERATIONS.find((item) => item.id === id);
+              if (!g) return null;
+              return (
+                <span key={id} className={lightChip}>
+                  Sin {g.name} · {g.region}
+                  {removeChipButton(
+                    `Volver a incluir ${g.name} · ${g.region}`,
+                    () =>
+                      onChange({
+                        ...filters,
+                        generations: selectedGens.filter((x) => x !== id),
+                      }),
+                    false
+                  )}
+                </span>
+              );
+            })}
           {filters.includeVariants && (
             <span className={darkChip}>
               Con variantes
