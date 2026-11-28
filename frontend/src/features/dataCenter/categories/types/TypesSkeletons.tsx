@@ -1,4 +1,17 @@
 import { Skeleton } from "../../../admin/components/Skeleton";
+import { getTypeBadge } from "../../../../utils/pokemon";
+
+/** Muestra de colores de tipo para que la carga no cambie de aspecto. */
+const SKELETON_SLUGS = [
+  "fire",
+  "water",
+  "grass",
+  "electric",
+  "psychic",
+  "fighting",
+  "ghost",
+  "fairy",
+];
 
 /** Skeleton del encabezado principal, con el botón en la misma posición. */
 export function TypesHeaderSkeleton() {
@@ -35,37 +48,52 @@ export function TypeMatrixHeaderSkeleton() {
   );
 }
 
-/** Skeleton de las Poké Balls, con la misma rejilla y forma que el contenido real. */
+/** Skeleton de las tarjetas rectangulares, con la misma forma que el contenido real. */
 export function TypeCardsSkeleton() {
   return (
     <section aria-busy="true" aria-label="Cargando tipos" className="space-y-3">
-      <ul className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 lg:grid-cols-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <li key={index} className="w-full">
-            <div className="relative mx-auto aspect-square w-full max-w-[150px] rounded-full sm:max-w-[180px]">
-              <div className="absolute inset-0 rounded-full bg-ink-900 p-[5px] shadow-soft sm:p-[6px]">
-                <div className="relative h-full w-full overflow-hidden rounded-full bg-white">
-                  <div className="absolute inset-x-0 top-0 h-1/2 bg-slate-300" />
-                  <div className="absolute inset-x-0 top-1/2 h-[9%] -translate-y-1/2 bg-ink-900">
-                    <span
+      <ul className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-6 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-7 lg:grid-cols-4 lg:gap-x-6">
+        {SKELETON_SLUGS.map((slug, index) => {
+          const badge = getTypeBadge(slug);
+          return (
+            <li key={index} className="w-full">
+              <div className="mx-auto w-full max-w-[205px]">
+                <article className="relative flex flex-col overflow-hidden rounded-card border border-line shadow-soft glass-surface">
+                  <div
+                    className="flex min-h-[46px] items-center justify-between gap-1.5 px-2.5 py-2 sm:min-h-[50px] sm:px-3"
+                    style={{
+                      backgroundColor: badge.badge,
+                      backgroundImage:
+                        "linear-gradient(115deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 58%)",
+                    }}
+                  >
+                    <Skeleton className="h-2.5 w-14 rounded-full bg-white/70 sm:w-20" />
+                    <Skeleton className="h-3 w-12 rounded-full bg-white/70 sm:w-14" />
+                  </div>
+                  <div
+                    className="relative flex h-[104px] items-center justify-center overflow-hidden sm:h-[118px]"
+                    style={{
+                      backgroundImage: `linear-gradient(160deg, ${badge.gradient[0]}, ${badge.gradient[1]})`,
+                    }}
+                  >
+                    <div
                       aria-hidden="true"
-                      className="absolute right-[6px] top-1/2 h-2 w-4 -translate-y-1/2 rounded-full bg-white/40"
+                      className="skeleton h-[84px] w-[84px] rounded-full border-[4px] border-ink-900 sm:h-[94px] sm:w-[94px]"
                     />
                   </div>
-                  <Skeleton className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-ink-900 sm:h-[58px] sm:w-[58px]" />
-                  <div className="absolute inset-x-[6%] bottom-[5%] grid grid-cols-3 items-end gap-0.5">
+                  <div className="grid grid-cols-[1.18fr_1fr_1fr] items-center gap-1 border-t border-line bg-[#FFFDF7] px-1.5 py-2 sm:px-2.5 sm:py-2.5">
                     {Array.from({ length: 3 }, (_, slot) => (
-                      <div key={slot} className="flex min-w-0 flex-col items-center gap-1">
-                        <Skeleton className="h-2 w-6" />
-                        <Skeleton className="h-1.5 w-8 max-w-full" />
+                      <div key={slot} className="flex min-w-0 flex-col items-center gap-1.5">
+                        <Skeleton className="h-3 w-5 sm:h-3.5 sm:w-6" />
+                        <Skeleton className="h-1.5 w-full max-w-[52px] sm:h-2" />
                       </div>
                     ))}
                   </div>
-                </div>
+                </article>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
