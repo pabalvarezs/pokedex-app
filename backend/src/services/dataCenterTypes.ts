@@ -153,11 +153,19 @@ export interface PokemonAnalytics {
 }
 
 /** Parámetros ya validados por el controlador. */
+export type FilterMode = "include" | "exclude";
+
 export interface DataCenterQuery {
   limit: number;
+  /** Compatible con el filtro simple existente. */
   type: string | null;
   generation: number | null;
   includeVariants: boolean;
+  /** Filtro múltiple con semántica de la portada. */
+  types?: string[];
+  generations?: number[];
+  typeMode?: FilterMode;
+  genMode?: FilterMode;
 }
 
 /** Categorías de catálogo: recursos de PokéAPI aún no mostrados en la web. */
@@ -219,6 +227,12 @@ export interface CatalogEntry {
   /** Recurso de origen dentro de la categoría (p. ej. `item`, `berry`). */
   group: string;
   sprite?: string;
+  /** Categoría oficial de PokéAPI (solo objetos). */
+  category?: string;
+  /** Nombre en español de la categoría oficial. */
+  categoryLabel?: string;
+  /** Bolsa de PokéAPI donde se guarda el objeto. */
+  pocket?: string;
 }
 
 export interface CatalogGroupCount {

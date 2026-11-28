@@ -87,11 +87,17 @@ export interface DataCenterPokemonResponse {
   };
 }
 
+export type FilterMode = "include" | "exclude";
+
 export interface PokemonDataCenterFilters {
   limit: number;
   type: string | null;
   generation: number | null;
   includeVariants: boolean;
+  types?: string[];
+  generations?: number[];
+  typeMode?: FilterMode;
+  genMode?: FilterMode;
 }
 
 export interface DataCenterRefreshResponse {
@@ -150,6 +156,9 @@ export interface CatalogEntry {
   label: string;
   group: string;
   sprite?: string;
+  category?: string;
+  categoryLabel?: string;
+  pocket?: string;
 }
 
 export interface CatalogGroupCount {
