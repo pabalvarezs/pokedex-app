@@ -19,6 +19,9 @@ interface RecordCardProps {
   icon: LucideIcon;
   entries: RankEntry[];
   accent: string;
+  className?: string;
+  /** La última tarjeta queda sola en la fila de 3 columnas. */
+  orphan?: boolean;
 }
 
 function RecordCard({
@@ -28,6 +31,8 @@ function RecordCard({
   icon: Icon,
   entries,
   accent,
+  className,
+  orphan,
 }: RecordCardProps) {
   const [leader, ...contenders] = entries;
 
@@ -35,7 +40,8 @@ function RecordCard({
     <article
       className={cn(
         "glass-surface flex min-w-0 flex-col overflow-hidden rounded-card border border-line shadow-soft",
-        !leader && "min-h-[168px]"
+        !leader && "min-h-[168px]",
+        className
       )}
     >
       {/* Franja de acento: ocupa todo el ancho, el texto se mantiene en tinta. */}
@@ -67,13 +73,17 @@ function RecordCard({
           <div className="relative px-3 pb-3 pt-3">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 top-4 h-24 w-24 -translate-x-1/2 rounded-full blur-2xl sm:h-28 sm:w-28"
+              className={cn(
+                "pointer-events-none absolute left-1/2 top-4 h-24 w-24 -translate-x-1/2 rounded-full blur-2xl sm:h-28 sm:w-28",
+                orphan && "lg:h-32 lg:w-32 xl:h-28 xl:w-28"
+              )}
               style={{ backgroundColor: `${accent}22` }}
             />
             <div className="relative flex flex-col items-center text-center">
               <div
                 className={cn(
                   "grid h-28 w-28 place-items-center sm:h-32 sm:w-32",
+                  orphan && "lg:h-40 lg:w-40 xl:h-32 xl:w-32",
                   "motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-0.5"
                 )}
               >
@@ -175,8 +185,9 @@ export default function RecordCards({ records }: { records: PhysicalRecords }) {
   return (
     <section aria-label="Récords físicos">
       <h2 className="mb-3 text-sm font-black text-ink-900">Récords físicos</h2>
-      <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4")}>
-        {CARDS.map((card) => (
+      {/* Flex + justify-center: la fila que queda incompleta se centra sola. */}
+      <div className="flex flex-wrap justify-center gap-4">
+        {CARDS.map((card, index) => (
           <RecordCard
             key={card.key}
             label={card.label}
@@ -185,6 +196,8 @@ export default function RecordCards({ records }: { records: PhysicalRecords }) {
             icon={card.icon}
             accent={card.accent}
             entries={records[card.key]}
+            className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)] xl:w-[calc(25%-0.75rem)]"
+            orphan={index === CARDS.length - 1}
           />
         ))}
       </div>
