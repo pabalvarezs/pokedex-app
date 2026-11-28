@@ -8,10 +8,18 @@ interface Props {
   meta: CatalogMeta;
   selected: boolean;
   onSelect: () => void;
+  /** Ubicación (bolsa/categoría) que sustituye al grupo genérico. */
+  location?: string;
 }
 
 /** Tarjeta reutilizable para cualquier entrada de cualquier catálogo. */
-export default function CatalogCard({ entry, meta, selected, onSelect }: Props) {
+export default function CatalogCard({
+  entry,
+  meta,
+  selected,
+  onSelect,
+  location,
+}: Props) {
   return (
     <button
       type="button"
@@ -47,7 +55,8 @@ export default function CatalogCard({ entry, meta, selected, onSelect }: Props) 
           {entry.label}
         </span>
         <span className="mt-0.5 block text-[10px] font-bold text-ink-500">
-          {groupLabel(meta, entry.group)} · #{String(entry.id).padStart(3, "0")}
+          {location ?? groupLabel(meta, entry.group)} · #
+          {String(entry.id).padStart(3, "0")}
         </span>
       </span>
       <span

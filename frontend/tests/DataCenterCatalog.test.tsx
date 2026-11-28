@@ -61,30 +61,74 @@ class ResizeObserverStub {
   disconnect() {}
 }
 
-const INDEX: CatalogIndexResponse = {
-  meta: {
-    category: "items",
-    source: "PokeAPI",
-    generatedAt: "2026-01-01T00:00:00.000Z",
-    total: 2,
-    filtered: 2,
-    limit: 12,
-    offset: 0,
-  },
-  groups: [{ id: "item", count: 2 }],
-  items: [
-    { id: 1, name: "potion", label: "Poción", group: "item" },
-    { id: 2, name: "super-potion", label: "Súper Poción", group: "item" },
-  ],
-};
+function indexFor(
+  entries: CatalogIndexResponse["items"],
+  category: "items" | "berries" = "items"
+): CatalogIndexResponse {
+  return {
+    meta: {
+      category,
+      source: "PokeAPI",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      total: entries.length,
+      filtered: entries.length,
+      limit: 50,
+      offset: 0,
+    },
+    groups: [{ id: category === "items" ? "item" : "berry", count: entries.length }],
+    items: entries,
+  };
+}
 
-function renderApp() {
+const INDEX = indexFor([
+  {
+    id: 1,
+    name: "potion",
+    label: "Poción",
+    group: "item",
+    pocket: "medicine",
+    category: "potion",
+    categoryLabel: "Poción",
+  },
+  {
+    id: 2,
+    name: "super-potion",
+    label: "Súper Poción",
+    group: "item",
+    pocket: "medicine",
+    category: "potion",
+    categoryLabel: "Poción",
+  },
+  {
+    id: 3,
+    name: "master-ball",
+    label: "Master Ball",
+    group: "item",
+    pocket: "pokeballs",
+    category: "ball",
+    categoryLabel: "Poké Ball",
+  },
+]);
+
+const PAGED_INDEX = indexFor(
+  Array.from({ length: 13 }, (_, position) => ({
+    id: position + 1,
+    name: `potion-${position + 1}`,
+    label: `Poción ${position + 1}`,
+    group: "item",
+    pocket: "medicine",
+    category: "potion",
+    categoryLabel: "Poción",
+  }))
+);
+
+function renderApp(category: "items" | "berries" = "items") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/centro-datos?category=items"]}>
+      <MemoryRouter initialEntries={[`/centro-datos?category=${category}`]}>
         <MotionProvider>
           <App />
         </MotionProvider>
@@ -110,11 +154,27 @@ describe("Centro de Datos: catálogos", () => {
     vi.unstubAllGlobals();
   });
 
-  it("muestra el catálogo de objetos y abre el detalle al elegir una tarjeta", async () => {
+  it("muestra el acordeón de bolsas y abre el detalle al elegir una tarjeta", async () => {
     renderApp();
 
     expect(
       await screen.findByRole("heading", { name: "Catálogo de objetos" }, { timeout: 5000 })
+    ).toBeTruthy();
+    expect(screen.queryByText("Entradas")).toBeNull();
+    expect(screen.queryByText("Con estos filtros")).toBeNull();
+
+    const medicine = screen.getByRole("button", { name: "Medicina, 2 objetos" });
+    expect(medicine.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("button", { name: "Ver detalle de Poción" })).toBeNull();
+
+    fireEvent.click(medicine);
+
+    expect(
+      await screen.findByRole(
+        "region",
+        { name: "Medicina" },
+        { timeout: 5000 }
+      )
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ver detalle de Poción" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ver detalle de Súper Poción" })).toBeTruthy();
@@ -122,13 +182,19 @@ describe("Centro de Datos: catálogos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ver detalle de Poción" }));
 
     expect(
-      await screen.findByRole("region", { name: "Detalle del recurso" })
+      await screen.findByRole(
+        "region",
+        { name: "Detalle del recurso" },
+        { timeout: 5000 }
+      )
     ).toBeTruthy();
-    expect(await screen.findByText("Restaura 20 PS.")).toBeTruthy();
-    expect(await screen.findByText("Coste")).toBeTruthy();
+    expect(
+      await screen.findByText("Restaura 20 PS.", { timeout: 5000 })
+    ).toBeTruthy();
+    expect(await screen.findByText("Coste", { timeout: 5000 })).toBeTruthy();
   });
 
-  it("envía la búsqueda al backend cuando cambia el filtro", async () => {
+  it("envía la búsqueda global al backend y agrupa las coincidencias por bolsa y categoría", async () => {
     renderApp();
 
     const input = await screen.findByRole("searchbox", { name: "Buscar en Objetos" }, { timeout: 5000 });
@@ -137,5 +203,76 @@ describe("Centro de Datos: catálogos", () => {
     await waitFor(() => {
       expect(vi.mocked(getDataCenterCatalog).mock.calls.at(-1)?.[1].q).toBe("poción");
     });
+    expect(
+      await screen.findByRole(
+        "region",
+        { name: "Resultados de búsqueda" },
+        { timeout: 5000 }
+      )
+    ).toBeTruthy();
+    expect(screen.getByText("Medicina · Poción")).toBeTruthy();
+    expect(screen.getByText("Poké Balls · Poké Ball")).toBeTruthy();
+  });
+
+  it("pagina cada categoría de una bolsa en grupos de 12", async () => {
+    vi.mocked(getDataCenterCatalog).mockResolvedValue(PAGED_INDEX);
+    renderApp();
+
+    fireEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: "Medicina, 13 objetos" },
+        { timeout: 5000 }
+      )
+    );
+
+    expect(
+      await screen.findByRole(
+        "region",
+        { name: "Medicina" },
+        { timeout: 5000 }
+      )
+    ).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Ver detalle de/ })).toHaveLength(12);
+    expect(screen.queryByRole("button", { name: "Ver detalle de Poción 13" })).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Siguiente página de Poción" })
+    );
+
+    expect(
+      await screen.findByRole(
+        "button",
+        { name: "Ver detalle de Poción 13" },
+        { timeout: 5000 }
+      )
+    ).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Ver detalle de/ })).toHaveLength(1);
+  });
+
+  it("conserva la vista plana y las tarjetas de resumen en bayas", async () => {
+    vi.mocked(getDataCenterCatalog).mockResolvedValue(
+      indexFor(
+        [
+          {
+            id: 10,
+            name: "cheri-berry",
+            label: "Baya Cheri",
+            group: "berry",
+          },
+        ],
+        "berries"
+      )
+    );
+    renderApp("berries");
+
+    expect(
+      await screen.findByRole("heading", { name: "Catálogo de bayas" }, { timeout: 5000 })
+    ).toBeTruthy();
+    expect(screen.getByText("Entradas")).toBeTruthy();
+    expect(screen.getByText("Con estos filtros")).toBeTruthy();
+    expect(screen.getByText("Recursos")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver detalle de Baya Cheri" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Bolsas de objetos" })).toBeNull();
   });
 });

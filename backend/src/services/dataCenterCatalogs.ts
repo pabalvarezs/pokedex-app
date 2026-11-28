@@ -48,6 +48,15 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
+/** Metadatos oficiales que PokéAPI asocia a cada objeto desde su categoría. */
+interface ItemCategoryMeta {
+  category: string;
+  categoryLabel: string;
+  pocket: string;
+}
+
+type ItemCategoryMap = Map<string, ItemCategoryMeta>;
+
 export interface CatalogIndex {
   category: CatalogCategory;
   generatedAt: string;
@@ -77,6 +86,9 @@ const indexRequests = new Map<CatalogCategory, Promise<CatalogIndex>>();
 const detailCache = new Map<string, CacheEntry<CatalogDetailResponse>>();
 const detailRequests = new Map<string, Promise<CatalogDetailResponse | null>>();
 const refreshing = new Set<CatalogCategory>();
+const ITEM_CATEGORY_CACHE_KEY = "item-category";
+const itemCategoryCache = new Map<string, CacheEntry<ItemCategoryMap>>();
+const itemCategoryRequests = new Map<string, Promise<ItemCategoryMap>>();
 
 export function isCatalogCategory(value: string): value is CatalogCategory {
   return (CATALOG_CATEGORIES as readonly string[]).includes(value);
@@ -136,25 +148,102 @@ function spriteFor(resource: CatalogResource, name: string): string | undefined 
   return `${SPRITE_BASE}/items/${name}.png`;
 }
 
-async function buildIndex(category: CatalogCategory): Promise<CatalogIndex> {
-  const lists = await mapWithConcurrency<
-    CatalogResource,
-    { resource: CatalogResource; results: RawNamedResource[] }
-  >([...CATALOG_CONFIG[category].resources], LIST_CONCURRENCY, async (resource) => {
-    try {
-      const { data } = await api.get<RawList>(`/${resource.path}`, {
-        params: { limit: 100000, offset: 0 },
-      });
-      // `characteristic` entrega solo la URL: el ID se deriva de ella.
-      const results = asArray(data.results).filter(
-        (entry): entry is RawNamedResource =>
-          isRecord(entry) && typeof entry.url === "string"
-      );
-      return { resource, results };
-    } catch {
-      return { resource, results: [] };
-    }
+/**
+ * El listado de categorías no trae ni los objetos ni su bolsa: hay que pedir
+ * cada detalle. Se cachea el mapa completo para no repetir ~200 peticiones en
+ * cada arranque del índice.
+ */
+async function buildItemCategoryMap(): Promise<ItemCategoryMap> {
+  const { data } = await api.get<RawList>("/item-category", {
+    params: { limit: 200, offset: 0 },
   });
+  const categories = asArray(data.results)
+    .map(namedRef)
+    .filter((ref): ref is NamedRef => ref !== undefined)
+    .flatMap((ref) => {
+      const id = idFromUrl(ref.url ?? "");
+      return id === undefined ? [] : [{ id, name: ref.name }];
+    })
+    .sort((a, b) => a.id - b.id);
+
+  const details = await mapWithConcurrency(
+    categories,
+    LIST_CONCURRENCY,
+    async ({ id, name }) => {
+      try {
+        const { data: detail } = await api.get<RawDetail>(`/item-category/${id}`);
+        return { name, detail };
+      } catch {
+        return undefined;
+      }
+    }
+  );
+
+  const map: ItemCategoryMap = new Map();
+  for (const result of details) {
+    if (!result) continue;
+    const pocket = namedRef(result.detail.pocket)?.name;
+    if (!pocket) continue;
+    const categoryLabel = localizedName(result.detail, humanize(result.name));
+    for (const ref of asArray(result.detail.items)) {
+      const item = namedRef(ref)?.name;
+      // Un objeto pertenece a una sola categoría; el orden por ID fija cuál gana.
+      if (item && !map.has(item)) {
+        map.set(item, { category: result.name, categoryLabel, pocket });
+      }
+    }
+  }
+  return map;
+}
+
+function loadItemCategoryMap(): Promise<ItemCategoryMap> {
+  const cached = itemCategoryCache.get(ITEM_CATEGORY_CACHE_KEY);
+  if (cached && cached.expiresAt > Date.now()) {
+    return Promise.resolve(cached.value);
+  }
+
+  const pending = itemCategoryRequests.get(ITEM_CATEGORY_CACHE_KEY);
+  if (pending) return pending;
+
+  const request = buildItemCategoryMap()
+    .then((map) => {
+      itemCategoryCache.set(ITEM_CATEGORY_CACHE_KEY, {
+        value: map,
+        expiresAt: Date.now() + CATALOG_TTL_MS,
+      });
+      return map;
+    })
+    .finally(() => {
+      itemCategoryRequests.delete(ITEM_CATEGORY_CACHE_KEY);
+    });
+  itemCategoryRequests.set(ITEM_CATEGORY_CACHE_KEY, request);
+  return request;
+}
+
+async function buildIndex(category: CatalogCategory): Promise<CatalogIndex> {
+  const [lists, itemCategories] = await Promise.all([
+    mapWithConcurrency<
+      CatalogResource,
+      { resource: CatalogResource; results: RawNamedResource[] }
+    >([...CATALOG_CONFIG[category].resources], LIST_CONCURRENCY, async (resource) => {
+      try {
+        const { data } = await api.get<RawList>(`/${resource.path}`, {
+          params: { limit: 100000, offset: 0 },
+        });
+        // `characteristic` entrega solo la URL: el ID se deriva de ella.
+        const results = asArray(data.results).filter(
+          (entry): entry is RawNamedResource =>
+            isRecord(entry) && typeof entry.url === "string"
+        );
+        return { resource, results };
+      } catch {
+        return { resource, results: [] };
+      }
+    }),
+    category === "items"
+      ? loadItemCategoryMap().catch(() => new Map<string, ItemCategoryMeta>())
+      : Promise.resolve(new Map<string, ItemCategoryMeta>()),
+  ]);
 
   const items: CatalogEntry[] = [];
   let failed = 0;
@@ -168,11 +257,19 @@ async function buildIndex(category: CatalogCategory): Promise<CatalogIndex> {
       }
       const name = typeof raw.name === "string" && raw.name ? raw.name : String(id);
       const sprite = spriteFor(resource, name);
+      const itemMeta = itemCategories.get(name);
       items.push({
         id,
         name,
         label: labelFor(name, resource.group),
         group: resource.group,
+        ...(itemMeta
+          ? {
+              category: itemMeta.category,
+              categoryLabel: itemMeta.categoryLabel,
+              pocket: itemMeta.pocket,
+            }
+          : {}),
         ...(sprite ? { sprite } : {}),
       });
     }

@@ -18,11 +18,17 @@ import {
   DataCenterSkeleton,
 } from "../../components/DataCenterState";
 import { useDataCenterCatalog } from "../../hooks/useDataCenterCatalog";
-import { DATA_CENTER_CATALOGS, getCatalogMeta, groupLabel } from "../../lib/catalogs";
+import {
+  DATA_CENTER_CATALOGS,
+  getCatalogMeta,
+  groupLabel,
+  type CatalogMeta,
+} from "../../lib/catalogs";
 import { formatDate, formatNumber } from "../../lib/format";
 import type { CatalogQuery } from "../../lib/types";
 import CatalogCard from "./CatalogCard";
 import CatalogDetail from "./CatalogDetail";
+import ItemsCatalog from "./ItemsCatalog";
 
 const PAGE_SIZE = 12;
 
@@ -34,14 +40,22 @@ const INITIAL_QUERY: CatalogQuery = {
 };
 
 /**
- * Panel genérico de catálogos. La categoría viene del mismo parámetro `?category=`
- * que ya usa la página, así que el registro solo añade una entrada por catálogo
- * y no hace falta un componente por recurso.
+ * La categoría viene del mismo parámetro `?category=` que ya usa la página.
+ * Objetos tienen su propio acordeón; bayas conservan el panel genérico.
  */
 export default function CatalogCategory() {
   const [searchParams] = useSearchParams();
   const category = getCatalogMeta(searchParams.get("category")).id;
-  const meta = DATA_CENTER_CATALOGS[category];
+  return category === "items" ? (
+    <ItemsCatalog meta={DATA_CENTER_CATALOGS.items} />
+  ) : (
+    <GenericCatalog meta={DATA_CENTER_CATALOGS[category]} />
+  );
+}
+
+/** Panel genérico que siguen usando el resto de catálogos. */
+function GenericCatalog({ meta }: { meta: CatalogMeta }) {
+  const category = meta.id;
   const reduceMotion = useReducedMotionSafe();
 
   const [query, setQuery] = useState<CatalogQuery>(INITIAL_QUERY);
