@@ -3,6 +3,7 @@ import {
   STAT_KEYS,
   type DataCenterEntry,
   type DataCenterQuery,
+  type FilterMode,
   type DataCenterDataset,
   type GenerationBucket,
   type PhysicalRecords,
@@ -31,14 +32,48 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+/**
+ * Un eje de filtro no restringe nada cuando no hay valores seleccionados.
+ * Con `include` basta una coincidencia (unión); con `exclude` none debe
+ * coincidir (se restan todos los seleccionados). Es la misma semántica que la
+ * portada, donde "Todos" activa la exclusión con la lista vacía.
+ */
+function matchesAxis<T>(
+  selected: readonly T[],
+  mode: FilterMode,
+  matches: (value: T) => boolean
+): boolean {
+  if (selected.length === 0) return true;
+  const hit = selected.some(matches);
+  return mode === "include" ? hit : !hit;
+}
+
 export function filterEntries(
   entries: DataCenterEntry[],
   query: DataCenterQuery
 ): DataCenterEntry[] {
+  // Los arrays nuevos mandan cuando vienen en la consulta; si no, se usan los
+  // campos simples de siempre como un único valor seleccionado.
+  const types: readonly string[] =
+    query.types ?? (query.type ? [query.type] : []);
+  const generations: readonly number[] =
+    query.generations ?? (query.generation !== null ? [query.generation] : []);
+  const typeMode = query.typeMode ?? "include";
+  const genMode = query.genMode ?? "include";
+
   return entries.filter((entry) => {
     if (!query.includeVariants && !entry.isDefault) return false;
-    if (query.type && !entry.types.includes(query.type)) return false;
-    if (query.generation !== null && entry.generation !== query.generation) {
+    // Unión dentro de cada eje e intersección entre ejes.
+    if (!matchesAxis(types, typeMode, (type) => entry.types.includes(type))) {
+      return false;
+    }
+    if (
+      !matchesAxis(
+        generations,
+        genMode,
+        (generation) => entry.generation === generation
+      )
+    ) {
       return false;
     }
     return true;

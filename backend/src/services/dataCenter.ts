@@ -12,12 +12,32 @@ import {
 } from "./dataCenterRepository";
 import { buildPokemonAnalytics, isPokemonDataType } from "./dataCenterStats";
 import {
+  getCatalog,
+  getCatalogItem,
+  getCatalogStatus,
+  isCatalogCategory,
+  refreshCatalog,
+} from "./dataCenterCatalogs";
+import {
+  getTypeMatrix,
+  getTypeMatrixStatus,
+  refreshTypeMatrix,
+} from "./dataCenterTypeMatrix";
+import {
   STAT_KEYS,
+  type CatalogCategory,
+  type CatalogQuery,
   type DataCenterDataset,
   type DataCenterEntry,
   type DataCenterQuery,
+  type DataCenterRequestQuery,
   type StatKey,
 } from "./dataCenterTypes";
+
+export {
+  getCatalogItem,
+  isCatalogCategory,
+} from "./dataCenterCatalogs";
 
 /**
  * Dataset del Centro de Datos con dos niveles de caché:
@@ -322,6 +342,9 @@ export async function getPokemonDataset(
 export async function getCategoryStatus(
   category: DataCenterCategory
 ): Promise<SnapshotStatus> {
+  if (category === "types") return getTypeMatrixStatus();
+  if (isCatalogCategory(category)) return getCatalogStatus(category);
+
   const dbStatus = await readStatus(category);
   const memory = peekDataset(category);
   return {
@@ -400,31 +423,55 @@ export async function getPokemonTypesByIds(
 }
 
 /**
- * Registro de categorías del Centro de Datos. Para sumar Objetos, Bayas o
- * Movimientos basta con añadir un builder y un refresher aquí y una pestaña en
- * el registro del frontend: ni el router ni la página tienen que cambiar.
+ * Registro de categorías del Centro de Datos. Para sumar otra categoría basta
+ * con añadir un builder y un refresher aquí y una pestaña en el registro del
+ * frontend: ni el router ni la página tienen que cambiar.
  */
-export const DATA_CENTER_CATEGORIES = ["pokemon"] as const;
+export const DATA_CENTER_CATEGORIES = [
+  "pokemon",
+  "types",
+  "items",
+  "berries",
+] as const;
 export type DataCenterCategory = (typeof DATA_CENTER_CATEGORIES)[number];
 
 export function isDataCenterCategory(value: string): value is DataCenterCategory {
   return (DATA_CENTER_CATEGORIES as readonly string[]).includes(value);
 }
 
-type CategoryHandler = (query: DataCenterQuery) => Promise<unknown>;
+type CategoryHandler = (query: DataCenterRequestQuery) => Promise<unknown>;
 
 export const DATA_CATEGORY_HANDLERS: Record<DataCenterCategory, CategoryHandler> = {
   pokemon: async (query) =>
     buildPokemonAnalytics(await getPokemonDataset(), query),
+  types: () => getTypeMatrix(),
+  items: (query) => getCatalog("items", catalogQuery(query)),
+  berries: (query) => getCatalog("berries", catalogQuery(query)),
 };
 
+function catalogQuery(query: DataCenterRequestQuery): CatalogQuery {
+  return {
+    q: query.q,
+    group: query.group,
+    limit: query.limit,
+    offset: query.offset,
+  };
+}
+
 type CategoryRefresher = () => Promise<SnapshotStatus>;
+
+function catalogRefresher(category: CatalogCategory): CategoryRefresher {
+  return () => refreshCatalog(category);
+}
 
 export const DATA_CATEGORY_REFRESHERS: Record<
   DataCenterCategory,
   CategoryRefresher
 > = {
   pokemon: async () => refreshCategoryData("pokemon"),
+  types: refreshTypeMatrix,
+  items: catalogRefresher("items"),
+  berries: catalogRefresher("berries"),
 };
 
 export { isPokemonDataType };

@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   getDataCenterPokemon,
   getDataCenterStatus,
@@ -23,9 +28,28 @@ export function useDataCenterPokemon(filters: PokemonDataCenterFilters) {
   const queryClient = useQueryClient();
   const [polling, setPolling] = useState(false);
 
+  // La clave normaliza los arrays para que el orden de selección no provoque
+  // refetches: la semántica es de conjuntos (unión / exclusión), no de orden.
+  const queryFilters = useMemo(
+    () => ({
+      limit: filters.limit,
+      type: filters.type,
+      generation: filters.generation,
+      includeVariants: filters.includeVariants,
+      types: [...(filters.types ?? [])].sort(),
+      generations: [...(filters.generations ?? [])].sort((a, b) => a - b),
+      typeMode: filters.typeMode ?? "include",
+      genMode: filters.genMode ?? "include",
+    }),
+    [filters]
+  );
+
   const query = useQuery({
-    queryKey: [...DATA_CENTER_POKEMON_KEY, "data", filters],
+    queryKey: [...DATA_CENTER_POKEMON_KEY, "data", queryFilters],
     queryFn: () => getDataCenterPokemon(filters),
+    // Conserva los datos anteriores al cambiar de filtros: evita que el panel
+    // se desmonte (y se cierren los desplegables) mientras llega la respuesta.
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 60,
     gcTime: 1000 * 60 * 60 * 24,
     retry: 1,

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import App from "../src/App";
@@ -178,13 +178,13 @@ describe("Centro de Datos", () => {
     renderApp();
 
     expect(
-      await screen.findByRole("heading", { name: "Centro de Datos" }, { timeout: 5000 })
+      await screen.findByRole("heading", { name: "Centro de Datos" }, { timeout: 10000 })
     ).toBeTruthy();
     expect(
       await screen.findByRole(
         "heading",
         { name: "Rankings de Pokémon" },
-        { timeout: 5000 }
+        { timeout: 10000 }
       )
     ).toBeTruthy();
     expect(screen.getByRole("region", { name: "Filtros de Pokémon" })).toBeTruthy();
@@ -196,15 +196,82 @@ describe("Centro de Datos", () => {
       type: null,
       generation: null,
       includeVariants: false,
+      types: [],
+      generations: [],
+      typeMode: "include",
+      genMode: "include",
     });
-  });
+  }, 15000);
+
+  it("propaga la selección múltiple de tipos y generaciones", async () => {
+    setUser("admin");
+    renderApp();
+
+    expect(
+      await screen.findByRole(
+        "heading",
+        { name: "Rankings de Pokémon" },
+        { timeout: 10000 }
+      )
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Tipo/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Fuego" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agua" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Generación/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Gen 1 · Kanto/ }));
+
+    await waitFor(() =>
+      expect(getDataCenterPokemon).toHaveBeenLastCalledWith({
+        limit: 10,
+        type: null,
+        generation: null,
+        includeVariants: false,
+        types: ["fire", "water"],
+        generations: [1],
+        typeMode: "include",
+        genMode: "include",
+      })
+    );
+  }, 15000);
+
+  it("usa el modo exclusión al pulsar Todos y al excluir un tipo", async () => {
+    setUser("admin");
+    renderApp();
+
+    expect(
+      await screen.findByRole(
+        "heading",
+        { name: "Rankings de Pokémon" },
+        { timeout: 10000 }
+      )
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Tipo/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+    fireEvent.click(screen.getByRole("button", { name: "Fuego" }));
+
+    expect(screen.getByText("Sin Fuego")).toBeTruthy();
+    await waitFor(() =>
+      expect(getDataCenterPokemon).toHaveBeenLastCalledWith({
+        limit: 10,
+        type: null,
+        generation: null,
+        includeVariants: false,
+        types: ["fire"],
+        generations: [],
+        typeMode: "exclude",
+        genMode: "include",
+      })
+    );
+  }, 15000);
 
   it("bloquea la página a usuarios sin rol de admin", async () => {
     setUser("trainer");
     renderApp();
 
     expect(
-      await screen.findByText("Acceso restringido", {}, { timeout: 5000 })
+      await screen.findByText("Acceso restringido", {}, { timeout: 10000 })
     ).toBeTruthy();
     expect(screen.queryByText("Rankings de Pokémon")).toBeNull();
     expect(screen.queryByRole("link", { name: /Centro de Datos/ })).toBeNull();

@@ -14,17 +14,11 @@ import {
   RANKING_KEYS,
   type PokemonDataCenterFilters,
 } from "../../lib/types";
+import { GENERATIONS, getTypeBadge } from "../../../../utils/pokemon";
 import InsightsPanels from "./InsightsPanels";
-import PokemonFilters from "./PokemonFilters";
+import PokemonFilters, { INITIAL_FILTERS } from "./PokemonFilters";
 import RankingTable from "./RankingTable";
 import RecordCards from "./RecordCards";
-
-const INITIAL_FILTERS: PokemonDataCenterFilters = {
-  limit: 10,
-  type: null,
-  generation: null,
-  includeVariants: false,
-};
 
 const ACCENTS = {
   total: "#dc2626",
@@ -44,6 +38,10 @@ export default function PokemonCategory() {
       type: filters.type,
       generation: filters.generation,
       includeVariants: filters.includeVariants,
+      types: filters.types,
+      generations: filters.generations,
+      typeMode: filters.typeMode,
+      genMode: filters.genMode,
     }),
     [filters]
   );
@@ -103,15 +101,50 @@ export default function PokemonCategory() {
   const { meta, rankings, records, insights } = data;
   const busy = refresh.isPending || isPolling || isFetching;
 
+  // El resumen usa el estado local (puede haber datos en caché de otra
+  // consulta), con los campos simples del servidor como respaldo.
+  const selectedTypes = filters.types ?? [];
+  const typeFilterText = (() => {
+    if (selectedTypes.length === 0) {
+      return meta.type ? ` · tipo ${getTypeBadge(meta.type).es}` : "";
+    }
+    const labels = selectedTypes.map((type) => getTypeBadge(type).es).join(", ");
+    return (filters.typeMode ?? "include") === "include"
+      ? ` · tipos ${labels}`
+      : ` · sin tipos ${labels}`;
+  })();
+  const selectedGenerations = filters.generations ?? [];
+  const generationFilterText = (() => {
+    if (selectedGenerations.length === 0) {
+      return meta.generation ? ` · generación ${meta.generation}` : "";
+    }
+    const labels = selectedGenerations
+      .map((id) => GENERATIONS.find((g) => g.id === id)?.name ?? `Gen ${id}`)
+      .join(", ");
+    return (filters.genMode ?? "include") === "include"
+      ? ` · generaciones ${labels}`
+      : ` · sin generaciones ${labels}`;
+  })();
+
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-ink-900">Rankings de Pokémon</h2>
-          <p className="text-xs font-semibold text-ink-500">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+            Estadísticas internas
+          </span>
+          <h2 className="mt-2 flex items-center gap-3 text-display font-extrabold text-ink-900">
+            <span
+              className="h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-red-600 to-amber-400"
+              aria-hidden="true"
+            />
+            Rankings de Pokémon
+          </h2>
+          <p className="mt-1 max-w-2xl text-body text-ink-500">
             {formatNumber(meta.filtered)} de {formatNumber(meta.total)} Pokémon
-            {meta.type ? ` · tipo ${meta.type}` : ""}
-            {meta.generation ? ` · generación ${meta.generation}` : ""}
+            {typeFilterText}
+            {generationFilterText}
             {meta.includeVariants ? " · con variantes" : " · solo forma por defecto"}
             {" · actualizado "}
             {formatDate(status?.generatedAt ?? meta.generatedAt)}
@@ -144,7 +177,7 @@ export default function PokemonCategory() {
         </button>
       </header>
 
-      <PokemonFilters filters={filters} onChange={setFilters} disabled={isFetching} />
+      <PokemonFilters filters={filters} onChange={setFilters} />
 
       {meta.filtered === 0 ? (
         <DataCenterEmpty />

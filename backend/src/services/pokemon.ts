@@ -428,7 +428,7 @@ export async function translateMove(name: string): Promise<string> {
 
 // --- Cadena evolutiva ---
 
-const TYPE_NAMES_ES: Record<string, string> = {
+export const TYPE_NAMES_ES: Record<string, string> = {
   normal: "Normal",
   fire: "Fuego",
   water: "Agua",
@@ -449,7 +449,7 @@ const TYPE_NAMES_ES: Record<string, string> = {
   fairy: "Hada",
 };
 
-const ITEM_NAMES_ES: Record<string, string> = {
+export const ITEM_NAMES_ES: Record<string, string> = {
   "water-stone": "Piedra Agua",
   "fire-stone": "Piedra Fuego",
   "thunder-stone": "Piedra Trueno",
